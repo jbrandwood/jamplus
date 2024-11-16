@@ -26,10 +26,24 @@ void buffer_initwithalloc(BUFFER* buff, buffer_Alloc alloc, void* userData) {
 	buff->buffsize = BUFFER_STATIC_SIZE;
 	buff->alloc_function = alloc ? alloc : buffer_DefaultAllocFunction;
 	buff->user_data = userData;
+	buff->own = 1;
 }
 
 
+void buffer_initwithuserstorage(BUFFER* buff, const char* userBuffer, size_t userBufferSize) {
+	buff->buffer = (char*)userBuffer;
+	buff->pos = 0;
+	buff->buffsize = userBufferSize;
+	buff->alloc_function = NULL;
+	buff->user_data = NULL;
+	buff->own = 0;
+}
+
 void buffer_resize(BUFFER* buff, size_t size) {
+	if (!buff->own) {
+		return;
+	}
+
     if (size == 0) {
 		if (buff->buffer != (char*)&buff->static_buffer) {
 			buff->alloc_function(buff->user_data, buff->buffer, 0);

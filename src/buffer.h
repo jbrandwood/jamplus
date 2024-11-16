@@ -14,10 +14,12 @@ typedef struct _buffer {
 	size_t buffsize;
 	buffer_Alloc alloc_function;
 	void* user_data;
+	int own;
 } BUFFER;
 
 void buffer_init(BUFFER* buff);
 void buffer_initwithalloc(BUFFER* buff, buffer_Alloc alloc, void* userData);
+void buffer_initwithuserstorage(BUFFER* buff, const char* userBuffer, size_t userBufferSize);
 
 #define buffer_ptr(buff)	((buff)->buffer)
 #define buffer_size(buff)	((buff)->buffsize)
@@ -46,6 +48,6 @@ void buffer_resize(BUFFER* buff, size_t size);
 #define buffer_deltapos(buff, delta) (buff)->pos += (delta)
 #define buffer_isempty(buff) ((buff)->pos == 0)
 
-#define buffer_getchar(buff) ((buff)->pos + 1 < (buff)->buffsize ? (buff)->buffer[(buff)->pos++] : EOF)
+#define buffer_getchar(buff) ((buff)->pos < (buff)->buffsize ? (buff)->buffer[(buff)->pos++] : EOF)
 
 #endif /* BUFFER_H */
