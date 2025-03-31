@@ -1,5 +1,5 @@
 /*
-** $Id: lauxlib.c,v 1.289 2016/12/20 18:37:00 roberto Exp $
+** $Id: lauxlib.c,v 1.289.1.1 2017/04/19 17:20:42 roberto Exp $
 ** Auxiliary functions for building Lua libraries
 ** See Copyright Notice in lua.h
 */
@@ -807,10 +807,6 @@ LUALIB_API lua_Integer luaL_len (lua_State *L, int idx) {
 }
 
 
-#if LUAPLUS_DUMPOBJECT
-extern void luaplus_dumptable(lua_State* L, int index);
-#endif
-
 LUALIB_API const char *luaL_tolstring (lua_State *L, int idx, size_t *len) {
   if (luaL_callmeta(L, idx, "__tostring")) {  /* metafield? */
     if (!lua_isstring(L, -1))
@@ -834,11 +830,6 @@ LUALIB_API const char *luaL_tolstring (lua_State *L, int idx, size_t *len) {
       case LUA_TNIL:
         lua_pushliteral(L, "nil");
         break;
-#if LUAPLUS_DUMPOBJECT
-      //case LUA_TTABLE:
-        //luaplus_dumptable(L, 1);
-        //break;
-#endif
       default: {
         int tt = luaL_getmetafield(L, idx, "__name");  /* try name */
         const char *kind = (tt == LUA_TSTRING) ? lua_tostring(L, -1) :
@@ -1020,8 +1011,13 @@ static void *l_alloc (void *ud, void *ptr, size_t osize, size_t nsize) {
     free(ptr);
     return NULL;
   }
-  else
-    return realloc(ptr, nsize);
+  else {  /* cannot fail when shrinking a block */
+    void *newptr = realloc(ptr, nsize);
+    if (newptr == NULL && ptr != NULL && nsize <= osize)
+      return ptr;  /* keep the original block */
+    else  /* no fail or not shrinking */
+     return newptr;  /* use the new block */
+  }
 }
 
 

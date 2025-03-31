@@ -1,5 +1,5 @@
 /*
-** $Id: lua.c,v 1.230 2017/01/12 17:14:26 roberto Exp $
+** $Id: lua.c,v 1.230.1.1 2017/04/19 17:29:57 roberto Exp $
 ** Lua stand-alone interpreter
 ** See Copyright Notice in lua.h
 */
@@ -28,9 +28,7 @@
 #include "lauxlib.h"
 #include "lualib.h"
 
-#if LUA_TILDE_DEBUGGER
-#include "tilde/LuaTilde.h"
-#endif /* LUA_TILDE_DEBUGGER */
+
 
 #if !defined(LUA_PROMPT)
 #define LUA_PROMPT		"> "
@@ -165,7 +163,7 @@ static void print_usage (const char *badoption) {
   "Available options are:\n"
   "  -e stat  execute string 'stat'\n"
   "  -i       enter interactive mode after executing 'script'\n"
-  "  -l name  require library 'name'\n"
+  "  -l name  require library 'name' into global 'name'\n"
   "  -v       show version information\n"
   "  -E       ignore environment variables\n"
   "  --       stop handling options\n"
@@ -464,17 +462,8 @@ static int pushargs (lua_State *L) {
 static int handle_script (lua_State *L, char **argv) {
   int status;
   const char *fname = argv[0];
-#if LUA_TILDE_DEBUGGER  &&  _MSC_VER
-  char buffer[4096];
-#endif // LUA_TILDE_DEBUGGER  && _MSC_VER
   if (strcmp(fname, "-") == 0 && strcmp(argv[-1], "--") != 0)
     fname = NULL;  /* stdin */
-#if LUA_TILDE_DEBUGGER  &&  _MSC_VER
-  if (fname) {
-    _fullpath(buffer, fname, 4096);
-    fname = buffer;
-  }
-#endif // LUA_TILDE_DEBUGGER  && _MSC_VER
   status = luaL_loadfile(L, fname);
   if (status == LUA_OK) {
     int n = pushargs(L);  /* push arguments to script */
@@ -535,32 +524,6 @@ static int collectargs (char **argv, int *first) {
         }
         break;
       case 'd': {
-#if LUA_TILDE_DEBUGGER
-        if (strcmp(argv[i], "-debug") == 0) {
-#if defined(_WIN32)
-          char filename[_MAX_PATH];
-          char* slashptr;
-          GetModuleFileName(NULL, filename, _MAX_PATH);
-          slashptr = strrchr(filename, '\\');
-          if (slashptr) {
-            HMODULE luaTildeModule;
-            LuaTildeHost* (*LuaTilde_Command)(LuaTildeHost*, const char*, void*, void*);
-            LuaTildeHost* host;
-            slashptr++;
-#ifdef _DEBUG
-            strcpy(slashptr, "lua-tilde.debug.dll");
-#else
-            strcpy(slashptr, "lua-tilde.dll");
-#endif
-            luaTildeModule = LoadLibrary(filename);
-            LuaTilde_Command = (LuaTildeHost* (*)(LuaTildeHost*, const char*, void*, void*))GetProcAddress(luaTildeModule, "LuaTilde_Command");
-#endif // _WIN32
-            host = LuaTilde_Command(NULL, "create", (void*)10000, NULL);
-            LuaTilde_Command(host, "registerstate", "State", globalL);
-            LuaTilde_Command(host, "waitfordebuggerconnection", NULL, NULL);
-          }
-        } else
-#endif /* LUA_TILDE_DEBUGGER */
         if (strcmp(argv[i], "-dl") == 0) {
           lua_sethook(globalL, DebugLineHook, LUA_MASKLINE, 0);
         }
