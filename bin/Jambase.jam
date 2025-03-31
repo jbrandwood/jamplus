@@ -20,6 +20,7 @@ TAB = "	" ;
 NEWLINE = "
 " ;
 DOLLAR = $ ;
+QUOTE = "\"" ;
 
 JAMBASE_VERSION = "JamPlus 3.0 (2020.06.01)" ;
 
