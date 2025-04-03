@@ -13,28 +13,29 @@ typedef enum eLookupMode LookupMode;
 
 struct s_Keeper
 {
-	MUTEX_T keeper_cs;
-	lua_State* L;
-	//int count;
+    MUTEX_T keeper_cs;
+    lua_State* L;
+    //int count;
 };
 typedef struct s_Keeper Keeper;
 
 struct s_Keepers
 {
-	int nb_keepers;
-	Keeper keeper_array[1];
+    int gc_threshold;
+    int nb_keepers;
+    Keeper keeper_array[1];
 };
 typedef struct s_Keepers Keepers;
 
 void init_keepers( Universe* U, lua_State* L);
-void close_keepers( Universe* U, lua_State* L);
+void close_keepers( Universe* U);
 
-Keeper* which_keeper( Keepers* keepers_, ptrdiff_t magic_);
-Keeper* keeper_acquire( Keepers* keepers_, ptrdiff_t magic_);
+Keeper* which_keeper(Keepers* keepers_, uint_t magic_);
+Keeper* keeper_acquire(Keepers* keepers_, uint_t magic_);
 #define KEEPER_MAGIC_SHIFT 3
-void keeper_release( Keeper* K);
+void keeper_release( Keeper* K_);
 void keeper_toggle_nil_sentinels( lua_State* L, int val_i_, LookupMode const mode_);
-int keeper_push_linda_storage( Universe* U, lua_State* L, void* ptr_, ptrdiff_t magic_);
+int keeper_push_linda_storage(Universe* U, lua_State* L, void* ptr_, uint_t magic_);
 
 // crc64/we of string "NIL_SENTINEL" generated at http://www.nitrxgen.net/hashgen/
 static DECLARE_CONST_UNIQUE_KEY( NIL_SENTINEL, 0x7eaafa003a1d11a1);

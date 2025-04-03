@@ -259,6 +259,7 @@
     <ClCompile Include="luaplus\Src\Modules\lanes\src\keeper.c" />
     <ClCompile Include="luaplus\Src\Modules\lanes\src\lanes.c" />
     <ClCompile Include="luaplus\Src\Modules\lanes\src\linda.c" />
+    <ClCompile Include="luaplus\Src\Modules\lanes\src\state.c" />
     <ClCompile Include="luaplus\Src\Modules\lanes\src\threading.c" />
     <ClCompile Include="luaplus\Src\Modules\lanes\src\tools.c" />
     <ClCompile Include="luaplus\Src\Modules\lanes\src\universe.c" />
@@ -377,6 +378,7 @@
     <ClInclude Include="luaplus\Src\Modules\lanes\src\lanes_private.h" />
     <ClInclude Include="luaplus\Src\Modules\lanes\src\macros_and_utils.h" />
     <ClInclude Include="luaplus\Src\Modules\lanes\src\platform.h" />
+    <ClInclude Include="luaplus\Src\Modules\lanes\src\state.h" />
     <ClInclude Include="luaplus\Src\Modules\lanes\src\threading.h" />
     <ClInclude Include="luaplus\Src\Modules\lanes\src\threading_osx.h" />
     <ClInclude Include="luaplus\Src\Modules\lanes\src\tools.h" />

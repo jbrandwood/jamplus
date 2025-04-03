@@ -1,5 +1,69 @@
 CHANGES:
 
+CHANGE 163: BGe 11-Mar-25
+   * Fix a compilation warning
+   * internal version bumped to 3.17.1
+
+CHANGE 162: BGe 29-Apr-24
+   * remove uintptr_t again. I love optional stuff in standard headers
+   * expose nil sentinel as lanes.null
+
+CHANGE 161: BGe 15-Apr-24
+   * fix keeper state stack accumulating garbage in case of transfer errors
+
+CHANGE 160: BGe 11-Apr-24
+   * add manual control over GC behavior in keeper states
+   * update a bunch of test scripts
+   * minor internal fixes
+   * probably the last C implementation update, unless a critical bug creeps up
+   * internal version bumped to 3.17.0
+
+CHANGE 159: BGe 19-Mar-24
+   * fix small internal issue with when hitting timeout on thread kill during thread_cancel() in pthread implementation
+
+CHANGE 158: BGe 22-Feb-24
+   * naive luajit detection in PUC-Lua-based builds, and vice-versa to detect mismatches
+   * internal version bumped to 3.16.3
+
+CHANGE 157: Mitalie 17-Aug-23
+   * Prevent crash on linux as non-root
+   * internal version bumped to 3.16.2
+
+CHANGE 156: BGe 9-Aug-23
+   * new configuration option .internal_allocator to help LuaJIT users.
+   * internal version bumped to 3.16.1
+
+CHANGE 155: BGe 28-Jul-23
+   * tweaks to linux thread priority management: do nothing if not super-user. if super-user, do nothing if nothing is provided (instead of trying to force a prio when LINUX_SCHED_RR is defined).
+
+CHANGE 154: eligovision 1-Mar-22
+   * Fix 3-parametrized __lanesclone
+
+CHANGE 153: BGe 17-Feb-22
+   * NEVER use allocator obtained from lua_getallocf to allocate stuff manually when compiling for LuaJIT
+
+CHANGE 152: BGe 7-Feb-22
+   * bumped version to 3.16.0
+   * __lanesclone is now called only once with 3 parameters dest, source, size -> BREAKS CUSTOM DEEP USERDATA API
+
+CHANGE 151: BGe 7-Feb-22
+   * bumped version to 3.15.2
+   * Lanes no longer relies on malloc/free for internal allocations, but uses the primary alloc function from the master Lua state
+
+CHANGE 150: BGe 22-Sep-21
+   * fix require() wrapper to return all values returned by original require()
+
+CHANGE 149: BGe 8-Jul-21
+   * bumped version to 3.15.1
+   * fix function transfer with lua_dump for Lua 5.4 failing for functions big enough to necessitate a buffer reallocation
+
+CHANGE 148: BGe 23-Jun-21
+   * __lanesclone now receives the original as light userdata the first time it is called -> BREAKS CUSTOM DEEP USERDATA API
+
+CHANGE 147: BGe 16-Jun-21
+   * changed lanes.threads() output so that several lanes with the same name don't clobber each other in the result table -> BREAKS API
+   * bumped version to 3.15 because of the API change
+
 CHANGE 146: BGe 26-Apr-19
    * lane:cancel() rework (see doc).
    * opt.cancelstep is gone, hook is installed by lane:cancel() if requested
@@ -662,15 +726,15 @@ CHANGE 6 (bug fix) AKa 15-Oct-2008:
     Added local caches of the following to src/lanes.lua (was otherwise getting
     errors at least in 'tests/irayo_recursive.lua').
 
-		local assert= assert
-		local string_gmatch= assert( string.gmatch )
-		local select= assert( select )
-		local type= assert( type )
-		local pairs= assert( pairs )
-		local tostring= assert( tostring )
-		local error= assert( error )
-		local setmetatable= assert( setmetatable )
-		local rawget= assert( rawget )
+        local assert= assert
+        local string_gmatch= assert( string.gmatch )
+        local select= assert( select )
+        local type= assert( type )
+        local pairs= assert( pairs )
+        local tostring= assert( tostring )
+        local error= assert( error )
+        local setmetatable= assert( setmetatable )
+        local rawget= assert( rawget )
 
     Thanks to Irayo for detecting and reporting this.
 

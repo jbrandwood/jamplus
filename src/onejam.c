@@ -176,6 +176,7 @@
 #include "luaplus/Src/Modules/lanes/src/keeper.c"
 #include "luaplus/Src/Modules/lanes/src/lanes.c"
 #include "luaplus/Src/Modules/lanes/src/linda.c"
+#include "luaplus/Src/Modules/lanes/src/state.c"
 #include "luaplus/Src/Modules/lanes/src/threading.c"
 #include "luaplus/Src/Modules/lanes/src/tools.c"
 #include "luaplus/Src/Modules/lanes/src/universe.c"
