@@ -1522,6 +1522,11 @@ builtin_expandfilelist(
 		absolute = strcmp( str, "1" ) == 0  ||  strcmp( str, "true" ) == 0;
 	}
 
+	if ( !list_first( searchSourceList ) )
+	{
+		searchSourceList = var_get( "SEARCH_SOURCE" );
+	}
+
 	if ( list_first( searchSourceList ) )
 	{
 		searchSourceStr = list_value( list_first( searchSourceList ) );
