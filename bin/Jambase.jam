@@ -983,6 +983,7 @@ rule WorkspaceConfig WORKSPACE_NAME : CONFIG_NAME : ACTUAL_CONFIG_NAME : COMMAND
 
 	C.CONFIG ?= $(CONFIG) ;
 	C.PLATFORM ?= $(PLATFORM) ;
+	C.COMPILER ?= $(c.compiler) ;
 	C.COMPILER ?= $(COMPILER) ;
 
 	C.TOOLCHAIN ?= $(c.toolchain) ;
