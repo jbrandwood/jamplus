@@ -12,16 +12,6 @@ rule CopyFile PARENT : TARGET : SOURCE {
 	Clean $(PARENT:G)clean:$(PARENT:G=) : $(TARGET) ;
 }
 
-if $(NT) {
-	actions Copy1File {
-		$(CP) "$(2:\\)" "$(1:\\)" 1>nul
-	}
-} else {
-	actions Copy1File {
-		$(CP) "$(2)" "$(1)"
-	}
-}
-
 } else {
 
 rule CopyFile {
