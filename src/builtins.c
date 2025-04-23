@@ -143,6 +143,7 @@ LIST *builtin_quicksettingslookup(PARSE *parse, LOL *args, int *jmp);
 LIST *builtin_actionexists(PARSE *parse, LOL *args, int *jmp);
 LIST *builtin_ruleexists(PARSE *parse, LOL *args, int *jmp);
 LIST *builtin_configurefilehelper(PARSE *parse, LOL *args, int *jmp);
+LIST *builtin_rescantimestamp(PARSE *parse, LOL *args, int *jmp);
 LIST *builtin_search(PARSE *parse, LOL *args, int *jmp);
 LIST *builtin_searchinternal(PARSE *parse, LOL *args, int *jmp);
 LIST *builtin_makerelativepath(PARSE *parse, LOL *args, int *jmp);
@@ -333,6 +334,9 @@ load_builtins()
 
 	bindrule( "ConfigureFileHelper" )->procedure =
 		parse_make( builtin_configurefilehelper, P0, P0, P0, C0, C0, 0 );
+
+	bindrule( "RescanTimestamp" )->procedure =
+		parse_make( builtin_rescantimestamp, P0, P0, P0, C0, C0, 0 );
 
 	bindrule( "Search" )->procedure =
 		parse_make( builtin_search, P0, P0, P0, C0, C0, 0 );
@@ -1909,6 +1913,24 @@ LIST *builtin_configurefilehelper(PARSE *parse, LOL *args, int *jmp)
 		target->binding = T_BIND_UNBOUND;
 	}
 
+	return L0;
+}
+
+
+LIST *builtin_rescantimestamp(PARSE *parse, LOL *args, int *jmp)
+{
+	LIST* targetName;
+	TARGET* target;
+	const char* filename;
+	time_t time;
+
+	targetName = lol_get(args, 0);
+	if (!list_first(targetName))
+		return L0;
+
+	target = bindtarget(list_value(list_first(targetName)));
+	filename = search_using_target_settings(target, target->name, &time);
+	timestamp(filename, &time, 1);
 	return L0;
 }
 
