@@ -1285,6 +1285,15 @@ rule C.RuntimeType TARGET : TYPE {
 }
 
 
+rule C.CStandard TARGET : VERSION {
+	TARGET = [ C.ActiveTarget $(TARGET) ] ;
+	local theRule ;
+	for theRule in $(C._CStandard:Z=$(C.COMPILER_SUITE_SYMBOL)) {
+		$(theRule) ;
+	}
+}
+
+
 rule C.C++Exceptions TARGET : TYPE {
 	C.ActiveTarget $(TARGET) ;
 	local theRule ;

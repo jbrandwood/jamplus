@@ -40,6 +40,7 @@ rule C.Toolchain.mingw.Setup MINGW_ROOT {
     C.LINK on $(C.COMPILER_SUITE_SYMBOL) 	= "$(MINGW_ROOT)/bin/g++" ;
     C.RANLIB on $(C.COMPILER_SUITE_SYMBOL)  = "$(MINGW_ROOT)/bin/ranlib" ;
 
+    C._CStandard on $(C.COMPILER_SUITE_SYMBOL) = C.mingw._CStandard ;
     C._C++Exceptions on $(C.COMPILER_SUITE_SYMBOL) = C.mingw._C++Exceptions ;
     C._C++Standard on $(C.COMPILER_SUITE_SYMBOL) = C.mingw._C++Standard ;
     C._LinkPrebuiltLibraries on $(C.COMPILER_SUITE_SYMBOL) = C.mingw._LinkPrebuiltLibraries ;

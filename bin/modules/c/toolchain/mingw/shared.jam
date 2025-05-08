@@ -19,6 +19,11 @@ rule C.mingw._LinkPrebuiltLibraries {
 }
 
 
+rule C.mingw._C++Standard {
+    CCFLAGS on $(C.ACTIVE_TOOLCHAIN_TARGET) += -std=gnu$(VERSION) ;
+}
+
+
 rule C.mingw._C++Exceptions {
 	FLAGS_TO_REMOVE on $(C.ACTIVE_TOOLCHAIN_TARGET) += -fno-exceptions -fexceptions ;
 

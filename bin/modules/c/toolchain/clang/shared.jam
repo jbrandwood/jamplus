@@ -18,6 +18,11 @@ rule C.clang._LinkPrebuiltLibraries {
     }
 }
 
+rule C.clang._CStandard {
+    CCFLAGS on $(C.ACTIVE_TOOLCHAIN_TARGET) += -std=gnu$(VERSION) ;
+    MMFLAGS on $(C.ACTIVE_TOOLCHAIN_TARGET) += -std=gnu$(VERSION) ;
+}
+
 rule C.clang._C++Exceptions {
     FLAGS_TO_REMOVE on $(C.ACTIVE_TOOLCHAIN_TARGET) += -fno-exceptions -fexceptions ;
 

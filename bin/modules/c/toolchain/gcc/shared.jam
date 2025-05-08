@@ -18,6 +18,10 @@ rule C.gcc._LinkPrebuiltLibraries {
     }
 }
 
+rule C.gcc._CStandard {
+    CCFLAGS on $(C.ACTIVE_TOOLCHAIN_TARGET) += -std=gnu$(VERSION) ;
+}
+
 rule C.gcc._C++Exceptions {
     FLAGS_TO_REMOVE on $(C.ACTIVE_TOOLCHAIN_TARGET) += -fno-exceptions -fexceptions ;
 

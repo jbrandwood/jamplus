@@ -11,6 +11,11 @@ rule C.vc.FDefines { return /D$(<) ; }
 rule C.vc.FIncludes { return /I"\"$(<)\"" ; }
 rule C.vc.FLibraryPaths { return \"/LIBPATH:$(<)\" ; }
 
+rule C.vc._CStandard {
+    CCFLAGS on $(C.ACTIVE_TOOLCHAIN_TARGET) += /std:c$(VERSION) ;
+    MFLAGS on $(C.ACTIVE_TOOLCHAIN_TARGET) += /std:c$(VERSION) ;
+}
+
 
 rule C.vc._C++Exceptions {
     FLAGS_TO_REMOVE on $(C.ACTIVE_TOOLCHAIN_TARGET) += /EHa /EHsc ;
