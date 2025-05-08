@@ -29,7 +29,7 @@ rule C.vc._C++Exceptions {
 
 
 rule C.vc._C++Standard {
-    C++FLAGS on $(C.ACTIVE_TOOLCHAIN_TARGET) += /std:c++$(VERSION) /Zc:__cplusplus ;
+    C++FLAGS on $(C.ACTIVE_TOOLCHAIN_TARGET) += /std:c++$(VERSION) /permissive- /Zc:__cplusplus ;
     MMFLAGS on $(C.ACTIVE_TOOLCHAIN_TARGET) += /std:c++$(VERSION) ;
 }
 
