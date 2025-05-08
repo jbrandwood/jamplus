@@ -59,6 +59,8 @@ search_helper(
 	
 	if( list_first(varlist = varget( "LOCATE", userData )) )
 	{
+		int absolute = 0;
+
 		f->f_root.ptr = list_value(list_first(varlist));
 		f->f_root.len = (int)(strlen( list_value(list_first(varlist)) ));
 		
@@ -68,6 +70,36 @@ search_helper(
 		path_build( f, buf, 1 );
 #endif
 		
+#ifdef OS_NT
+		absolute =
+			( ( ( buf[0] >= 'a'  &&  buf[0] <= 'z' )  ||  ( buf[0] >= 'A'  &&  buf[0] <= 'Z' ) )  &&
+			buf[1] == ':' )  ||  ( buf[0] == '/'  ||  buf[0] == '\\' );
+#else
+		absolute = buf[0] == '/';
+#endif
+
+		if (!absolute)
+		{
+			LIST *subdir = varget( "SUBDIR", userData );
+			if ( list_first( subdir ) )
+			{
+				PATHNAME rf[1];
+				char	buf2[ MAXJPATH ];
+				memset( rf, 0, sizeof( PATHNAME ) );
+				rf->f_root.ptr = list_value( list_first( subdir ) );
+				rf->f_root.len = (int)(strlen( rf->f_root.ptr ));
+				rf->f_dir.ptr = buf;
+				rf->f_dir.len = (int)strlen(buf);
+
+#ifdef OPT_ROOT_PATHS_AS_ABSOLUTE_EXT
+				path_build( rf, buf2, 1, 1 );
+#else
+				path_build( rf, buf2, 1 );
+#endif
+				strcpy( buf, buf2 );
+			}
+		}
+
 		if( DEBUG_SEARCH )
 			printf( "locate %s: %s\n", target, buf );
 		
