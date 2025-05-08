@@ -1,2 +1,2 @@
-git clone --depth=1 -b v5.3 https://github.com/lua/lua.git
-git clone --depth=1 https://github.com/diegonehab/luasocket.git
+git clone --depth=1 -b v5.4 https://github.com/lua/lua.git .deps/lua
+git clone --depth=1 https://github.com/lunarmodules/luasocket .deps/luasocket
