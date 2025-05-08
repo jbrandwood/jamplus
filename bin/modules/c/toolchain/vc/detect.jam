@@ -39,18 +39,13 @@ rule FindVisualStudioHelper VERSION : COMPILER {
     switch $(VERSION) {
         case vs2022 :
             local pf = $(ProgramFiles:J=" ") ;
-            VS170COMNTOOLS = "$(pf)/Microsoft Visual Studio/2022/Preview/Common7/Tools" ;
+            VS170COMNTOOLS = "$(pf)/Microsoft Visual Studio/2022/Professional/Common7/Tools" ;
             if [ Glob $(VS170COMNTOOLS) : VsDevCmd.bat ] {
                 MSVCNT = $(VS170COMNTOOLS) ;
             } else {
-                VS170COMNTOOLS = "$(pf)/Microsoft Visual Studio/2022/Professional/Common7/Tools" ;
+                VS170COMNTOOLS = "$(pf)/Microsoft Visual Studio/2022/Community/Common7/Tools" ;
                 if [ Glob $(VS170COMNTOOLS) : VsDevCmd.bat ] {
                     MSVCNT = $(VS170COMNTOOLS) ;
-                } else {
-                    VS170COMNTOOLS = "$(pf)/Microsoft Visual Studio/2022/Community/Common7/Tools" ;
-                    if [ Glob $(VS170COMNTOOLS) : VsDevCmd.bat ] {
-                        MSVCNT = $(VS170COMNTOOLS) ;
-                    }
                 }
             }
             if $(MSVCNT) {
