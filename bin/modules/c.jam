@@ -1165,6 +1165,12 @@ rule C.ForcePublic TARGET {
 }
 
 
+rule C.Includes TARGET : SOURCES : DEPS {
+	C.ActiveTarget $(TARGET) ;
+	Includes [ C.GristFiles $(TARGET) : $(SOURCES) ] : $(DEPS) ;
+}
+
+
 rule C.InstallNamePath TARGET : INSTALL_NAME_PATH {
 	C.ActiveTarget $(TARGET) ;
 	INSTALL_NAME_PATH on $(C.ACTIVE_TOOLCHAIN_TARGET) += $(INSTALL_NAME_PATH) ;
