@@ -857,10 +857,20 @@ void hcache_done()
 	for( file = hcachefilelist; file; file = file->next ) {
 		hcache_writefile( file );
 	}
+
+	hashdone(hcachefilehash);
+	hcachefilehash = NULL;
+
+	hashdone(hcachehash);
+	hcachehash = NULL;
+
+	hcachefilelist = NULL;
+	lasthcachefile = NULL;
+	lasthcachefile_name = NULL;
+
 #ifdef OPT_BUILTIN_MD5CACHE_EXT
 	checksums_writefile();
 #endif /* OPT_BUILTIN_MD5CACHE_EXT */
-	hashdone(hcachehash);
 }
 
 #ifdef OPT_BUILTIN_MD5CACHE_EXT
