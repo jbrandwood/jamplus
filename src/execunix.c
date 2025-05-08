@@ -268,7 +268,7 @@ execlua(
 		cmdtab[ slot ].outputFilenameUsed = 0;
 	}
 
-	cmdtab[ slot ].pid = pid;
+	cmdtab[ slot ].pid = -pid;
 	cmdtab[ slot ].func = func;
 	cmdtab[ slot ].closure = closure;
 	cmdtab[ slot ].lua = 1;
@@ -685,10 +685,10 @@ my_wait( int *status )
 	* and return if so.
 	*/
 	for ( i = 0; i < globs.jobs; i++ ) {
-		if ( cmdtab[i].pid ) {
+		if ( cmdtab[i].pid != 0 ) {
 #ifdef OPT_BUILTIN_LUA_SUPPORT_EXT
 			if ( cmdtab[i].lua ) {
-				int ret = luahelper_taskisrunning( cmdtab[i].pid, status );
+				int ret = luahelper_taskisrunning( -cmdtab[i].pid, status );
 				if ( ret == 0 ) {
 					return cmdtab[i].pid;
 				}
@@ -733,7 +733,8 @@ my_wait( int *status )
 			if ( cmdtab[i].pid ) {
 #ifdef OPT_BUILTIN_LUA_SUPPORT_EXT
 				if ( cmdtab[i].lua ) {
-					luahelper_taskcancel( cmdtab[i].pid );
+					luahelper_taskcancel( -cmdtab[i].pid );
+					cmdtab[i].pid = 0;
 					continue;
 				}
 #endif
@@ -760,7 +761,7 @@ my_wait( int *status )
 			if ( cmdtab[i].pid ) {
 #ifdef OPT_BUILTIN_LUA_SUPPORT_EXT
 				if ( cmdtab[i].lua ) {
-					int ret = luahelper_taskisrunning( cmdtab[i].pid, status );
+					int ret = luahelper_taskisrunning( -cmdtab[i].pid, status );
 					if ( ret == 0 ) {
 						return cmdtab[i].pid;
 					}
@@ -790,7 +791,7 @@ my_wait( int *status )
 		if ( cmdtab[i].pid ) {
 #ifdef OPT_BUILTIN_LUA_SUPPORT_EXT
 			if ( cmdtab[i].lua ) {
-				if ( !luahelper_taskisrunning( cmdtab[i].pid, status ) ) {
+				if ( !luahelper_taskisrunning( -cmdtab[i].pid, status ) ) {
 					*status = 0;
 					return cmdtab[i].pid;
 				}
