@@ -635,6 +635,11 @@ rule SubInclude TOKENS : FILENAME : OPTIONS
 	CURRENT_JAMFILE = $(jamfile:R=$(SUBDIR)) ;
 	BUILD.$(TARGET).CURRENT_JAMFILE = $(CURRENT_JAMFILE) ;
 
+	if $(SubInclude_PreInclude)
+	{
+		$(SubInclude_PreInclude) ;
+	}
+
 	local nocare ;
 	if register in $(OPTIONS)
 	{
