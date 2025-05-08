@@ -265,6 +265,28 @@ int main( int argc, char **argv, char **arg_environ )
 	InitGraf(&qd.thePort);
 # endif
 
+	if ( argc > 1 && argv[1][0] == '-' && argv[1][1] == 'l' && argv[1][2] == 0 )
+	{
+		char **new_argv = NULL;
+		int new_argc = 0;
+		int index = 0;
+
+		int extra_options_count = argc - 2;
+
+		new_argv = malloc( ( 1 + extra_options_count + 1 ) * sizeof( char* ) );
+		new_argv[ 0 ] = argv[ 0 ];
+
+		for ( index = 0; index < extra_options_count; ++index )
+		{
+			new_argv[ index + 1 ] = argv[ index + 2 ];
+		}
+		new_argv[ 1 + extra_options_count ] = NULL;
+		new_argc = 1 + extra_options_count;
+
+		int lua_main (int argc, char **argv);
+		return lua_main( new_argc, new_argv );
+	}
+
 	argc--, argv++;
 #ifdef OPT_SCRIPTS_PASSTHROUGH_EXT
     {

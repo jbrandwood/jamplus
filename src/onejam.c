@@ -214,6 +214,8 @@
 #include "luaplus/Src/Modules/uuid/wuuid.c"
 #endif
 
+#include "lua-c-for-jam.c"
+
 
 
 

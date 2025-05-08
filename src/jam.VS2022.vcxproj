@@ -218,6 +218,7 @@
     <ClCompile Include="jambase-j.c" />
     <ClCompile Include="jamgram.c" />
     <ClCompile Include="lists.c" />
+    <ClCompile Include="lua-c-for-jam.c" />
     <ClCompile Include="luagsub.c" />
     <ClCompile Include="luaplus\Src\LuaPlus\lua53-luaplus\src\lapi.c" />
     <ClCompile Include="luaplus\Src\LuaPlus\lua53-luaplus\src\lauxlib.c" />

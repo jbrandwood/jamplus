@@ -955,7 +955,7 @@ extern int luaopen_ziparchive(lua_State *L);
 
 #endif /* OPT_BUILTIN_LUA_DLL_SUPPORT_EXT */
 
-static void ls_register_custom_libs(ls_lua_State* L)
+void ls_register_custom_libs(ls_lua_State* L)
 {
 #ifndef OPT_BUILTIN_LUA_DLL_SUPPORT_EXT
     luaL_requiref((lua_State*)L, "filefind", luaopen_filefind, 1);
@@ -1031,17 +1031,45 @@ static int lanes_on_state_create(ls_lua_State *L) {
 }
 
 
-static int pmain (ls_lua_State *L)
+int ls_pmain(ls_lua_State *L)
 {
-    int top;
-    int ret;
+	{
+        char exeName[4096];
+        getexecutablepath(exeName, sizeof(exeName));
+        ls_lua_pushlstring(L, exeName, strlen(exeName));
+        ls_lua_setglobal(L, "JAM_EXECUTABLE");
 
-    ls_luaL_openlibs(L);
+        getprocesspath(exeName, sizeof(exeName));
+        ls_lua_pushlstring(L, exeName, strlen(exeName));
+        ls_lua_setglobal(L, "JAM_EXECUTABLE_PATH");
+    }
 
     ls_luaL_dostring(L,
         "package.path = JAM_EXECUTABLE_PATH .. '/lua/?.lua;' .. JAM_EXECUTABLE_PATH .. '/../lua/?.lua;' .. package.path\n"
         "package.path = JAM_EXECUTABLE_PATH .. '/lua/?/init.lua;' .. JAM_EXECUTABLE_PATH .. '/../lua/?/init.lua;'  .. package.path\n"
     );
+
+    int top = ls_lua_gettop(L);
+    ls_lua_getglobal(L, "package");                     /* package */
+    ls_lua_getfield(L, -1, "searchers");                /* package searchers */
+    ls_lua_len(L, -1);                                  /* package searchers searchersLen */
+    int isnum;
+    int l = (int)ls_lua_tointegerx(L, -1, &isnum);      /* package searchers searchersLen */
+    ls_lua_pop(L, 1);                                   /* package searchers */
+    ls_lua_pushvalue(L, -2);                            /* package searchers package */
+    ls_lua_pushcclosure(L, jluasearcher_Lua, 1);        /* package searchers package jluasearcher_Lua */
+    ls_lua_seti(L, -2, l + 1);                          /* package searchers package */
+    ls_lua_pop(L, 3);
+    return top;
+}
+
+
+static int luasupport_pmain (ls_lua_State *L)
+{
+    int top;
+    int ret;
+
+    ls_luaL_openlibs(L);
 
     ls_lua_pushcclosure(L, LS_jam_getvar, 0);
     ls_lua_setglobal(L, "jam_getvar");
@@ -1060,17 +1088,7 @@ static int pmain (ls_lua_State *L)
     ls_lua_pushcclosure(L, LS_jam_print, 0);
     ls_lua_setglobal(L, "jam_print");
 
-    top = ls_lua_gettop(L);
-    ls_lua_getglobal(L, "package");                     /* package */
-    ls_lua_getfield(L, -1, "searchers");                /* package searchers */
-    ls_lua_len(L, -1);                                  /* package searchers searchersLen */
-    int isnum;
-    int l = (int)ls_lua_tointegerx(L, -1, &isnum);      /* package searchers searchersLen */
-    ls_lua_pop(L, 1);                                   /* package searchers */
-    ls_lua_pushvalue(L, -2);                            /* package searchers package */
-    ls_lua_pushcclosure(L, jluasearcher_Lua, 1);        /* package searchers package jluasearcher_Lua */
-    ls_lua_seti(L, -2, l + 1);                          /* package searchers package */
-    ls_lua_pop(L, 3);
+    top = ls_pmain(L);
 
 #ifndef OPT_BUILTIN_LUA_DLL_SUPPORT_EXT
 	luaL_requiref((lua_State*)L, "lanes.core", luaopen_lanes_core, 1);
@@ -1135,8 +1153,7 @@ LuaTildeHost* (*LuaTilde_Command)(LuaTildeHost*, const char*, void*, void*);
 
 #endif // OPT_BUILTIN_LUA_DLL_SUPPORT_EXT
 
-
-void ls_lua_init()
+void ls_lua_preinit()
 {
 #ifdef OPT_BUILTIN_LUA_DLL_SUPPORT_EXT
     char fileName[4096];
@@ -1147,9 +1164,6 @@ void ls_lua_init()
     void* handle = NULL;
 #endif
 #endif // OPT_BUILTIN_LUA_DLL_SUPPORT_EXT
-
-    if (L)
-        return;
 
 #ifdef OPT_BUILTIN_LUA_DLL_SUPPORT_EXT
 
@@ -1308,20 +1322,19 @@ void ls_lua_init()
 
 #endif // OPT_BUILTIN_LUA_DLL_SUPPORT_EXT
 
+}
+
+
+void ls_lua_init()
+{
+    if (L)
+        return;
+
+    ls_lua_preinit();
+
     L = ls_luaL_newstate();
 
-	{
-        char exeName[4096];
-        getexecutablepath(exeName, sizeof(exeName));
-        ls_lua_pushlstring(L, exeName, strlen(exeName));
-        ls_lua_setglobal(L, "JAM_EXECUTABLE");
-
-        getprocesspath(exeName, sizeof(exeName));
-        ls_lua_pushlstring(L, exeName, strlen(exeName));
-        ls_lua_setglobal(L, "JAM_EXECUTABLE_PATH");
-    }
-
-    ls_lua_pushcclosure(L, &pmain, 0);
+    ls_lua_pushcclosure(L, &luasupport_pmain, 0);
     ls_lua_pcall(L, 0, 0, 0);
 
 #ifdef OPT_BUILTIN_LUA_DLL_SUPPORT_EXT
