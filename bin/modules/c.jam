@@ -1083,6 +1083,8 @@ rule C.PrecompiledHeader TARGET : NAME : FILES {
 	local cppPchFilename = $(SOURCE:G=$(C.ACTIVE_TOOLCHAIN_TARGET_GRIST)) ;
 	PCH on $(cppPchFilename) = $(PCH_STUFF) 1 ;
 
+	FILES = [ ExpandFileList $(FILES) ] ;
+
 	local file ;
 	for file in $(FILES:G=$(C.ACTIVE_TOOLCHAIN_TARGET_GRIST)) {
 		if $(file:S) in $(buildExtensions)  &&  $(file) != $(cppPchFilename) {
@@ -1094,6 +1096,7 @@ rule C.PrecompiledHeader TARGET : NAME : FILES {
 
 rule C.NoPrecompiledHeader TARGET : FILES {
 	C.ActiveTarget $(TARGET) ;
+	FILES = [ ExpandFileList $(FILES) ] ;
 	NOPCH on $(FILES:G=$(C.ACTIVE_TOOLCHAIN_TARGET_GRIST)) = 1 ;
 }
 
