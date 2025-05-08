@@ -386,7 +386,10 @@ int file_mkdir(const char *inPath)
 		{
 			*pathPtr = 0;
 			if (!CreateDirectory(path, NULL)  &&  (GetLastError() != ERROR_ALREADY_EXISTS  &&  GetLastError() != ERROR_ACCESS_DENIED))
+			{
+				printf("*********** Unable to create directory %d - %s\n", GetLastError(), path);
 				return -1;
+			}
 			*pathPtr++ = '\\';
 		}
 		else
