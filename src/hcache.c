@@ -318,8 +318,13 @@ read_int( BUFFER *buff )
 	int	 ch;
 	//  char num[ 30 ];
 	int value = 0;
+	int sign = 1;
 
 	ch = skip_spaces( buff );
+	if (ch == '-') {
+		sign = -1;
+		ch = buffer_getchar( buff );
+	}
 	while( ch >= '0' && ch <= '9' ) {
 		//	num[ i++ ] = ch;
 		value = (ch - '0') + value * 10;
@@ -328,7 +333,7 @@ read_int( BUFFER *buff )
 	//    num[ i ] = 0;
 
 	/*    return atoi( num );*/
-	return value;
+	return value * sign;
 }
 
 void
