@@ -1385,7 +1385,7 @@ void ls_lua_init()
 }
 
 
-int luahelper_taskadd(const char* taskscript, LOL* args)
+int luahelper_taskadd(const char* taskscript, LOL* args, LOL* unboundargs)
 {
     int ret;
     int ref;
@@ -1398,7 +1398,7 @@ int luahelper_taskadd(const char* taskscript, LOL* args)
 
     ls_lua_init();
 
-    cmdlist = lol_get(args, 0);
+    cmdlist = lol_get(unboundargs, 0);
     if (cmdlist != NULL && list_first(cmdlist) != NULL)
     {
         t = bindtarget(list_value(list_first(cmdlist)));
@@ -1412,36 +1412,51 @@ int luahelper_taskadd(const char* taskscript, LOL* args)
     ls_lua_newtable(L);                                     /* lanes gen * opts_tbl globals */ 
     ls_lua_newtable(L);                                     /* lanes gen * opts_tbl globals jamvar */
 
+    int hasoverridesettings = 0;
+
     if (t != NULL && t->settings != NULL)
     {
         SETTINGS* vars;
 
         for (vars = t->settings; vars; vars = vars->next)
         {
-            LISTITEM* varitem;
-            int index;
-
             if (vars->symbol[0] == 'J'  &&  vars->symbol[1] == 'A'  &&  vars->symbol[2] == 'M'  &&  vars->symbol[3] == '_'  &&
                 (strcmp(vars->symbol, "JAM_UNBOUND_SETTINGS") == 0  ||  strcmp(vars->symbol, "JAM_BOUND_SETTINGS") == 0))
             {
-                continue;
+                hasoverridesettings = 1;
+                break;
             }
+        }
 
-			index = 1;
-            ls_lua_newtable(L);                             /* jamvar entry_table */
-            for (varitem = list_first(vars->value); varitem; varitem = list_next(varitem), index++)
+        if (!hasoverridesettings)
+        {
+            for (vars = t->settings; vars; vars = vars->next)
             {
-                ls_lua_pushnumber(L, index);
-                ls_lua_pushstring(L, list_value(varitem));
-                ls_lua_settable(L, -3);
-            }
+                LISTITEM* varitem;
+                int index;
 
-            ls_lua_setfield(L, -2, vars->symbol);
+                if (vars->symbol[0] == 'J'  &&  vars->symbol[1] == 'A'  &&  vars->symbol[2] == 'M'  &&  vars->symbol[3] == '_'  &&
+                    (strcmp(vars->symbol, "JAM_UNBOUND_SETTINGS") == 0  ||  strcmp(vars->symbol, "JAM_BOUND_SETTINGS") == 0))
+                {
+                    continue;
+                }
+
+                index = 1;
+                ls_lua_newtable(L);                             /* jamvar entry_table */
+                for (varitem = list_first(vars->value); varitem; varitem = list_next(varitem), index++)
+                {
+                    ls_lua_pushnumber(L, index);
+                    ls_lua_pushstring(L, list_value(varitem));
+                    ls_lua_settable(L, -3);
+                }
+
+                ls_lua_setfield(L, -2, vars->symbol);
+            }
         }
     }
 
     settings = NULL;
-    if (t != NULL)
+    if (hasoverridesettings && t != NULL)
     {
         settings = quicksettingslookup(t, "JAM_UNBOUND_SETTINGS");
     }
@@ -1452,18 +1467,12 @@ int luahelper_taskadd(const char* taskscript, LOL* args)
 
         for (settingsitem = list_first(unboundsettingslist); settingsitem; settingsitem = list_next(settingsitem))
         {
-            LIST* varlist = NULL;
-            settings = quicksettingslookup(t, "JAM_UNBOUND_SETTINGS");
-            if (settings != NULL)
-            {
-                varlist = settings->value;
-            }
-
+            SETTINGS* varlist = quicksettingslookup(t, list_value(settingsitem));
             if (varlist != NULL) {
                 LISTITEM* varitem;
                 int index = 1;
                 ls_lua_newtable(L);                             /* jamvar entry_table */
-                for (varitem = list_first(varlist); varitem; varitem = list_next(varitem), ++index)
+                for (varitem = list_first(varlist->value); varitem; varitem = list_next(varitem), ++index)
                 {
                     ls_lua_pushnumber(L, index);
                     ls_lua_pushstring(L, list_value(varitem));
@@ -1475,7 +1484,7 @@ int luahelper_taskadd(const char* taskscript, LOL* args)
     }
 
     settings = NULL;
-    if (t != NULL)
+    if (hasoverridesettings && t != NULL)
     {
         settings = quicksettingslookup(t, "JAM_BOUND_SETTINGS");
     }
@@ -1486,12 +1495,12 @@ int luahelper_taskadd(const char* taskscript, LOL* args)
 
         for (settingsitem = list_first(boundsettingslist); settingsitem; settingsitem = list_next(settingsitem))
         {
-            LIST* varlist = var_get(list_value(settingsitem));
+            SETTINGS* varlist = quicksettingslookup(t, list_value(settingsitem));
             if (varlist != NULL) {
                 LISTITEM* varitem;
                 int index = 1;
                 ls_lua_newtable(L);                             /* jamvar entry_table */
-                for (varitem = list_first(varlist); varitem; varitem = list_next(varitem), ++index)
+                for (varitem = list_first(varlist->value); varitem; varitem = list_next(varitem), ++index)
                 {
                     TARGET *t;
                     ls_lua_pushnumber(L, index);

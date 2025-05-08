@@ -30,6 +30,7 @@ void
 execlua( 
 	char *string,
 	LOL *args,
+	LOL *unboundargs,
 #ifdef OPT_SERIAL_OUTPUT_EXT
 	void (*func)( const char* outputname, void *closure, int status ),
 #else

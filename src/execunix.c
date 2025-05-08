@@ -198,6 +198,7 @@ void
 execlua(
 	char *string,
 	LOL *args,
+	LOL *unboundargs,
 #ifdef OPT_SERIAL_OUTPUT_EXT
 	void (*func)( const char* outputname, void *closure, int status ),
 #else
@@ -253,7 +254,7 @@ execlua(
 
 	/* Start the command */
 
-	pid = luahelper_taskadd( string, args );
+	pid = luahelper_taskadd( string, args, unboundargs );
 	if( pid < 0 )
 	{
 		printf( "jam: Unable to add a new task\n" );

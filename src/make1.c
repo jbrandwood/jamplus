@@ -727,21 +727,30 @@ make1c( TARGET *t )
 	    {
             int i;
             LOL boundargs;
+            LOL unboundargs;
             lol_init(&boundargs);
+            lol_init(&unboundargs);
             for (i = 0; i < cmd->args.count; ++i)
             {
                 LIST* list = lol_get(&cmd->args, i);
                 LIST* newlist = L0;
                 LISTITEM *l2;
-                int index = 0;
                 for (l2 = list_first(list); l2; l2 = list_next(l2))
                 {
                     TARGET* t = bindtarget(list_value(l2));
                     newlist = list_append(newlist, t->boundname, 0);
                 }
                 lol_add(&boundargs, newlist);
+
+                newlist = L0;
+                for (l2 = list_first(list); l2; l2 = list_next(l2))
+                {
+                    newlist = list_append(newlist, t->name, 0);
+                }
+                lol_add(&unboundargs, newlist);
             }
-            execlua( cmd->luastring, &boundargs, make1d, t );
+            execlua( cmd->luastring, &boundargs, &unboundargs, make1d, t );
+            lol_free(&unboundargs);
             lol_free(&boundargs);
 	    }
 	    else
