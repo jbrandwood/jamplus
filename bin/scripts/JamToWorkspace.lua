@@ -328,6 +328,7 @@ function CreateTargetInfoFiles(outPath)
 			ospath.escape('JAMFILE_ROOT=' .. sourceRootPath),
 			ospath.escape('JAMFILE=' .. ospath.join(_getTargetInfoPath(), 'DumpJamTargetInfo.jam')),
 			ospath.escape('TARGETINFO_LOCATE=' .. ospath.add_slash(_getTargetInfoPath())),
+			'JAM_CREATING_WORKSPACE=1',
 			'C.TOOLCHAIN=' .. platform .. '/' .. config,
 			'-d0',
 			'-S'

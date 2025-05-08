@@ -5,6 +5,8 @@ if ! [ RuleExists C.Toolchain ]
 
 JAM_MODULES_PATH += $(JAMFILE_ROOT) ;
 
+JAM_CREATING_WORKSPACE = 1 ;
+
 PLATFORM ?= $(C.PLATFORM) ;
 CONFIG ?= $(C.CONFIG) ;
 
