@@ -504,7 +504,9 @@ rule SubDir SUBDIR_PATH : TARGET_DIRECTORY : OPTIONS
 	LOCATE_TARGET = [ FDirName $(ALL_LOCATE_TARGET) $(TARGET_DIRECTORY[1]) $(_top) $(SUBDIR_DOWN) $(TARGET_DIRECTORY[2]) ] ;
 
 	SOURCE_GRIST = [ FGrist $(ALL_SUBDIR_TOKENS) ] ;
-	SOURCE_GRIST = $(SOURCE_GRIST)$(target:E=) ;
+	if $(target) {
+		SOURCE_GRIST = $(SOURCE_GRIST):$(target) ;
+	}
 	## LOCAL CHANGE -- OPT_HEADER_CACHE_EXT.  With the header
 	# cache, we can grist all files found during a header scan
 	# without incurring a performance penalty.
