@@ -89,6 +89,11 @@ rule C.GristFiles TARGET : FILES {
 }
 
 
+rule C.GristFilesHelper FILES : EXTRA {
+	return $(FILES:G=$(C.ACTIVE_TOOLCHAIN_TARGET_GRIST)$(EXTRA:E=)) ;
+}
+
+
 rule C.GristFilesLite TARGET : FILES {
 	local grist = $(C.ACTIVE_TOOLCHAIN_GRIST):$(TARGET) ;
 	return $(FILES:G=$(grist)) ;
