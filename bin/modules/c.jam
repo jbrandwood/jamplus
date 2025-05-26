@@ -100,6 +100,13 @@ rule C.GristFilesLite TARGET : FILES {
 }
 
 
+rule C.GristHeader TARGET : FILES : LOCATE {
+	C.ActiveTarget $(TARGET) ;
+	LOCATE ?= $(LOCATE_SOURCE) ;
+	return $(FILES:R=$(LOCATE):L) ;
+}
+
+
 rule LocateSource TARGET : DIRECTORY {
 	C.ActiveTarget $(TARGET) ;
 	LOCATE_SOURCE on $(C.ACTIVE_TOOLCHAIN_TARGET) = $(DIRECTORY) ;
