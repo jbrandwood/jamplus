@@ -78,6 +78,7 @@
 # define C0 (char *)0
 
 LIST *builtin_depends( PARSE *parse, LOL *args, int *jmp );
+LIST *builtin_dependsunique( PARSE *parse, LOL *args, int *jmp );
 LIST *builtin_echo( PARSE *parse, LOL *args, int *jmp );
 LIST *builtin_exit( PARSE *parse, LOL *args, int *jmp );
 LIST *builtin_flags( PARSE *parse, LOL *args, int *jmp );
@@ -163,6 +164,9 @@ load_builtins()
     bindrule( "DEPENDS" )->procedure =
 	parse_make( builtin_depends, P0, P0, P0, C0, C0, 0 );
 
+	bindrule( "DependsUnique" )->procedure =
+		parse_make( builtin_dependsunique, P0, P0, P0, C0, C0, 0 );
+
     bindrule( "echo" )->procedure =
     bindrule( "Echo" )->procedure =
     bindrule( "ECHO" )->procedure =
@@ -180,6 +184,9 @@ load_builtins()
     bindrule( "Includes" )->procedure =
     bindrule( "INCLUDES" )->procedure =
 	parse_make( builtin_depends, P0, P0, P0, C0, C0, 1 );
+
+    bindrule( "IncludesUnique" )->procedure =
+		parse_make( builtin_dependsunique, P0, P0, P0, C0, C0, 1 );
 
     bindrule( "Leaves" )->procedure =
     bindrule( "LEAVES" )->procedure =
@@ -286,6 +293,9 @@ load_builtins()
     bindrule( "Needs" )->procedure =
     bindrule( "NEEDS" )->procedure =
 	parse_make( builtin_depends, P0, P0, P0, C0, C0, 2 );
+
+    bindrule( "NeedsUnique" )->procedure =
+		parse_make( builtin_dependsunique, P0, P0, P0, C0, C0, 2 );
 #endif
 
 #ifdef OPT_BUILTIN_LUA_SUPPORT_EXT
@@ -402,6 +412,62 @@ builtin_depends(
 	    t->depends = targetlist( t->depends, sources, (char)(parse->num==2) );
 #else
 	    t->depends = targetlist( t->depends, sources );
+#endif
+	}
+
+	++curindex;
+    }
+
+    return L0;
+}
+
+/*
+ * builtin_dependsunique() - DEPENDS/INCLUDES/NEEDS unique rule
+ *
+ * The DEPENDSUNIQUE builtin rule appends each of the listed sources on the
+ * dependency list of each of the listed targets if it is not already in the
+ * dependency list. It binds both the targets and sources as TARGETs.
+ */
+
+LIST *
+builtin_dependsunique(
+	PARSE	*parse,
+	LOL	*args,
+	int	*jmp )
+{
+    int curindex = 0;
+    while ( 1 )
+    {
+	LIST *targets = lol_get( args, curindex );
+	LIST *sources = lol_get( args, curindex + 1 );
+	LISTITEM *l;
+
+	if ( !sources )
+	    break;
+
+	for( l = list_first(targets); l; l = list_next( l ) )
+	{
+	    TARGET *t = bindtarget( list_value(l) );
+
+	    /* If doing INCLUDES, switch to the TARGET's include */
+	    /* TARGET, creating it if needed.  The internal include */
+	    /* TARGET shares the name of its parent. */
+
+#ifdef OPT_BUILTIN_NEEDS_EXT
+	    if( parse->num==1 )
+#else
+	    if( parse->num )
+#endif
+	    {
+		if( !t->includes )
+		    t->includes = copytarget( t );
+		t = t->includes;
+	    }
+
+#ifdef OPT_BUILTIN_NEEDS_EXT
+	    t->depends = targetlistunique( t->depends, sources, (char)(parse->num==2) );
+#else
+	    t->depends = targetlistunique( t->depends, sources );
 #endif
 	}
 

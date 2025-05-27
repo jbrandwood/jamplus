@@ -207,6 +207,39 @@ targetlist(
 	return chain;
 }
 
+/*
+ * targetlistunique() - turn list of target names into a unique TARGET chain
+ *
+ * Inputs:
+ *	chain	existing TARGETS to append to
+ *	targets	list of target names
+ */
+
+TARGETS *targetlistunique( TARGETS *chain, LIST *targets, char needs)      /* marks each TARGETS with the "needs" flag */
+{
+	LISTITEM* targetitem;
+	for ( targetitem = list_first( targets ); targetitem; targetitem = list_next( targetitem ) ) {
+		int found = 0;
+		TARGET *target = bindtarget( list_value( targetitem ) );
+		TARGETS *itertargets = chain;
+		for ( ; itertargets; itertargets = itertargets->next ) {
+			if ( itertargets->target == target ) {
+				found = 1;
+				break;
+			}
+		}
+		if (!found) {
+#ifdef OPT_BUILTIN_NEEDS_EXT
+			chain = targetentry( chain, target, needs );
+#else
+			chain = targetentry( chain, target );
+#endif
+		}
+	}
+
+	return chain;
+}
+
 #ifdef OPT_MULTIPASS_EXT
 
 /*

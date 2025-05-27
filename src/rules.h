@@ -263,6 +263,7 @@ TARGET *copytarget( const TARGET *t );
 void 	touchtarget( const char *t );
 #ifdef OPT_BUILTIN_NEEDS_EXT
 TARGETS *targetlist( TARGETS *chain, LIST  *targets, char needs );
+TARGETS *targetlistunique( TARGETS *chain, LIST  *targets, char needs );
 TARGETS *targetentry( TARGETS *chain, TARGET *target, char needs );
 TARGETS *targetentryhead( TARGETS *chain, TARGET *target, char needs );
 TARGETS *copytargets( TARGETS *chain, TARGETS *targets );
