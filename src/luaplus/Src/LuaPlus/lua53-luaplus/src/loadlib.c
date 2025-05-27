@@ -184,7 +184,9 @@ static void setprogdir (lua_State *L) {
   buff = malloc(MAXPATHLEN + 1);
   strcpy(buff, info.dli_fname);
   lb = strrchr(buff, '/');
-  *lb = '\0';
+  if (lb) {
+    *lb = '\0';
+  }
   luaL_gsub(L, lua_tostring(L, -1), LUA_EXEC_DIR, buff);
   lua_remove(L, -2);  /* remove original string */
   free(buff);
