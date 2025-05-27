@@ -330,9 +330,12 @@ path_build(
 		}
 	}
 	*file = 0;
-	file--;
-	if ( *file == pathdelim )
-		*file = 0;
+	if (file > fileorg)
+	{
+		file--;
+		if ( *file == pathdelim )
+			*file = 0;
+	}
 #endif
 	return file + 1;
 }
