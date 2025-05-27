@@ -341,7 +341,7 @@ rule C._MultiCppCompile SOURCES {
 		break ;
 	}
 
-	local sources = @($(dollar)(SOURCES$(colon)$(listIncludes)):A:G=$(C.ACTIVE_TOOLCHAIN_TARGET_GRIST)) ;
+	local sources = @($(dollar)(SOURCES$(colon)$(listIncludes)):A:G?=$(C.ACTIVE_TOOLCHAIN_TARGET_GRIST)) ;
 	SOURCES = ;
 
 	# source needs to be scanned for header dependencies
