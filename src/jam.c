@@ -1068,9 +1068,15 @@ int main( int argc, char **argv, char **arg_environ )
 
 //	    if (elapsed > 10)
 	    {
-		long hundredths = elapsed / 10 % 100;
-		long seconds = (elapsed / 1000) % 60;
-		long minutes = (elapsed / 1000) / 60;
+		long hundredths = 0;
+		long seconds = 0;
+		long minutes = 0;
+		if (elapsed > 0)
+		{
+			hundredths = elapsed / 10 % 100;
+			seconds = (elapsed / 1000) % 60;
+			minutes = (elapsed / 1000) / 60;
+		}
 
 		if ( DEBUG_MAKE )
 		{
