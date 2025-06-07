@@ -587,8 +587,6 @@ rule C.Lump PARENT : SOURCES_VARIABLE_NAME : LUMP_NAME : PCH_FILENAMES : EXTRA_I
 	MakeLocate $(gristedFileName) : $(LOCATE_SOURCE) ;
 	Clean $(C.ACTIVE_TOOLCHAIN_CLEAN_TARGET) : $(gristedFileName) ;
 
-	Includes $(gristedFileName) : $(gristedSourceFiles) ;
-	NoCare $(gristedSourceFiles) ;
 	SEARCH on $(gristedSourceFiles) = $(SEARCH_SOURCE) ;
 
 	$(SOURCES_VARIABLE_NAME) = ;
