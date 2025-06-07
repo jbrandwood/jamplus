@@ -851,8 +851,10 @@ make1c( TARGET *t )
 
 #ifdef OPT_BUILTIN_MD5CACHE_EXT
 	    /* Update the file cache. */
-	    if ( t->flags & T_FLAG_USECOMMANDLINE )
-		hcache_finalizerulemd5sum( t );
+		if ( t->status == EXEC_CMD_OK  &&  ( t->flags & T_FLAG_USECOMMANDLINE ) )
+		{
+			hcache_finalizerulemd5sum( t );
+		}
 #endif
 
 #ifdef OPT_SEMAPHORE
