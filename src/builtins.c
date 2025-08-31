@@ -522,7 +522,13 @@ builtin_exit(
 	LOL	*args,
 	int	*jmp )
 {
-	list_print( lol_get( args, 0 ) );
+	int i;
+	for ( i = 0; i < args->count; ++i ) {
+		if (i > 0) {
+			printf(": ");
+		}
+		list_print( lol_get( args, i ) );
+	}
 	printf( "\n" );
 	exit( EXITBAD ); /* yeech */
 	return L0;
