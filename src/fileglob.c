@@ -584,6 +584,10 @@ static void _fileglob_Reset(fileglob* self) {
 		_fileglob_FreeContextLevel(self);
 	}
 
+	if (self->startingContext) {
+		GLOB_FREE(self->startingContext->buf);
+	}
+
     glob_free_pattern(self, self->list);
 }
 
