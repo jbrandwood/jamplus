@@ -1851,7 +1851,13 @@ void make0calcmd5sum( TARGET *t, int source, int depth, int force )
 static void
 dependGraphOutputTimes( time_t time )
 {
-    printf( "(time:%d)\n", (int)time );
+    printf( "(time:%d)", (int)time );
+}
+
+static void
+dependGraphOutputChecksum( XXH128_hash_t hash )
+{
+    printf( "(checksum:%s)", md5tostring( hash ) );
 }
 
 static void
@@ -1925,6 +1931,7 @@ dependGraphOutput( TARGET *t, int depth )
 
 	printf( "  %s   Time: ", spaces(depth) );
 	dependGraphOutputTimes( t->time );
+	printf( "\n" );
 
 	if( t->flags & ~T_FLAG_VISITED )
 	{
@@ -1949,8 +1956,14 @@ dependGraphOutput( TARGET *t, int depth )
 	for( c = t->depends; c; c = c->next )
 	{
 		printf( "  %s       : %s %s%s (%s) ", spaces(depth),
-           c->needs ? "Needs" : "Depends on", (c->target->flags & T_FLAG_INTERNAL) ? "(internal) " : "", c->target->name, target_fate[ c->target->fate ] );
+			c->needs ? "Needs" : "Depends on", (c->target->flags & T_FLAG_INTERNAL) ? "(internal) " : "", c->target->name, target_fate[ c->target->fate ] );
 		dependGraphOutputTimes( c->target->time );
+		if ( c->target->contentchecksum )
+		{
+			printf( " " );
+			dependGraphOutputChecksum( c->target->contentchecksum->contentmd5sum );
+		}
+		printf( "\n" );
 	}
 
 	include = t->includes;
@@ -1959,6 +1972,7 @@ dependGraphOutput( TARGET *t, int depth )
 		printf( "  %s       : Includes %s (%s) ", spaces(depth),
 			include->name, target_fate[ include->fate ] );
 		dependGraphOutputTimes( include->time );
+		printf( "\n" );
 	}
 
 	for( c = t->depends; c; c = c->next )
