@@ -494,7 +494,7 @@ int main( int argc, char **argv, char **arg_environ )
 
 #ifdef OPT_SETCWD_SETTING_EXT
 #ifdef OPT_BUILTIN_LUA_SUPPORT_EXT
-	if( ( num_targets = getoptions( argc, argv, "d:C:j:f:gs:t:Tabno:qvSr", optv, targets, &extra_options ) ) < 0 )
+	if( ( num_targets = getoptions( argc, argv, "d:C:j:f:gs:t:Tabno:qvSrl", optv, targets, &extra_options ) ) < 0 )
 #else
 	if( ( num_targets = getoptions( argc, argv, "d:C:j:f:gs:t:Tano:qvSr", optv, targets, &extra_options ) ) < 0 )
 #endif
@@ -523,6 +523,7 @@ int main( int argc, char **argv, char **arg_environ )
             printf( "-fx     Read file x. Preface the file 'x' with a minus to prevent reading the internal Jambase.\n" );
 	    printf( "-g      Build from newest sources first.\n" );
             printf( "-jx     Run up to x shell commands concurrently.\n" );
+            printf( "-l      Run Lua.\n" );
             printf( "-n      Don't actually execute the updating actions.\n" );
             printf( "-ox     Write the updating actions to file x.\n" );
             printf( "-q      Quit quickly as soon as a target fails.\n" );
@@ -876,6 +877,37 @@ int main( int argc, char **argv, char **arg_environ )
 	if( ( s = getoptval( optv, 'r', 0 ) ) )
 	{
 		var_set( "JAM_RUN_MODE", list_append( L0, "1", 0 ), VAR_SET );
+	}
+
+	if( ( s = getoptval( optv, 'l', 0 ) ) )
+	{
+		char **new_argv = NULL;
+		int new_argc = 0;
+		int index = 0;
+
+		int extra_options_count = 0;
+		if ( extra_options )
+		{
+			const char** extra_option = (const char**)extra_options;
+			while ( *extra_option )
+			{
+				++extra_options_count;
+				++extra_option;
+			}
+		}
+
+		new_argv = malloc( ( 1 + extra_options_count + 1 ) * sizeof( char* ) );
+		new_argv[ 0 ] = argv[ -1 ];
+
+		for ( index = 0; index < extra_options_count; ++index )
+		{
+			new_argv[ index + 1 ] = extra_options[ index ];
+		}
+		new_argv[ 1 + extra_options_count ] = NULL;
+		new_argc = 1 + extra_options_count;
+
+		int lua_main (int argc, char **argv);
+		return lua_main( new_argc, new_argv );
 	}
 #if 0
 	else

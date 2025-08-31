@@ -453,6 +453,9 @@
     <ClCompile Include="xxhash.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="lua-c-for-jam.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
     <ClCompile Include="luaplus\Src\Modules\lanes\src\state.c">
       <Filter>Lua Files\Lua Modules\lanes</Filter>
     </ClCompile>
