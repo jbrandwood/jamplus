@@ -151,6 +151,7 @@ LIST *builtin_searchinternal(PARSE *parse, LOL *args, int *jmp);
 LIST *builtin_makerelativepath(PARSE *parse, LOL *args, int *jmp);
 LIST *builtin_debugsuppressmaketext(PARSE *parse, LOL *args, int *jmp);
 LIST *builtin_parsejam(PARSE *parse, LOL *args, int *jmp);
+LIST *builtin_comparetimestamp(PARSE *parse, LOL *args, int *jmp);
 
 int glob( const char *s, const char *c );
 
@@ -367,6 +368,9 @@ load_builtins()
 	bindrule( "Parse" )->procedure =
 	bindrule( "parse" )->procedure =
 		parse_make( builtin_parsejam, P0, P0, P0, C0, C0, 0 );
+
+	bindrule( "CompareTimestamp" )->procedure =
+		parse_make( builtin_comparetimestamp, P0, P0, P0, C0, C0, 0 );
 }
 
 /*
@@ -2318,6 +2322,45 @@ LIST *builtin_parsejam(PARSE *parse, LOL *args, int *jmp)
 	}
 
 	return 0;
+}
+
+
+LIST *builtin_comparetimestamp(PARSE *parse, LOL *args, int *jmp)
+{
+	LIST* leftTargetName;
+	LIST* rightTargetName;
+	TARGET* leftTarget;
+	TARGET* rightTarget;
+	const char* leftFilename;
+	const char* rightFilename;
+	time_t leftTime;
+	time_t rightTime;
+
+	leftTargetName = lol_get(args, 0);
+	if (!list_first(leftTargetName))
+		return L0;
+
+	rightTargetName = lol_get(args, 1);
+	if (!list_first(rightTargetName))
+		return L0;
+
+	leftTarget = bindtarget(list_value(list_first(leftTargetName)));
+	leftFilename = search_using_target_settings(leftTarget, leftTarget->name, &leftTime);
+	timestamp(leftFilename, &leftTime, 1);
+
+	rightTarget = bindtarget(list_value(list_first(rightTargetName)));
+	rightFilename = search_using_target_settings(rightTarget, rightTarget->name, &rightTime);
+	timestamp(rightFilename, &rightTime, 1);
+
+	if (leftTime < rightTime)
+	{
+		return list_append(L0, "<", 0);
+	}
+	else if (leftTime == rightTime)
+	{
+		return list_append(L0, "=", 0);
+	}
+	return list_append(L0, ">", 0);
 }
 
 
