@@ -297,6 +297,12 @@ var_set(
 	    else
 		list_free( value );
 	    break;
+
+	case VAR_APPENDUNIQUE:
+		/* Append unique values */
+		v->value = list_appendListUnique(v->value,value);
+		break;
+
 	}
 }
 

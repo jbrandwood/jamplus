@@ -490,6 +490,11 @@ addsettings(
 	    v->value = list_appendList( v->value, value );
 	    break;
 
+	case VAR_APPENDUNIQUE:
+	    /* Append new to old */
+	    v->value = list_appendListUnique( v->value, value );
+	    break;
+
 #ifdef OPT_MINUS_EQUALS_EXT
 	case VAR_REMOVE:
 	    /* Remove value from existing */

@@ -85,7 +85,7 @@ extern int actionpass;
 #endif
 
 #ifdef OPT_MINUS_EQUALS_EXT
-static const char *set_names[] = { "=", "+=", "?=", "-=" };
+static const char *set_names[] = { "=", "+=", "|=", "-=", "?=" };
 #else
 static const char *set_names[] = { "=", "+=", "?=" };
 #endif

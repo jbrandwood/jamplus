@@ -48,6 +48,7 @@
 %token WHILE_t
 %token _LBRACE_t
 %token _BAR_t
+%token _BAR_EQUALS_t
 %token _BARBAR_t
 %token _RBRACE_t
 /*
@@ -206,6 +207,8 @@ assign	: _EQUALS_t
 		{ $$.number = VAR_SET; }
 	| _PLUS_EQUALS_t
 		{ $$.number = VAR_APPEND; }
+	| _BAR_EQUALS_t
+		{ $$.number = VAR_APPENDUNIQUE; }
 	| _MINUS_EQUALS_t
 		{ $$.number = VAR_REMOVE; }
 	| _QUESTION_EQUALS_t

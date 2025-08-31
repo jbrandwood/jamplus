@@ -29,4 +29,5 @@ void 	var_done();
 /* commented out so jamgram.y can compile #ifdef OPT_MINUS_EQUALS_EXT */
 # define VAR_REMOVE	3	/* filter an old value */
 /* commented out so jamgram.y can compile #endif */
+# define VAR_APPENDUNIQUE	4	/* append to previous value */
 

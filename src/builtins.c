@@ -85,6 +85,7 @@ LIST *builtin_flags( PARSE *parse, LOL *args, int *jmp );
 LIST *builtin_flags_forcecare( PARSE *parse, LOL *args, int *jmp );
 LIST *builtin_flags_nocare( PARSE *parse, LOL *args, int *jmp );
 LIST *builtin_glob( PARSE *parse, LOL *args, int *jmp );
+LIST *builtin_listappendunique( PARSE *parse, LOL *args, int *jmp );
 LIST *builtin_match( PARSE *parse, LOL *args, int *jmp );
 #ifdef OPT_BUILTIN_SUBST_EXT
 LIST *builtin_subst( PARSE *parse, LOL *args, int *jmp );
@@ -176,6 +177,9 @@ load_builtins()
     bindrule( "Exit" )->procedure =
     bindrule( "EXIT" )->procedure =
 	parse_make( builtin_exit, P0, P0, P0, C0, C0, 0 );
+
+    bindrule( "ListAppendUnique" )->procedure =
+	parse_make( builtin_listappendunique, P0, P0, P0, C0, C0, 0 );
 
     bindrule( "Glob" )->procedure =
     bindrule( "GLOB" )->procedure =
@@ -577,6 +581,39 @@ builtin_flags_nocare(
 
 	return L0;
 }
+
+
+/*
+ * builtin_listappendunique() -
+ */
+
+LIST *builtin_listappendunique( PARSE	*parse, LOL	*args, int	*jmp )
+{
+	LIST *list = lol_get( args, 0 );
+	LIST *appendlist = lol_get( args, 1 );
+	LISTITEM* appenditem;
+	for ( appenditem = list_first( appendlist ); appenditem; appenditem = list_next( appenditem ) )
+	{
+		LISTITEM* item;
+		int found = 0;
+		for ( item = list_first( list ) ; item; item = list_next( item ) )
+		{
+			if ( list_value( item ) == list_value( appenditem ) )
+			{
+				found = 1;
+				break;
+			}
+		}
+
+		if ( !found )
+		{
+			list = list_append( list, list_value( appenditem ), 1 );
+		}
+	}
+
+	return list;
+}
+
 
 /*
  * builtin_globbing() - GLOB rule

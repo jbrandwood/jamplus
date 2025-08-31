@@ -78,8 +78,10 @@ int list_equal(LIST* a, LIST* b);
 int list_in(LIST* l0, LIST* l1);
 
 LIST* list_append(LIST* list, char const* value, int copy);
+LIST* list_appendunique(LIST* list, char const* value, int copy);
 /* Takes ownership of tail */
 LIST* list_appendList(LIST* list, LIST* tail);
+LIST* list_appendListUnique(LIST* list, LIST* tail);
 LIST* list_copy(LIST* head, LIST* list);
 LIST* list_copytail(LIST* head, LISTITEM* first, int maxNumToCopy);
 LIST* list_sublist(LIST* list, int start, int count);

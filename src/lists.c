@@ -326,6 +326,47 @@ LIST* list_append(LIST* list, char const* value, int copy)
 	return list;
 }
 
+LIST* list_appendunique(LIST* list, char const* value, int copy)
+{
+	LISTITEM* item;
+	LISTITEM* testitem;
+
+#if USE_COPYONWRITE
+	if(list && list->refs > 1) {
+		LIST* copy = list_realcopy(NULL, list);
+		list_free(list);
+		list = copy;
+	}
+#endif
+
+	item = allocItem();
+	item->string = copy? copystr(value) : newstr(value);
+
+	item->next = NULL;
+
+	if (DEBUG_LISTS) {
+		printf("listunique > %s <\n", value);
+	}
+
+	for ( testitem = list_first( list ) ; testitem; testitem = list_next( testitem ) ) {
+		if ( testitem->string == item->string ) {
+			freeItem( item );
+			return list;
+		}
+	}
+
+	if(!list)
+	{
+		list = list_new();
+	}
+
+	*list->tail = item;
+
+	list->tail = &item->next;
+
+	return list;
+}
+
 LIST* list_appendList(LIST* list, LIST* tail)
 {
 	if(!list) { return tail; }
@@ -354,6 +395,66 @@ LIST* list_appendList(LIST* list, LIST* tail)
 		for(item = list_first(tail); item;)
 		{
 			LISTITEM* next = list_next(item);
+
+			/* Move item into list */
+			item->next = NULL;
+			*(list->tail) = item;
+			list->tail = &(item->next);
+
+			item = next;
+		}
+
+		/* Dispose of the old list head */
+		tail->head = NULL;
+		tail->tail = &(tail->head);
+		list_free(tail);
+
+		return list;
+	}
+}
+
+LIST* list_appendListUnique(LIST* list, LIST* tail)
+{
+	if(!list) { return tail; }
+	if(!tail) { return list; }
+
+#if USE_COPYONWRITE
+	if(list && list->refs > 1) {
+		LIST* copy = list_realcopy(NULL, list);
+		list_free(list);
+		list = copy;
+	}
+	if(tail && tail->refs > 1) {
+		LISTITEM* item;
+		for(item = list_first(tail); item; item = list_next(item)) {
+			list_appendunique(list, list_value(item), 1);
+		}
+
+		list_free(tail);
+
+		return list;
+	}
+	else
+#endif
+	{
+		LISTITEM* item;
+		for(item = list_first(tail); item;)
+		{
+			LISTITEM* next = list_next(item);
+
+			LISTITEM* testitem;
+			int found = 0;
+			for (testitem = list_first(list); testitem; testitem = list_next(testitem)) {
+				if (testitem->string == item->string) {
+					freeItem(item);
+					found = 1;
+				}
+			}
+
+			if (found) {
+				item = next;
+				continue;
+			}
 
 			/* Move item into list */
 			item->next = NULL;
