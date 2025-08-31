@@ -152,7 +152,7 @@ static const char *target_bind[] =
 	"exists",
 } ;
 
-# define spaces(x) ( "                " + 16 - ( x > 16 ? 16 : x ) )
+# define spaces(x) ( "                                " + 32 - ( x > 32 ? 32 : x ) )
 
 #ifdef OPT_INTERRUPT_FIX
 void onintr( int disp );
