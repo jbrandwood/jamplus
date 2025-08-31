@@ -1,14 +1,14 @@
-/* A Bison parser, made by GNU Bison 2.3.  */
+/* A Bison parser, made by GNU Bison 3.8.2.  */
 
-/* Skeleton implementation for Bison's Yacc-like parsers in C
+/* Bison interface for Yacc-like parsers in C
 
-   Copyright (C) 1984, 1989, 1990, 2000, 2001, 2002, 2003, 2004, 2005, 2006
-   Free Software Foundation, Inc.
+   Copyright (C) 1984, 1989-1990, 2000-2015, 2018-2021 Free Software Foundation,
+   Inc.
 
-   This program is free software; you can redistribute it and/or modify
+   This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
-   the Free Software Foundation; either version 2, or (at your option)
-   any later version.
+   the Free Software Foundation, either version 3 of the License, or
+   (at your option) any later version.
 
    This program is distributed in the hope that it will be useful,
    but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -16,9 +16,7 @@
    GNU General Public License for more details.
 
    You should have received a copy of the GNU General Public License
-   along with this program; if not, write to the Free Software
-   Foundation, Inc., 51 Franklin Street, Fifth Floor,
-   Boston, MA 02110-1301, USA.  */
+   along with this program.  If not, see <https://www.gnu.org/licenses/>.  */
 
 /* As a special exception, you may create a larger work that contains
    part or all of the Bison parser skeleton and distribute that work
@@ -33,12 +31,19 @@
    This special exception was added by the Free Software Foundation in
    version 2.2 of Bison.  */
 
-/* C LALR(1) parser skeleton written by Richard Stallman, by
-   simplifying the original so-called "semantic" parser.  */
+/* DO NOT RELY ON FEATURES THAT ARE NOT DOCUMENTED in the manual,
+   especially those whose name start with YY_ or yy_.  They are
+   private implementation details that can be changed or removed.  */
 
-
-#pragma once
-
+#ifndef YY_YY_Y_TAB_H_INCLUDED
+# define YY_YY_Y_TAB_H_INCLUDED
+/* Debug traces.  */
+#ifndef YYDEBUG
+# define YYDEBUG 0
+#endif
+#if YYDEBUG
+extern int yydebug;
+#endif
 
 /* Token kinds.  */
 #ifndef YYTOKENTYPE
@@ -62,47 +67,49 @@
     _LANGLE_t = 268,               /* _LANGLE_t  */
     _LANGLE_EQUALS_t = 269,        /* _LANGLE_EQUALS_t  */
     _EQUALS_t = 270,               /* _EQUALS_t  */
-    _RANGLE_t = 271,               /* _RANGLE_t  */
-    _RANGLE_EQUALS_t = 272,        /* _RANGLE_EQUALS_t  */
-    _QUESTION_EQUALS_t = 273,      /* _QUESTION_EQUALS_t  */
-    _LBRACKET_t = 274,             /* _LBRACKET_t  */
-    _RBRACKET_t = 275,             /* _RBRACKET_t  */
-    ACTIONS_t = 276,               /* ACTIONS_t  */
-    BIND_t = 277,                  /* BIND_t  */
-    BREAK_t = 278,                 /* BREAK_t  */
-    CASE_t = 279,                  /* CASE_t  */
-    CLEANUNUSEDTARGETS_t = 280,    /* CLEANUNUSEDTARGETS_t  */
-    CONTINUE_t = 281,              /* CONTINUE_t  */
-    DEFAULT_t = 282,               /* DEFAULT_t  */
-    ELSE_t = 283,                  /* ELSE_t  */
-    EXISTING_t = 284,              /* EXISTING_t  */
-    FOR_t = 285,                   /* FOR_t  */
-    IF_t = 286,                    /* IF_t  */
-    IGNORE_t = 287,                /* IGNORE_t  */
-    IN_t = 288,                    /* IN_t  */
-    INCLUDE_t = 289,               /* INCLUDE_t  */
-    LOCAL_t = 290,                 /* LOCAL_t  */
-    LUA_t = 291,                   /* LUA_t  */
-    MAXLINE_t = 292,               /* MAXLINE_t  */
-    MAXTARGETS_t = 293,            /* MAXTARGETS_t  */
-    ON_t = 294,                    /* ON_t  */
-    PIECEMEAL_t = 295,             /* PIECEMEAL_t  */
-    QUIETLY_t = 296,               /* QUIETLY_t  */
-    REMOVEEMPTYDIRS_t = 297,       /* REMOVEEMPTYDIRS_t  */
-    RESPONSE_t = 298,              /* RESPONSE_t  */
-    RETURN_t = 299,                /* RETURN_t  */
-    RULE_t = 300,                  /* RULE_t  */
-    SCREENOUTPUT_t = 301,          /* SCREENOUTPUT_t  */
-    SWITCH_t = 302,                /* SWITCH_t  */
-    TOGETHER_t = 303,              /* TOGETHER_t  */
-    UPDATED_t = 304,               /* UPDATED_t  */
-    WHILE_t = 305,                 /* WHILE_t  */
-    _LBRACE_t = 306,               /* _LBRACE_t  */
-    _BAR_t = 307,                  /* _BAR_t  */
-    _BARBAR_t = 308,               /* _BARBAR_t  */
-    _RBRACE_t = 309,               /* _RBRACE_t  */
-    ARG = 310,                     /* ARG  */
-    STRING = 311                   /* STRING  */
+    _EQUALSEQUALS_t = 271,         /* _EQUALSEQUALS_t  */
+    _RANGLE_t = 272,               /* _RANGLE_t  */
+    _RANGLE_EQUALS_t = 273,        /* _RANGLE_EQUALS_t  */
+    _QUESTION_EQUALS_t = 274,      /* _QUESTION_EQUALS_t  */
+    _LBRACKET_t = 275,             /* _LBRACKET_t  */
+    _RBRACKET_t = 276,             /* _RBRACKET_t  */
+    ACTIONS_t = 277,               /* ACTIONS_t  */
+    BIND_t = 278,                  /* BIND_t  */
+    BREAK_t = 279,                 /* BREAK_t  */
+    CASE_t = 280,                  /* CASE_t  */
+    CLEANUNUSEDTARGETS_t = 281,    /* CLEANUNUSEDTARGETS_t  */
+    CONTINUE_t = 282,              /* CONTINUE_t  */
+    DEFAULT_t = 283,               /* DEFAULT_t  */
+    ELSE_t = 284,                  /* ELSE_t  */
+    EXISTING_t = 285,              /* EXISTING_t  */
+    FOR_t = 286,                   /* FOR_t  */
+    IF_t = 287,                    /* IF_t  */
+    IGNORE_t = 288,                /* IGNORE_t  */
+    IN_t = 289,                    /* IN_t  */
+    INCLUDE_t = 290,               /* INCLUDE_t  */
+    LOCAL_t = 291,                 /* LOCAL_t  */
+    LUA_t = 292,                   /* LUA_t  */
+    MAXLINE_t = 293,               /* MAXLINE_t  */
+    MAXTARGETS_t = 294,            /* MAXTARGETS_t  */
+    ON_t = 295,                    /* ON_t  */
+    PIECEMEAL_t = 296,             /* PIECEMEAL_t  */
+    QUIETLY_t = 297,               /* QUIETLY_t  */
+    REMOVEEMPTYDIRS_t = 298,       /* REMOVEEMPTYDIRS_t  */
+    RESPONSE_t = 299,              /* RESPONSE_t  */
+    RETURN_t = 300,                /* RETURN_t  */
+    RULE_t = 301,                  /* RULE_t  */
+    SCREENOUTPUT_t = 302,          /* SCREENOUTPUT_t  */
+    SWITCH_t = 303,                /* SWITCH_t  */
+    TOGETHER_t = 304,              /* TOGETHER_t  */
+    UPDATED_t = 305,               /* UPDATED_t  */
+    WHILE_t = 306,                 /* WHILE_t  */
+    _LBRACE_t = 307,               /* _LBRACE_t  */
+    _BAR_t = 308,                  /* _BAR_t  */
+    _BAR_EQUALS_t = 309,           /* _BAR_EQUALS_t  */
+    _BARBAR_t = 310,               /* _BARBAR_t  */
+    _RBRACE_t = 311,               /* _RBRACE_t  */
+    ARG = 312,                     /* ARG  */
+    STRING = 313                   /* STRING  */
   };
   typedef enum yytokentype yytoken_kind_t;
 #endif
@@ -124,53 +131,62 @@
 #define _LANGLE_t 268
 #define _LANGLE_EQUALS_t 269
 #define _EQUALS_t 270
-#define _RANGLE_t 271
-#define _RANGLE_EQUALS_t 272
-#define _QUESTION_EQUALS_t 273
-#define _LBRACKET_t 274
-#define _RBRACKET_t 275
-#define ACTIONS_t 276
-#define BIND_t 277
-#define BREAK_t 278
-#define CASE_t 279
-#define CLEANUNUSEDTARGETS_t 280
-#define CONTINUE_t 281
-#define DEFAULT_t 282
-#define ELSE_t 283
-#define EXISTING_t 284
-#define FOR_t 285
-#define IF_t 286
-#define IGNORE_t 287
-#define IN_t 288
-#define INCLUDE_t 289
-#define LOCAL_t 290
-#define LUA_t 291
-#define MAXLINE_t 292
-#define MAXTARGETS_t 293
-#define ON_t 294
-#define PIECEMEAL_t 295
-#define QUIETLY_t 296
-#define REMOVEEMPTYDIRS_t 297
-#define RESPONSE_t 298
-#define RETURN_t 299
-#define RULE_t 300
-#define SCREENOUTPUT_t 301
-#define SWITCH_t 302
-#define TOGETHER_t 303
-#define UPDATED_t 304
-#define WHILE_t 305
-#define _LBRACE_t 306
-#define _BAR_t 307
-#define _BARBAR_t 308
-#define _RBRACE_t 309
-#define ARG 310
-#define STRING 311
+#define _EQUALSEQUALS_t 271
+#define _RANGLE_t 272
+#define _RANGLE_EQUALS_t 273
+#define _QUESTION_EQUALS_t 274
+#define _LBRACKET_t 275
+#define _RBRACKET_t 276
+#define ACTIONS_t 277
+#define BIND_t 278
+#define BREAK_t 279
+#define CASE_t 280
+#define CLEANUNUSEDTARGETS_t 281
+#define CONTINUE_t 282
+#define DEFAULT_t 283
+#define ELSE_t 284
+#define EXISTING_t 285
+#define FOR_t 286
+#define IF_t 287
+#define IGNORE_t 288
+#define IN_t 289
+#define INCLUDE_t 290
+#define LOCAL_t 291
+#define LUA_t 292
+#define MAXLINE_t 293
+#define MAXTARGETS_t 294
+#define ON_t 295
+#define PIECEMEAL_t 296
+#define QUIETLY_t 297
+#define REMOVEEMPTYDIRS_t 298
+#define RESPONSE_t 299
+#define RETURN_t 300
+#define RULE_t 301
+#define SCREENOUTPUT_t 302
+#define SWITCH_t 303
+#define TOGETHER_t 304
+#define UPDATED_t 305
+#define WHILE_t 306
+#define _LBRACE_t 307
+#define _BAR_t 308
+#define _BAR_EQUALS_t 309
+#define _BARBAR_t 310
+#define _RBRACE_t 311
+#define ARG 312
+#define STRING 313
 
+/* Value type.  */
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
 typedef int YYSTYPE;
 # define YYSTYPE_IS_TRIVIAL 1
-# define yystype YYSTYPE /* obsolescent; will be withdrawn */
 # define YYSTYPE_IS_DECLARED 1
 #endif
 
+
 extern YYSTYPE yylval;
+
+
+int yyparse (void);
+
+
+#endif /* !YY_YY_Y_TAB_H_INCLUDED  */

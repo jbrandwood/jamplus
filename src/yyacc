@@ -57,6 +57,7 @@ sed '
 	s/>/_RANGLE/
 	s/\./_PERIOD/
 	s/?/_QUESTION/
+	s/==/_EQUALSEQUALS/
 	s/=/_EQUALS/
 	s/,/_COMMA/
 	s/\[/_LBRACKET/

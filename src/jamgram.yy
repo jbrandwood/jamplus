@@ -32,7 +32,7 @@
 
 %left `||` `|`
 %left `&&` `&`
-%left `=` `!=` `in`
+%left `=` `==` `!=` `in`
 %left `<` `<=` `>` `>=`
 %left `!`
 
@@ -171,6 +171,8 @@ assign	: `=`
 expr	: arg
 		{ $$.parse = peval( EXPR_EXISTS, $1.parse, pnull() ); }
 	| expr `=` expr
+		{ $$.parse = peval( EXPR_EQUALS, $1.parse, $3.parse ); }
+	| expr `==` expr
 		{ $$.parse = peval( EXPR_EQUALS, $1.parse, $3.parse ); }
 	| expr `!=` expr
 		{ $$.parse = peval( EXPR_NOTEQ, $1.parse, $3.parse ); }

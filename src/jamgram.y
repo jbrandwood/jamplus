@@ -11,6 +11,7 @@
 %token _LANGLE_t
 %token _LANGLE_EQUALS_t
 %token _EQUALS_t
+%token _EQUALSEQUALS_t
 %token _RANGLE_t
 %token _RANGLE_EQUALS_t
 %token _QUESTION_EQUALS_t
@@ -85,7 +86,7 @@
 
 %left _BARBAR_t _BAR_t
 %left _AMPERAMPER_t _AMPER_t
-%left _EQUALS_t _BANG_EQUALS_t IN_t
+%left _EQUALS_t _EQUALSEQUALS_t _BANG_EQUALS_t IN_t
 %left _LANGLE_t _LANGLE_EQUALS_t _RANGLE_t _RANGLE_EQUALS_t
 %left _BANG_t
 
@@ -224,6 +225,8 @@ assign	: _EQUALS_t
 expr	: arg
 		{ $$.parse = peval( EXPR_EXISTS, $1.parse, pnull() ); }
 	| expr _EQUALS_t expr
+		{ $$.parse = peval( EXPR_EQUALS, $1.parse, $3.parse ); }
+	| expr _EQUALSEQUALS_t expr
 		{ $$.parse = peval( EXPR_EQUALS, $1.parse, $3.parse ); }
 	| expr _BANG_EQUALS_t expr
 		{ $$.parse = peval( EXPR_NOTEQ, $1.parse, $3.parse ); }
