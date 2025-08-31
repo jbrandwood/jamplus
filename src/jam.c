@@ -692,6 +692,7 @@ int main( int argc, char **argv, char **arg_environ )
 	}
 
 	var_set( "CRLF", list_append(L0, "\r\n", 0), VAR_SET );
+	var_set( "LF", list_append(L0, "\n", 0), VAR_SET );
 
 	/* Set JAMDATE first */
 
