@@ -688,6 +688,16 @@ rule SubIncludeRelative RELATIVE_PATH : REQUESTED_JAMFILE : OPTIONS
 	SubInclude $(ALL_SUBDIR_TOKENS) $(RELATIVE_PATH) : $(REQUESTED_JAMFILE) : $(OPTIONS) ;
 }
 
+rule SubRegister TOKENS : FILENAME : OPTIONS
+{
+	SubInclude $(TOKENS) : $(FILENAME) : register $(OPTIONS) ;
+}
+
+rule SubRegisterRelative RELATIVE_PATH : REQUESTED_JAMFILE : OPTIONS
+{
+	SubIncludeRelative $(RELATIVE_PATH) : $(REQUESTED_JAMFILE) : register $(OPTIONS) ;
+}
+
 rule SubRules
 {
 	# SubRules TOP d1 ... : Other-TOP ;
