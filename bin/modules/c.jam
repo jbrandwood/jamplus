@@ -242,7 +242,13 @@ rule C._MultiCppCompile_ObjName_Pass1_OutputAsTree {
 	outputAsTree_obj = [ Subst $(outputAsTree_obj) : \: : -- ] ;
 	local _objdir = $(outputAsTree_obj:DR=$(LOCATE_TARGET)) ;
 	MakeLocate $(_obj) : $(_objdir) ;
-	_postmflags = "/c \"/Fo$(_objdir:\\)\\\\\" \"/Fd$(_VCPDB:T)\"" ;
+	_postmflags = "/c \"/Fd$(_VCPDB:T)\"" ;
+	local srcBinding = @($(BINDING:Z=$(_src)):B) ;
+	if $(srcBinding) && $(srcBinding) != $(_src:B) {
+		_postmflags += "\"/Fo$(_objdir:\\)\\\\\$(_obj:BS)\"" ;
+	} else {
+		_postmflags += "\"/Fo$(_objdir:\\)\\\\\"" ;
+	}
 }
 
 
