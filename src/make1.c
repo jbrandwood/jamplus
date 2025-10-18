@@ -1742,7 +1742,9 @@ make1cmds( ACTIONS *a0 )
 #endif
 
 		if( rule->flags & RULE_TOGETHER )
+		{
 			for( a1 = a0->next; a1; a1 = a1->next )
+			{
 #ifdef OPT_MULTIPASS_EXT
 				if( a1->action->pass == actionpass && a1->action->rule == rule && !a1->action->running )
 #else
@@ -1756,6 +1758,8 @@ make1cmds( ACTIONS *a0 )
 					a1->action->run_tgt = t;
 #endif
 				}
+			}
+		}
 
 		/* If doing only updated (or existing) sources, but none have */
 		/* been updated (or exist), skip this action. */
