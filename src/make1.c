@@ -388,7 +388,7 @@ make1b( TARGET *t )
 			}
 			/* If it didn't have the MightNotUpdate flag but did update, mark it. */
 			else if ( c->target->fate > T_FATE_STABLE  &&  !c->needs ) {
-				if ( /*usechecksums ||*/ (c->target->flags & T_FLAG_SCANCONTENTS)) {
+				if ( usechecksums || (c->target->flags & T_FLAG_SCANCONTENTS)) {
 					childscancontents = 1;
 					if ( getcachedmd5sum( c->target, 0 ) )
 						childupdated = 1;
@@ -477,7 +477,7 @@ make1b( TARGET *t )
 	} else {
 		if (usechecksums)
 		{
-			if ( t->fate >= T_FATE_SPOIL  &&  !childupdated  &&  t->status != EXEC_CMD_NEXTPASS  &&  !( t->flags & T_FLAG_TOUCHED ) )
+			if ( t->fate >= T_FATE_SPOIL  &&  !childupdated  &&  t->status != EXEC_CMD_NEXTPASS  &&  !( t->flags & T_FLAG_TOUCHED )  &&  t->progress != T_MAKE_DONE )
 			{
 				if (md5matchescommandline(t))
 				{
@@ -1224,6 +1224,7 @@ make1d(
 					t->time = 0;
 					getcachedmd5sum( t, 1 );
 					t->time = t->contentchecksum->originalmtime;
+					t->binding = t->time ? T_BIND_EXISTS : T_BIND_MISSING;
 					t->buildmd5sum_calculated = 0;
 					++make0calcmd5sum_epoch;
 					++make0calcmd5sum_timestamp_epoch;
@@ -1637,7 +1638,8 @@ make1cmds( ACTIONS *a0 )
 #ifdef OPT_USE_CHECKSUMS_EXT
 					if (usechecksums)
 					{
-						int flags = ( t->binding == T_BIND_MISSING || ( t->flags & T_FLAG_WRONGCHECKSUM ) ) ? ( rule->flags & ~RULE_UPDATED ) : rule->flags;
+						//int flags = ( t->binding == T_BIND_MISSING || ( t->flags & T_FLAG_WRONGCHECKSUM ) ) ? ( rule->flags & ~RULE_UPDATED ) : rule->flags;
+						int flags = rule->flags;
 						ns = make1list( L0, a0->action->sources, flags );
 						nsunbound = make1list_unbound( L0, a0->action->sources, flags );
 					} else
@@ -1722,8 +1724,8 @@ make1cmds( ACTIONS *a0 )
 				ntunbound = make1list_unbound( L0, a0->action->targets, 0 );
 #ifdef OPT_USE_CHECKSUMS_EXT
 				if (usechecksums) {
-					ns = make1list( L0, a0->action->sources, t->binding == T_BIND_MISSING ? ( rule->flags & ~RULE_UPDATED ) : rule->flags );
-					nsunbound = make1list_unbound( L0, a0->action->sources, t->binding == T_BIND_MISSING ? ( rule->flags & ~RULE_UPDATED ) : rule->flags );
+					ns = make1list( L0, a0->action->sources, rule->flags );
+					nsunbound = make1list_unbound( L0, a0->action->sources, rule->flags );
 				} else
 #endif /* OPT_USE_CHECKSUMS_EXT */
 				{
@@ -1935,7 +1937,7 @@ make1list(
 	    continue;
 
 #ifdef OPT_BUILTIN_MD5CACHE_EXT
-	if( ( flags & RULE_UPDATED ) && t->fate <= T_FATE_STABLE && !targets->parentcommandlineoutofdate )
+	if( ( ( flags & RULE_UPDATED ) &&  ( t->binding != T_BIND_MISSING && !( t->flags & T_FLAG_WRONGCHECKSUM ) ) ) && t->fate <= T_FATE_STABLE && !targets->parentcommandlineoutofdate )
 #else
 	if( ( flags & RULE_UPDATED ) && t->fate <= T_FATE_STABLE )
 #endif
