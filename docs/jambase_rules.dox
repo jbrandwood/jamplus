@@ -473,8 +473,7 @@ In reality, a \c WorkspaceConfig is a hack. Just modify the generated <tt>custom
         for config in debug release {
             local engine ;
             for engine in d3d opengl sdl {
-                local dollar = $ ;
-                WorkspaceConfig $(THE_WORKSPACE_NAME) : $(config)_$(engine) : $(config) : C.TOOLCHAIN=$(dollar)(PLATFORM)/$(config) THE_ENGINE=$(engine) ;
+                WorkspaceConfig $(THE_WORKSPACE_NAME) : $(config)_$(engine) : $(config) : C.TOOLCHAIN=$(DOLLAR)(PLATFORM)/$(config) THE_ENGINE=$(engine) ;
             }
         }
     }
