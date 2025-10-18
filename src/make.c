@@ -1002,19 +1002,6 @@ make0(
 	{
 		t->boundname = search( t->name, &t->time );
 		t->binding = t->time ? T_BIND_EXISTS : T_BIND_MISSING;
-#if 0
-		if (usechecksums)
-		{
-			if (t->binding == T_BIND_EXISTS)
-			{
-				getcachedmd5sum(t, 0);
-				if (t->contentchecksum)
-				{
-					t->time = t->contentchecksum->originalmtime;
-				}
-			}
-		}
-#endif
 	}
 
 	/* INTERNAL, NOTFILE header nodes have the time of their parents */
