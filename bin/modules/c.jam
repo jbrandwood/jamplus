@@ -187,11 +187,6 @@ rule C.BatchCompileGroupSize TARGET : SIZE {
 
 
 #---------------------------------------------------------------------
-# OBJECTS = MultiCppCompile $(sources) ;
-#
-#   This rule will compile $(sources), and will return  the result objects.
-#
-#---------------------------------------------------------------------
 # Set this if you want object files to be put in subdirs matching dir hierarchy of source files.
 # Otherwise, all object files are put in one flat directory per project.
 rule C.CompileOptions OPTIONS {
@@ -258,6 +253,11 @@ rule C._MultiCppCompile_ObjName_Pass1 {
 }
 
 
+#---------------------------------------------------------------------
+# OBJECTS = C._MultiCppCompile $(sources) ;
+#
+#   This rule will compile $(sources) and will return the result objects.
+#
 rule C._MultiCppCompile SOURCES {
 	local TARGET = $(C.ACTIVE_TOOLCHAIN_TARGET) ;
 	SOURCES = [ ExpandFileList $(SOURCES) : 0 : $(SEARCH_SOURCE) ] ;
