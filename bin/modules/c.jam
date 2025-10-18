@@ -1864,7 +1864,8 @@ rule C._FilterSourcesForCompilableOnly {
 	local colon = ":" ;
 	local buildExtensions = $(C.BUILD_EXTENSIONS:Z=$(C.COMPILER_SUITE_SYMBOL)) ;
 	local listIncludes = @(I=\\$(buildExtensions)$:J=$(colon)) ;
-	local sources = @($(dollar)(SOURCES$(colon)$(listIncludes)):A:G=$(C.ACTIVE_TOOLCHAIN_TARGET_GRIST)) ;
+	local expandedSources = [ ExpandFileList $(SOURCES) ] ;
+	local sources = @($(dollar)(expandedSources$(colon)$(listIncludes)):A:G=$(C.ACTIVE_TOOLCHAIN_TARGET_GRIST)) ;
 	return $(sources) ;
 }
 
