@@ -582,7 +582,8 @@ rule C.Lump PARENT : SOURCES_VARIABLE_NAME : LUMP_NAME : PCH_FILENAMES : EXTRA_I
 	local c_style_build_extensions = $(C.C_STYLE_BUILD_EXTENSIONS:Z=$(C.COMPILER_SUITE_SYMBOL)) ;
 	local cpp_style_build_extensions = $(C.CPP_STYLE_BUILD_EXTENSIONS:Z=$(C.COMPILER_SUITE_SYMBOL)) ;
 	local file ;
-	local gristedSourceFiles = [ C.GristFiles : $($(SOURCES_VARIABLE_NAME)) ] ;
+	local expandedSourceFiles = [ Wildcard $($(SOURCES_VARIABLE_NAME)) ] ;
+	local gristedSourceFiles = [ C.GristFiles : $(expandedSourceFiles) ] ;
 	for file in $(gristedSourceFiles) {
 		local excludedFromBuild = $(EXCLUDED_FROM_BUILD:Z=$(file))) ;
 		if $(excludedFromBuild) = true {
