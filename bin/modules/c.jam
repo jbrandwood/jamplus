@@ -2027,6 +2027,12 @@ rule C.Build NAMES : TOOLCHAINS {
                 }
 
                 C.ActiveTarget $(target) ;
+                if $(C.Build_PreRules) {
+                    local theRule ;
+                    for theRule in $(C.Build_PreRules) {
+                        $(theRule) ;
+                    }
+                }
                 Build.$(name) $(target) ;
             }
         }
@@ -2050,6 +2056,12 @@ rule C.Build NAMES : TOOLCHAINS {
         }
 
         C.ActiveTarget $(target) ;
+        if $(C.Build_PreRules) {
+            local theRule ;
+            for theRule in $(C.Build_PreRules) {
+                $(theRule) ;
+            }
+        }
         Build.$(name) $(target) ;
     }
 
