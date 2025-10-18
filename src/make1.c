@@ -1205,7 +1205,6 @@ make1d(
 	else
 	{
 		LISTITEM* target;
-	    LIST *targets = lol_get( &cmd->args, 0 );
 
 		for (target = list_first(cmd->targetsunbound); target; target = list_next(target)) {
 			XXH128_hash_t buildmd5sum;
