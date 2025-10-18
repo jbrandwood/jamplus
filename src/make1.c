@@ -1286,17 +1286,6 @@ void make1buildchecksum( const char* makestage, TARGET *t, XXH128_hash_t* buildm
 		printf( "------------------------------------------------\n" );
 	}
 
-	if ( t->dependssorted != make0calcmd5sum_dependssorted_stage )
-	{
-		targetlist_free(t->dependssortedbyname);
-		if (t->depends)
-		{
-			t->dependssortedbyname = copytargets((TARGETS *)0, t->depends);
-			t->dependssortedbyname = make0sortbyname(t->dependssortedbyname);
-		}
-		t->dependssorted = make0calcmd5sum_dependssorted_stage;
-	}
-
 	state = XXH3_createState();
 	XXH3_128bits_reset(state);
 
@@ -1319,6 +1308,17 @@ void make1buildchecksum( const char* makestage, TARGET *t, XXH128_hash_t* buildm
 					printf( "\t\tCOMMANDLINE: %s\n", list_value(list) );
 			}
 		}
+	}
+
+	if ( t->dependssorted != make0calcmd5sum_dependssorted_stage || force)
+	{
+		targetlist_free(t->dependssortedbyname);
+		if (t->depends)
+		{
+			t->dependssortedbyname = copytargets((TARGETS *)0, t->depends);
+			//t->dependssortedbyname = make0sortbyname(t->dependssortedbyname);
+		}
+		t->dependssorted = make0calcmd5sum_dependssorted_stage;
 	}
 
 	/* for each dependencies */

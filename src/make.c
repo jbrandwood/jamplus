@@ -1807,13 +1807,13 @@ void make0calcmd5sumhelper( TARGET *t, int source, int depth, int force, int pha
 	//}
 
 	/* sort all dependents by name, so we can make reliable md5sums */
-	if ( t->dependssorted != make0calcmd5sum_dependssorted_stage )
+	if ( t->dependssorted != make0calcmd5sum_dependssorted_stage || force )
 	{
 		targetlist_free(t->dependssortedbyname);
 		if (t->depends)
 		{
 			t->dependssortedbyname = copytargets((TARGETS *)0, t->depends);
-			t->dependssortedbyname = make0sortbyname(t->dependssortedbyname);
+			//t->dependssortedbyname = make0sortbyname(t->dependssortedbyname);
 		}
 		t->dependssorted = make0calcmd5sum_dependssorted_stage;
 	}
