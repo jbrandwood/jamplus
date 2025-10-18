@@ -1926,6 +1926,7 @@ LIST *builtin_configurefilehelper(PARSE *parse, LOL *args, int *jmp)
 	LIST* newLines = L0;
 	int mustWrite;
 	int expand;
+	int rawstring;
 	int whichLeftParen = '{';
 	int whichRightParen = '}';
 	time_t time;
@@ -1941,6 +1942,7 @@ LIST *builtin_configurefilehelper(PARSE *parse, LOL *args, int *jmp)
 	options = lol_get(args, 2);
 
 	expand = 1;
+	rawstring = 0;
 	if (options) {
 		for (item = list_first(options); item; item = list_next(item)) {
 			const char* option = list_value(item);
@@ -1950,6 +1952,10 @@ LIST *builtin_configurefilehelper(PARSE *parse, LOL *args, int *jmp)
 			else if (strcmp(option, "parens") == 0) {
 				whichLeftParen = '(';
 				whichRightParen = ')';
+			}
+			else if (strcmp(option, "rawstring") == 0) {
+				newLines = sourceName;
+				goto writefile;
 			}
 		}
 	}
@@ -2063,7 +2069,6 @@ LIST *builtin_configurefilehelper(PARSE *parse, LOL *args, int *jmp)
 	if (target) {
 		LISTITEM* newLine = list_first(newLines);
 		const char* destinationFilename = search_using_target_settings(target, target->name, &time);
-		file_mkdir(destinationFilename);
 		file = fopen(destinationFilename, "rt");
 		if (file) {
 			mustWrite = 0;
@@ -2080,8 +2085,12 @@ LIST *builtin_configurefilehelper(PARSE *parse, LOL *args, int *jmp)
 	}
 
 	if (mustWrite) {
-		LISTITEM* newLine = list_first(newLines);
-		const char* destinationFilename = search_using_target_settings(target, target->name, &time);
+		LISTITEM* newLine;
+		const char* destinationFilename;
+writefile:
+		newLine = list_first(newLines);
+		destinationFilename = search_using_target_settings(target, target->name, &time);
+		file_mkdir(destinationFilename);
 		file = fopen(destinationFilename, "wb");
 		while (newLine) {
 			fputs(list_value(newLine), file);
