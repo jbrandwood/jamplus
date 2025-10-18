@@ -108,9 +108,9 @@ else
 	patternA = [[
 *** found 12 target(s)...
 *** updating 6 target(s)...
-@ C.$(COMPILER).CC <$(TOOLCHAIN_GRIST):app>main.o 
-@ C.$(COMPILER).CC <$(TOOLCHAIN_GRIST):lib-a>add.o 
-@ $(C_ARCHIVE) <$(TOOLCHAIN_GRIST):lib-a>lib-a.a 
+@ C.$(COMPILER).CC <$(TOOLCHAIN_GRIST):app>main.o
+@ C.$(COMPILER).CC <$(TOOLCHAIN_GRIST):lib-a>add.o
+@ $(C_ARCHIVE) <$(TOOLCHAIN_GRIST):lib-a>lib-a.a
 !NEXT!@ $(C_LINK) <$(TOOLCHAIN_GRIST):app>app
 *** updated 6 target(s)...
 ]]
@@ -128,7 +128,7 @@ else
 	patternC = [[
 *** found 12 target(s)...
 *** updating 2 target(s)...
-@ C.$(COMPILER).CC <$(TOOLCHAIN_GRIST):app>main.o 
+@ C.$(COMPILER).CC <$(TOOLCHAIN_GRIST):app>main.o
 @ $(C_LINK) <$(TOOLCHAIN_GRIST):app>app
 *** updated 2 target(s)...
 ]]
@@ -138,7 +138,8 @@ if Platform == 'linux' then
 		patternC_useChecksums = [[
 *** found 12 target(s)...
 *** updating 2 target(s)...
-@ C.$(COMPILER).CC <$(TOOLCHAIN_GRIST):app>main.o 
+@ C.$(COMPILER).CC <$(TOOLCHAIN_GRIST):app>main.o
+@ $(C_LINK) <$(TOOLCHAIN_GRIST):app>app
 *** updated 2 target(s)...
 ]]
 	else
@@ -148,7 +149,7 @@ else
 	patternC_useChecksums = [[
 *** found 12 target(s)...
 *** updating 2 target(s)...
-@ C.$(COMPILER).CC <$(TOOLCHAIN_GRIST):app>main.o 
+@ C.$(COMPILER).CC <$(TOOLCHAIN_GRIST):app>main.o
 @ $(C_LINK) <$(TOOLCHAIN_GRIST):app>app
 *** updated 2 target(s)...
 ]]
@@ -199,7 +200,7 @@ int Add(int a, int b);
 
 	---------------------------------------------------------------------------
 	do
-		osprocess.sleep(1.0)
+		osprocess.sleep(2.0)
 		ospath.touch('lib-a/add.h')
 
 		if useChecksums then

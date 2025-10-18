@@ -81,11 +81,11 @@ function Test()
 		local pattern = [[
 *** found 18 target(s)...
 *** updating 9 target(s)...
-@ C.$(COMPILER).C++ <$(TOOLCHAIN_GRIST):project1>project1.o 
-@ C.$(COMPILER).C++ <$(TOOLCHAIN_GRIST):common>print.o 
-@ $(C_ARCHIVE) <$(TOOLCHAIN_GRIST):common>common.a 
-!NEXT!@ C.$(COMPILER).C++ <$(TOOLCHAIN_GRIST):libA>libA.o 
-@ $(C_ARCHIVE) <$(TOOLCHAIN_GRIST):libA>libA.a 
+@ C.$(COMPILER).C++ <$(TOOLCHAIN_GRIST):project1>project1.o
+@ C.$(COMPILER).C++ <$(TOOLCHAIN_GRIST):common>print.o
+@ $(C_ARCHIVE) <$(TOOLCHAIN_GRIST):common>common.a
+!NEXT!@ C.$(COMPILER).C++ <$(TOOLCHAIN_GRIST):libA>libA.o
+@ $(C_ARCHIVE) <$(TOOLCHAIN_GRIST):libA>libA.a
 !NEXT!@ $(C_LINK) <$(TOOLCHAIN_GRIST):project1>project1
 *** updated 9 target(s)...
 ]]
@@ -129,7 +129,7 @@ function Test()
 ]]
 		TestPattern(pattern2, RunJam())
 	end
-	
+
 	osprocess.sleep(1.0)
 	ospath.touch('common/print.h')
 
@@ -148,9 +148,9 @@ function Test()
 		local pattern3 = [[
 *** found 18 target(s)...
 *** updating 4 target(s)...
-@ C.$(COMPILER).C++ <$(TOOLCHAIN_GRIST):project1>project1.o 
-@ C.$(COMPILER).C++ <$(TOOLCHAIN_GRIST):libA>libA.o 
-@ $(C_ARCHIVE) <$(TOOLCHAIN_GRIST):libA>libA.a 
+@ C.$(COMPILER).C++ <$(TOOLCHAIN_GRIST):project1>project1.o
+@ C.$(COMPILER).C++ <$(TOOLCHAIN_GRIST):libA>libA.o
+@ $(C_ARCHIVE) <$(TOOLCHAIN_GRIST):libA>libA.a
 !NEXT!@ $(C_LINK) <$(TOOLCHAIN_GRIST):project1>project1
 *** updated 4 target(s)...
 ]]
@@ -279,11 +279,11 @@ void LibA()
 		local pattern = [[
 *** found 18 target(s)...
 *** updating 9 target(s)...
-@ C.$(COMPILER).C++ <$(TOOLCHAIN_GRIST):project1>project1.o 
-@ C.$(COMPILER).C++ <$(TOOLCHAIN_GRIST):common>print.o 
-@ $(C_ARCHIVE) <$(TOOLCHAIN_GRIST):common>common.a 
-!NEXT!@ C.$(COMPILER).C++ <$(TOOLCHAIN_GRIST):libA>libA.o 
-@ $(C_ARCHIVE) <$(TOOLCHAIN_GRIST):libA>libA.a 
+@ C.$(COMPILER).C++ <$(TOOLCHAIN_GRIST):project1>project1.o
+@ C.$(COMPILER).C++ <$(TOOLCHAIN_GRIST):common>print.o
+@ $(C_ARCHIVE) <$(TOOLCHAIN_GRIST):common>common.a
+!NEXT!@ C.$(COMPILER).C++ <$(TOOLCHAIN_GRIST):libA>libA.o
+@ $(C_ARCHIVE) <$(TOOLCHAIN_GRIST):libA>libA.a
 !NEXT!@ $(C_LINK) <$(TOOLCHAIN_GRIST):project1>project1
 *** updated 9 target(s)...
 ]]
@@ -327,7 +327,7 @@ void LibA()
 ]]
 		TestPattern(pattern2, RunJam())
 	end
-	
+
 	osprocess.sleep(1.0)
 	ospath.touch('common/print.h')
 
@@ -359,6 +359,8 @@ void LibA()
 *** updating 4 target(s)...
 @ C.$(COMPILER).C++ <$(TOOLCHAIN_GRIST):project1>project1.o
 @ C.$(COMPILER).C++ <$(TOOLCHAIN_GRIST):libA>libA.o
+@ $(C_ARCHIVE) <$(TOOLCHAIN_GRIST):libA>libA.a
+!NEXT!@ $(C_LINK) <$(TOOLCHAIN_GRIST):project1>project1
 *** updated 4 target(s)...
 ]]
 			TestPattern(pattern4, RunJam())
@@ -377,9 +379,9 @@ void LibA()
 		local pattern4 = [[
 *** found 18 target(s)...
 *** updating 4 target(s)...
-@ C.$(COMPILER).C++ <$(TOOLCHAIN_GRIST):project1>project1.o 
-@ C.$(COMPILER).C++ <$(TOOLCHAIN_GRIST):libA>libA.o 
-@ $(C_ARCHIVE) <$(TOOLCHAIN_GRIST):libA>libA.a 
+@ C.$(COMPILER).C++ <$(TOOLCHAIN_GRIST):project1>project1.o
+@ C.$(COMPILER).C++ <$(TOOLCHAIN_GRIST):libA>libA.o
+@ $(C_ARCHIVE) <$(TOOLCHAIN_GRIST):libA>libA.a
 !NEXT!@ $(C_LINK) <$(TOOLCHAIN_GRIST):project1>project1
 *** updated 4 target(s)...
 ]]
@@ -408,8 +410,8 @@ void LibA()
 		local pattern5 = [[
 *** found 18 target(s)...
 *** updating 3 target(s)...
-@ C.$(COMPILER).C++ <$(TOOLCHAIN_GRIST):libA>libA.o 
-@ $(C_ARCHIVE) <$(TOOLCHAIN_GRIST):libA>libA.a 
+@ C.$(COMPILER).C++ <$(TOOLCHAIN_GRIST):libA>libA.o
+@ $(C_ARCHIVE) <$(TOOLCHAIN_GRIST):libA>libA.a
 !NEXT!@ $(C_LINK) <$(TOOLCHAIN_GRIST):project1>project1
 *** updated 3 target(s)...
 ]]

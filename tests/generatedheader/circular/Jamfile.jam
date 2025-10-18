@@ -26,4 +26,6 @@ local generated.h = [ C.GristFiles foo : generated.h ] ;
 SleepThenTouch $(generated.h) ;
 LOCATE on $(generated.h) = . ;
 UseCommandLine  $(generated.h) : $(OUTPUT_TEXT) ;
+
+C.Includes foo : sourceA.c sourceB.c : $(generated.h) ;
 C.Library foo : sourceA.c sourceB.c ;

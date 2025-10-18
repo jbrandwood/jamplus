@@ -1,5 +1,3 @@
-#JAM_USE_CHECKSUMS = 1 ;
-
 SubDir TOP ;
 
 if $(NT) {
@@ -17,7 +15,8 @@ GenerateHeader $(generated.h) : $(TOP)/template ;
 Depends $(generated.h) : $(TOP)/template ;
 MakeLocate $(generated.h) : $(TOP) ;
 Clean clean : $(generated.h) ;
-#Depends [ C.GristFiles test : main.c ] : $(g) ;
+
+Includes [ C.GristFiles test : main.c ] : $(generated.h) ;
 
 ScanContents $(generated.h) ;
 

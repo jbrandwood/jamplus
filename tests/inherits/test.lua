@@ -147,14 +147,14 @@ else
 	patternA = [[
 *** found 22 target(s)...
 *** updating 12 target(s)...
-@ C.$(COMPILER).CC <$(TOOLCHAIN_GRIST):app>main.o 
-@ C.$(COMPILER).CC <$(TOOLCHAIN_GRIST):lib-a>add.o 
-@ C.$(COMPILER).CC <$(TOOLCHAIN_GRIST):nested-lib-b>sub.o 
-@ C.$(COMPILER).CC <$(TOOLCHAIN_GRIST):nested-lib-c>mul.o 
-@ $(C_ARCHIVE) <$(TOOLCHAIN_GRIST):nested-lib-c>nested-lib-c.a 
-!NEXT!@ $(C_ARCHIVE) <$(TOOLCHAIN_GRIST):nested-lib-b>nested-lib-b.a 
-!NEXT!@ $(C_ARCHIVE) <$(TOOLCHAIN_GRIST):lib-a>lib-a.a 
-!NEXT!@ $(C_LINK) <$(TOOLCHAIN_GRIST):app>app 
+@ C.$(COMPILER).CC <$(TOOLCHAIN_GRIST):app>main.o
+@ C.$(COMPILER).CC <$(TOOLCHAIN_GRIST):lib-a>add.o
+@ C.$(COMPILER).CC <$(TOOLCHAIN_GRIST):nested-lib-b>sub.o
+@ C.$(COMPILER).CC <$(TOOLCHAIN_GRIST):nested-lib-c>mul.o
+@ $(C_ARCHIVE) <$(TOOLCHAIN_GRIST):nested-lib-c>nested-lib-c.a
+!NEXT!@ $(C_ARCHIVE) <$(TOOLCHAIN_GRIST):nested-lib-b>nested-lib-b.a
+!NEXT!@ $(C_ARCHIVE) <$(TOOLCHAIN_GRIST):lib-a>lib-a.a
+!NEXT!@ $(C_LINK) <$(TOOLCHAIN_GRIST):app>app
 *** updated 12 target(s)...
 ]]
 
@@ -166,7 +166,7 @@ else
 *** found 22 target(s)...
 *** updating 2 target(s)...
 @ C.$(COMPILER).CC <$(TOOLCHAIN_GRIST):app>main.o
-@ $(C_LINK) <$(TOOLCHAIN_GRIST):app>app 
+@ $(C_LINK) <$(TOOLCHAIN_GRIST):app>app
 *** updated 2 target(s)...
 ]]
 
@@ -176,6 +176,7 @@ else
 *** found 22 target(s)...
 *** updating 2 target(s)...
 @ C.$(COMPILER).CC <$(TOOLCHAIN_GRIST):app>main.o
+@ $(C_LINK) <$(TOOLCHAIN_GRIST):app>app
 *** updated 2 target(s)...
 ]]
 		else

@@ -25,7 +25,7 @@ function Test()
 		local pattern = [[
 *** found 12 target(s)...
 *** updating 5 target(s)...
-Writing generated.h
+&Writing .*generated.h
 @ SleepThenTouch <$(TOOLCHAIN_GRIST):foo>generated.h
 !NEXT!@ C.$(COMPILER).CC <$(TOOLCHAIN_GRIST):foo>sourceA.obj
 !NEXT!@ $(C_ARCHIVE) <$(TOOLCHAIN_GRIST):foo>foo.lib
@@ -61,7 +61,7 @@ Writing generated.h
 *** found 12 target(s)...
 ]]
 		TestPattern(pattern2, RunJam{ 'foo' })
-	
+
 		osprocess.sleep(1.0)
 		ospath.touch('generated.h')
 
@@ -79,7 +79,7 @@ Writing generated.h
 			local pattern3 = [[
 *** found 11 target(s)...
 *** updating 4 target(s)...
-Writing generated.h
+&Writing .*generated.h
 @ SleepThenTouch <$(TOOLCHAIN_GRIST):foo>generated.h
 !NEXT!*** updated 1 target(s)...
 ]]
@@ -88,7 +88,7 @@ Writing generated.h
             local pattern4 = [[
 *** found 12 target(s)...
 *** updating 4 target(s)...
-Writing generated.h
+&Writing .*generated.h
 @ SleepThenTouch <$(TOOLCHAIN_GRIST):foo>generated.h
 !NEXT!@ C.$(COMPILER).CC <$(TOOLCHAIN_GRIST):foo>sourceA.obj
 !NEXT!@ $(C_ARCHIVE) <$(TOOLCHAIN_GRIST):foo>foo.lib
@@ -105,17 +105,17 @@ Writing generated.h
 ]]
 			TestPattern(pattern3, RunJam{ 'foo' })
 		end
-	
+
 	else -- Other platforms
 		-- First build
 		local pattern = [[
 *** found 11 target(s)...
 *** updating 5 target(s)...
-Writing generated.h
-@ SleepThenTouch <$(TOOLCHAIN_GRIST):foo>generated.h 
-@ C.$(COMPILER).CC <$(TOOLCHAIN_GRIST):foo>sourceA.o 
-@ C.$(COMPILER).CC <$(TOOLCHAIN_GRIST):foo>sourceB.o 
-@ $(C_ARCHIVE) <$(TOOLCHAIN_GRIST):foo>foo.a 
+&Writing .*generated.h
+@ SleepThenTouch <$(TOOLCHAIN_GRIST):foo>generated.h
+@ C.$(COMPILER).CC <$(TOOLCHAIN_GRIST):foo>sourceA.o
+@ C.$(COMPILER).CC <$(TOOLCHAIN_GRIST):foo>sourceB.o
+@ $(C_ARCHIVE) <$(TOOLCHAIN_GRIST):foo>foo.a
 !NEXT!*** updated 5 target(s)...
 ]]
 
@@ -166,8 +166,8 @@ Writing generated.h
 			local pattern3 = [[
 *** found 11 target(s)...
 *** updating 4 target(s)...
-Writing generated.h
-@ SleepThenTouch <$(TOOLCHAIN_GRIST):foo>generated.h 
+&Writing .*generated.h
+@ SleepThenTouch <$(TOOLCHAIN_GRIST):foo>generated.h
 !NEXT!*** updated 1 target(s)...
 ]]
 			TestPattern(pattern3, RunJam{ 'foo' })
@@ -181,11 +181,11 @@ Writing generated.h
 		local pattern4 = [[
 *** found 11 target(s)...
 *** updating 4 target(s)...
-Writing generated.h
-@ SleepThenTouch <$(TOOLCHAIN_GRIST):foo>generated.h 
-@ C.$(COMPILER).CC <$(TOOLCHAIN_GRIST):foo>sourceA.o 
-@ C.$(COMPILER).CC <$(TOOLCHAIN_GRIST):foo>sourceB.o 
-@ $(C_ARCHIVE) <$(TOOLCHAIN_GRIST):foo>foo.a 
+&Writing .*generated.h
+@ SleepThenTouch <$(TOOLCHAIN_GRIST):foo>generated.h
+@ C.$(COMPILER).CC <$(TOOLCHAIN_GRIST):foo>sourceA.o
+@ C.$(COMPILER).CC <$(TOOLCHAIN_GRIST):foo>sourceB.o
+@ $(C_ARCHIVE) <$(TOOLCHAIN_GRIST):foo>foo.a
 !NEXT!*** updated 4 target(s)...
 ]]
 		TestPattern(pattern4, RunJam{ 'OUTPUT_TEXT=int GENERATED_H;', 'foo' })

@@ -23,7 +23,7 @@ function Test()
 	local patternC
 	local noDepCacheFiles
 	local dirs
-	
+
 	if Platform == 'win32' then
 		dirs = {
 			'$(TOOLCHAIN_PATH)/',
@@ -43,7 +43,7 @@ function Test()
 			'?$(TOOLCHAIN_PATH)/test/test.exe.intermediate.manifest',
 			'$(TOOLCHAIN_PATH)/test/test.pdb',
 		}
-		
+
 		patternA = [[
 *** found 21 target(s)...
 *** updating 5 target(s)...
@@ -77,13 +77,13 @@ function Test()
 			'$(TOOLCHAIN_PATH)/test/test.o',
 			'$(TOOLCHAIN_PATH)/test/test',
 		}
-		
+
 		patternA = [[
 *** found 13 target(s)...
 *** updating 5 target(s)...
 @ WriteFile <$(TOOLCHAIN_GRIST):test>generated.h
-@ C.$(COMPILER).CC <$(TOOLCHAIN_GRIST):test>main.o 
-@ C.$(COMPILER).CC <$(TOOLCHAIN_GRIST):test>test.o 
+@ C.$(COMPILER).CC <$(TOOLCHAIN_GRIST):test>main.o
+@ C.$(COMPILER).CC <$(TOOLCHAIN_GRIST):test>test.o
 @ $(C_LINK) <$(TOOLCHAIN_GRIST):test>test
 *** updated 5 target(s)...
 ]]
@@ -120,14 +120,14 @@ function Test()
 		TestDirectories(dirs)
 		TestFiles(noDepCacheFiles)
 	end
-	
+
 	---------------------------------------------------------------------------
 	do
 		TestPattern(patternB, RunJam{ 'JAM_NO_DEPCACHE=1' })
 		TestDirectories(dirs)
 		TestFiles(noDepCacheFiles)
 	end
-	
+
 	---------------------------------------------------------------------------
 	do
 		osprocess.sleep(1.0)
@@ -148,7 +148,7 @@ function Test()
 	local patternC
 	local patternD
 	local patternE
-	
+
 	if Platform == 'win32' then
 		depCacheFiles = {
 			'generated.h',
@@ -162,7 +162,7 @@ function Test()
 			'?$(TOOLCHAIN_PATH)/test/test.exe.intermediate.manifest',
 			'$(TOOLCHAIN_PATH)/test/test.pdb',
 		}
-		
+
 		patternA = [[
 *** found 21 target(s)...
 *** updating 5 target(s)...
@@ -222,13 +222,13 @@ function Test()
 			'$(TOOLCHAIN_PATH)/test/test.o',
 			'$(TOOLCHAIN_PATH)/test/test',
 		}
-		
+
 		patternA = [[
 *** found 13 target(s)...
 *** updating 5 target(s)...
 @ WriteFile <$(TOOLCHAIN_GRIST):test>generated.h
-@ C.$(COMPILER).CC <$(TOOLCHAIN_GRIST):test>main.o 
-@ C.$(COMPILER).CC <$(TOOLCHAIN_GRIST):test>test.o 
+@ C.$(COMPILER).CC <$(TOOLCHAIN_GRIST):test>main.o
+@ C.$(COMPILER).CC <$(TOOLCHAIN_GRIST):test>test.o
 @ $(C_LINK) <$(TOOLCHAIN_GRIST):test>test
 *** updated 5 target(s)...
 ]]
@@ -238,13 +238,34 @@ function Test()
 *** found 13 target(s)...
 ]]
 
-			patternC = [[
+			if Compiler == 'clang' then
+				if Platform == 'macosx' then
+					patternC = [[
 *** found 13 target(s)...
 *** updating 3 target(s)...
 @ WriteFile <$(TOOLCHAIN_GRIST):test>generated.h
-@ C.$(COMPILER).CC <$(TOOLCHAIN_GRIST):test>main.o 
+@ C.$(COMPILER).CC <$(TOOLCHAIN_GRIST):test>main.o
 *** updated 2 target(s)...
 ]]
+				else
+					patternC = [[
+*** found 13 target(s)...
+*** updating 3 target(s)...
+@ WriteFile <$(TOOLCHAIN_GRIST):test>generated.h
+@ C.$(COMPILER).CC <$(TOOLCHAIN_GRIST):test>main.o
+@ $(C_LINK) <$(TOOLCHAIN_GRIST):test>test
+*** updated 3 target(s)...
+]]
+				end
+			else
+				patternC = [[
+*** found 13 target(s)...
+*** updating 3 target(s)...
+@ WriteFile <$(TOOLCHAIN_GRIST):test>generated.h
+@ C.$(COMPILER).CC <$(TOOLCHAIN_GRIST):test>main.o
+*** updated 2 target(s)...
+]]
+			end
 		else
 			patternB = [[
 *** found 13 target(s)...
@@ -254,7 +275,7 @@ function Test()
 *** found 13 target(s)...
 *** updating 3 target(s)...
 @ WriteFile <$(TOOLCHAIN_GRIST):test>generated.h
-@ C.$(COMPILER).CC <$(TOOLCHAIN_GRIST):test>main.o 
+@ C.$(COMPILER).CC <$(TOOLCHAIN_GRIST):test>main.o
 @ $(C_LINK) <$(TOOLCHAIN_GRIST):test>test
 *** updated 3 target(s)...
 ]]
@@ -265,12 +286,32 @@ function Test()
 *** found 13 target(s)...
 ]]
 
-			patternE = [[
+			if Compiler == 'clang' then
+				if Platform == 'macosx' then
+					patternE = [[
 *** found 13 target(s)...
 *** updating 3 target(s)...
 @ WriteFile <$(TOOLCHAIN_GRIST):test>generated.h
 *** updated 1 target(s)...
 ]]
+				else
+					patternE = [[
+*** found 13 target(s)...
+*** updating 3 target(s)...
+@ WriteFile <$(TOOLCHAIN_GRIST):test>generated.h
+@ C.$(COMPILER).CC <$(TOOLCHAIN_GRIST):test>main.o
+@ $(C_LINK) <$(TOOLCHAIN_GRIST):test>test
+*** updated 3 target(s)...
+]]
+				end
+			else
+				patternE = [[
+*** found 13 target(s)...
+*** updating 3 target(s)...
+@ WriteFile <$(TOOLCHAIN_GRIST):test>generated.h
+*** updated 1 target(s)...
+]]
+			end
 		else
 			patternD = [[
 *** found 13 target(s)...
@@ -280,7 +321,7 @@ function Test()
 *** found 13 target(s)...
 *** updating 3 target(s)...
 @ WriteFile <$(TOOLCHAIN_GRIST):test>generated.h
-@ C.$(COMPILER).CC <$(TOOLCHAIN_GRIST):test>main.o 
+@ C.$(COMPILER).CC <$(TOOLCHAIN_GRIST):test>main.o
 @ $(C_LINK) <$(TOOLCHAIN_GRIST):test>test
 *** updated 3 target(s)...
 ]]

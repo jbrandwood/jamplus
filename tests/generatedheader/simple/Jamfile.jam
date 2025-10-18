@@ -6,6 +6,7 @@ local test.h = [ C.GristFiles test : test.h ] ;
 MakeLocate $(test.h) : $(SUBDIR) ;
 CONTENTS on $(test.h) = "// $(OVERRIDE_TEXT:E="")$(NEWLINE)extern void Print(const char*);" ;
 UseCommandLine $(test.h) : $(CONTENTS:Z=$(test.h)) ;
+C.Includes test : main.c : $(test.h) ;
 
 WriteFile $(test.h) ;
 C.Clean test : $(test.h) ;

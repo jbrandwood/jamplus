@@ -32,7 +32,7 @@ function Test()
 			'$(TOOLCHAIN_PATH)/',
 			'$(TOOLCHAIN_PATH)/test/',
 		}
-		
+
 		local pass1Files =
 		{
 			'Jamfile.jam',
@@ -53,7 +53,7 @@ function Test()
 *** found 19 target(s)...
 ]]
 		TestPattern(pattern2, RunJam())
-	
+
 		osprocess.sleep(1.0)
 		ospath.touch('test.h')
 
@@ -65,7 +65,7 @@ function Test()
 !NEXT!*** updated 2 target(s)...
 ]]
 		TestPattern(pattern3, RunJam())
-	
+
 	else
 
 		-- First build
@@ -73,20 +73,20 @@ function Test()
 *** found 11 target(s)...
 *** updating 5 target(s)...
 @ WriteFile <$(TOOLCHAIN_GRIST):test>test.h
-@ C.$(COMPILER).CC <$(TOOLCHAIN_GRIST):test>main.o 
-@ C.$(COMPILER).CC <$(TOOLCHAIN_GRIST):test>test.o 
-@ $(C_LINK) <$(TOOLCHAIN_GRIST):test>test 
+@ C.$(COMPILER).CC <$(TOOLCHAIN_GRIST):test>main.o
+@ C.$(COMPILER).CC <$(TOOLCHAIN_GRIST):test>test.o
+@ $(C_LINK) <$(TOOLCHAIN_GRIST):test>test
 *** updated 5 target(s)...
 ]]
 
 		TestPattern(pattern, RunJam())
 
-		local pass1Dirs = { 
+		local pass1Dirs = {
 			'$(TOOLCHAIN_PATH)/',
 			'$(TOOLCHAIN_PATH)/test/',
 		}
 
-		local pass1Files = { 
+		local pass1Files = {
 			'Jamfile.jam',
 			'main.c',
 			'test.c',
@@ -95,7 +95,7 @@ function Test()
 			'$(TOOLCHAIN_PATH)/test/main.o',
 			'$(TOOLCHAIN_PATH)/test/test.o',
 			'$(TOOLCHAIN_PATH)/test/test',
-		}	
+		}
 
 		TestFiles(pass1Files)
 		TestDirectories(pass1Dirs)
@@ -111,8 +111,8 @@ function Test()
 		local pattern3 = [[
 *** found 11 target(s)...
 *** updating 2 target(s)...
-@ C.$(COMPILER).CC <$(TOOLCHAIN_GRIST):test>main.o 
-@ $(C_LINK) <$(TOOLCHAIN_GRIST):test>test 
+@ C.$(COMPILER).CC <$(TOOLCHAIN_GRIST):test>main.o
+@ $(C_LINK) <$(TOOLCHAIN_GRIST):test>test
 *** updated 2 target(s)...
 ]]
 		TestPattern(pattern3, RunJam())
@@ -174,7 +174,7 @@ extern void Print(const char* str);
 			'$(TOOLCHAIN_PATH)/',
 			'$(TOOLCHAIN_PATH)/test/',
 		}
-		
+
 		local pass1Files =
 		{
 			'Jamfile.jam',
@@ -195,7 +195,7 @@ extern void Print(const char* str);
 *** found 19 target(s)...
 ]]
 		TestPattern(pattern2, RunJam())
-	
+
 		if useChecksums then
 			pattern2 = [[
 *** found 21 target(s)...
@@ -233,7 +233,7 @@ extern void Print(const char* str);
 !NEXT!*** updated 3 target(s)...
 ]]
 		TestPattern(pattern4, RunJam{"OVERRIDE_TEXT=override"})
-	
+
 	else
 
 		-- First build
@@ -241,20 +241,20 @@ extern void Print(const char* str);
 *** found 11 target(s)...
 *** updating 5 target(s)...
 @ WriteFile <$(TOOLCHAIN_GRIST):test>test.h
-@ C.$(COMPILER).CC <$(TOOLCHAIN_GRIST):test>main.o 
-@ C.$(COMPILER).CC <$(TOOLCHAIN_GRIST):test>test.o 
-@ $(C_LINK) <$(TOOLCHAIN_GRIST):test>test 
+@ C.$(COMPILER).CC <$(TOOLCHAIN_GRIST):test>main.o
+@ C.$(COMPILER).CC <$(TOOLCHAIN_GRIST):test>test.o
+@ $(C_LINK) <$(TOOLCHAIN_GRIST):test>test
 *** updated 5 target(s)...
 ]]
 
 		TestPattern(pattern, RunJam())
 
-		local pass1Dirs = { 
+		local pass1Dirs = {
 			'$(TOOLCHAIN_PATH)/',
 			'$(TOOLCHAIN_PATH)/test/',
 		}
 
-		local pass1Files = { 
+		local pass1Files = {
 			'Jamfile.jam',
 			'main.c',
 			'test.c',
@@ -263,7 +263,7 @@ extern void Print(const char* str);
 			'$(TOOLCHAIN_PATH)/test/main.o',
 			'$(TOOLCHAIN_PATH)/test/test.o',
 			'$(TOOLCHAIN_PATH)/test/test',
-		}	
+		}
 
 		TestFiles(pass1Files)
 		TestDirectories(pass1Dirs)
@@ -297,13 +297,35 @@ extern void Print(const char* str);
 
 		osprocess.sleep(1.0)
 
-		local pattern4 = [[
+		local pattern4
+		if Compiler == 'clang' then
+			if Platform == 'macosx' then
+				pattern4 = [[
 *** found 11 target(s)...
 *** updating 3 target(s)...
 @ WriteFile <$(TOOLCHAIN_GRIST):test>test.h
-@ C.$(COMPILER).CC <$(TOOLCHAIN_GRIST):test>main.o 
+@ C.$(COMPILER).CC <$(TOOLCHAIN_GRIST):test>main.o
 *** updated 2 target(s)...
 ]]
+			else
+				pattern4 = [[
+*** found 11 target(s)...
+*** updating 3 target(s)...
+@ WriteFile <$(TOOLCHAIN_GRIST):test>test.h
+@ C.$(COMPILER).CC <$(TOOLCHAIN_GRIST):test>main.o
+@ $(C_LINK) <$(TOOLCHAIN_GRIST):test>test
+*** updated 3 target(s)...
+]]
+			end
+		else
+			pattern4 = [[
+*** found 11 target(s)...
+*** updating 3 target(s)...
+@ WriteFile <$(TOOLCHAIN_GRIST):test>test.h
+@ C.$(COMPILER).CC <$(TOOLCHAIN_GRIST):test>main.o
+*** updated 2 target(s)...
+]]
+		end
 		TestPattern(pattern4, RunJam{"OVERRIDE_TEXT=override"})
 	end
 

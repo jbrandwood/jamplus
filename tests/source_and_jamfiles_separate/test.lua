@@ -62,7 +62,7 @@ function Test()
 	local dirs
 	local files
 	local pattern
-	
+
 	if Platform == 'win32' then
 		dirs =
 		{
@@ -71,7 +71,7 @@ function Test()
 			'jam/$(TOOLCHAIN_PATH)/',
 			'jam/$(TOOLCHAIN_PATH)/helloworld/',
 		}
-	
+
 		files =
 		{
 			'jam/Jamfile.jam',
@@ -125,18 +125,18 @@ function Test()
 			'src/main.c',
 			'src/precomp.h',
 		}
-		
+
 		pattern = [[
 			*** found 17 target(s)...
 			*** updating 7 target(s)...
-			&@ C.$(COMPILER).PCH <$(TOOLCHAIN_GRIST):helloworld%-%x+>precomp.h.gch 
-			@ C.$(COMPILER).CC <$(TOOLCHAIN_GRIST):helloworld>../src/file.o 
-			@ C.$(COMPILER).CC <$(TOOLCHAIN_GRIST):helloworld>../src/main.o 
-			@ C.$(COMPILER).CC <$(TOOLCHAIN_GRIST):helloworld>../src/createprecomp.o 
-			@ $(C_LINK) <$(TOOLCHAIN_GRIST):helloworld>helloworld 
+			&@ C.$(COMPILER).PCH <$(TOOLCHAIN_GRIST):helloworld%-%x+>precomp.h.gch
+			@ C.$(COMPILER).CC <$(TOOLCHAIN_GRIST):helloworld>../src/file.o
+			@ C.$(COMPILER).CC <$(TOOLCHAIN_GRIST):helloworld>../src/main.o
+			@ C.$(COMPILER).CC <$(TOOLCHAIN_GRIST):helloworld>../src/createprecomp.o
+			@ $(C_LINK) <$(TOOLCHAIN_GRIST):helloworld>helloworld
 			*** updated 7 target(s)...
 ]]
-	
+
 	end
 
 	do
@@ -169,12 +169,39 @@ function Test()
 		ospath.touch('src/precomp.h')
 
 		if useChecksums then
-			local noopPattern2 = [[
+			if useHeaderPreScan then
+				local noopPattern2 = [[
 		*** found 22 target(s)...
 		*** updating 5 target(s)...
 		*** updated 0 target(s)...
 ]]
-			TestPattern(noopPattern2, RunJam{ '-Cjam' })
+				TestPattern(noopPattern2, RunJam{ '-Cjam' })
+			else
+				if Compiler == 'gcc' then
+					local noopPattern2 = [[
+		*** found 22 target(s)...
+		*** updating 5 target(s)...
+		*** updated 0 target(s)...
+]]
+					TestPattern(noopPattern2, RunJam{ '-Cjam' })
+				else
+					local noopPattern2
+					if useHeaderPreScan then
+						noopPattern2 = [[
+		*** found 22 target(s)...
+		*** updating 4 target(s)...
+		*** updated 0 target(s)...
+]]
+					else
+						noopPattern2 = [[
+		*** found 22 target(s)...
+		*** updating 5 target(s)...
+		*** updated 0 target(s)...
+]]
+					end
+					TestPattern(noopPattern2, RunJam{ '-Cjam' })
+				end
+			end
 
 			osprocess.sleep(1.0)
 			WriteModifiedFileA()
@@ -182,7 +209,8 @@ function Test()
 
 		if Platform == 'win32' then
 			if useChecksums then
-				pattern = [[
+				if useHeaderPreScan then
+					pattern = [[
 *** found 22 target(s)...
 *** updating 5 target(s)...
 @ C.$(COMPILER).CC <$(TOOLCHAIN_GRIST):helloworld>../src/createprecomp.obj
@@ -190,8 +218,19 @@ function Test()
 !NEXT!@ $(C_LINK) <$(TOOLCHAIN_GRIST):helloworld>helloworld.exe
 !NEXT!*** updated 3 target(s)...
 ]]
+				else
+					pattern = [[
+*** found 22 target(s)...
+*** updating 4 target(s)...
+@ C.$(COMPILER).CC <$(TOOLCHAIN_GRIST):helloworld>../src/createprecomp.obj
+!NEXT!@ C.$(COMPILER).CC <$(TOOLCHAIN_GRIST):helloworld>../src/file.obj
+!NEXT!@ $(C_LINK) <$(TOOLCHAIN_GRIST):helloworld>helloworld.exe
+!NEXT!*** updated 3 target(s)...
+]]
+				end
 			else
-				pattern = [[
+				if useHeaderPreScan then
+					pattern = [[
 *** found 22 target(s)...
 *** updating 5 target(s)...
 @ C.$(COMPILER).CC <$(TOOLCHAIN_GRIST):helloworld>../src/createprecomp.obj
@@ -199,27 +238,37 @@ function Test()
 !NEXT!@ $(C_LINK) <$(TOOLCHAIN_GRIST):helloworld>helloworld.exe
 !NEXT!*** updated 5 target(s)...
 ]]
+				else
+					pattern = [[
+*** found 22 target(s)...
+*** updating 4 target(s)...
+@ C.$(COMPILER).CC <$(TOOLCHAIN_GRIST):helloworld>../src/createprecomp.obj
+!NEXT!@ C.$(COMPILER).CC <$(TOOLCHAIN_GRIST):helloworld>../src/file.obj
+!NEXT!@ $(C_LINK) <$(TOOLCHAIN_GRIST):helloworld>helloworld.exe
+!NEXT!*** updated 4 target(s)...
+]]
+				end
 			end
 		else
 			if useChecksums then
 				pattern = [[
 				*** found 17 target(s)...
 				*** updating 5 target(s)...
-				&@ C.$(COMPILER).PCH <$(TOOLCHAIN_GRIST):helloworld%-%x+>precomp.h.gch 
-				@ C.$(COMPILER).CC <$(TOOLCHAIN_GRIST):helloworld>../src/file.o 
-				@ C.$(COMPILER).CC <$(TOOLCHAIN_GRIST):helloworld>../src/main.o 
-				@ C.$(COMPILER).CC <$(TOOLCHAIN_GRIST):helloworld>../src/createprecomp.o 
+				&@ C.$(COMPILER).PCH <$(TOOLCHAIN_GRIST):helloworld%-%x+>precomp.h.gch
+				@ C.$(COMPILER).CC <$(TOOLCHAIN_GRIST):helloworld>../src/file.o
+				@ C.$(COMPILER).CC <$(TOOLCHAIN_GRIST):helloworld>../src/main.o
+				@ C.$(COMPILER).CC <$(TOOLCHAIN_GRIST):helloworld>../src/createprecomp.o
 				*** updated 4 target(s)...
 ]]
 			else
 				pattern = [[
 				*** found 17 target(s)...
 				*** updating 5 target(s)...
-				&@ C.$(COMPILER).PCH <$(TOOLCHAIN_GRIST):helloworld%-%x+>precomp.h.gch 
-				@ C.$(COMPILER).CC <$(TOOLCHAIN_GRIST):helloworld>../src/file.o 
-				@ C.$(COMPILER).CC <$(TOOLCHAIN_GRIST):helloworld>../src/main.o 
-				@ C.$(COMPILER).CC <$(TOOLCHAIN_GRIST):helloworld>../src/createprecomp.o 
-				@ $(C_LINK) <$(TOOLCHAIN_GRIST):helloworld>helloworld 
+				&@ C.$(COMPILER).PCH <$(TOOLCHAIN_GRIST):helloworld%-%x+>precomp.h.gch
+				@ C.$(COMPILER).CC <$(TOOLCHAIN_GRIST):helloworld>../src/file.o
+				@ C.$(COMPILER).CC <$(TOOLCHAIN_GRIST):helloworld>../src/main.o
+				@ C.$(COMPILER).CC <$(TOOLCHAIN_GRIST):helloworld>../src/createprecomp.o
+				@ $(C_LINK) <$(TOOLCHAIN_GRIST):helloworld>helloworld
 				*** updated 5 target(s)...
 ]]
 			end
@@ -289,15 +338,15 @@ function Test()
 				pattern = [[
 				*** found 17 target(s)...
 				*** updating 2 target(s)...
-				@ C.$(COMPILER).CC <$(TOOLCHAIN_GRIST):helloworld>../src/createprecomp.o 
+				@ C.$(COMPILER).CC <$(TOOLCHAIN_GRIST):helloworld>../src/createprecomp.o
 				*** updated 1 target(s)...
 ]]
 			else
 				pattern = [[
 				*** found 17 target(s)...
 				*** updating 2 target(s)...
-				@ C.$(COMPILER).CC <$(TOOLCHAIN_GRIST):helloworld>../src/createprecomp.o 
-				@ $(C_LINK) <$(TOOLCHAIN_GRIST):helloworld>helloworld 
+				@ C.$(COMPILER).CC <$(TOOLCHAIN_GRIST):helloworld>../src/createprecomp.o
+				@ $(C_LINK) <$(TOOLCHAIN_GRIST):helloworld>helloworld
 				*** updated 2 target(s)...
 ]]
 			end

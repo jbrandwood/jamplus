@@ -74,7 +74,7 @@ function Test()
 *** found 33 target(s)...
 ]]
 		TestPattern(pattern2, RunJam())
-	
+
 		osprocess.sleep(1.0)
 		ospath.touch('common/print.h')
 
@@ -102,17 +102,17 @@ function Test()
 		TestPattern(pattern4, RunJam())
 		TestFiles(pass1Files)
 		TestDirectories(pass1Directories)
-	
+
 	else
 
 		-- First build
 		local pattern = [[
 !NEXT!*** updating 7 target(s)...
-@ C.$(COMPILER).C++ <$(TOOLCHAIN_GRIST):project1>project1.o 
-@ C.$(COMPILER).C++ <$(TOOLCHAIN_GRIST):project1>adefine.o 
-@ C.$(COMPILER).C++ <$(TOOLCHAIN_GRIST):common>print.o 
-@ $(C_ARCHIVE) <$(TOOLCHAIN_GRIST):common>common.a 
-!NEXT!@ $(C_LINK) <$(TOOLCHAIN_GRIST):project1>project1 
+@ C.$(COMPILER).C++ <$(TOOLCHAIN_GRIST):project1>project1.o
+@ C.$(COMPILER).C++ <$(TOOLCHAIN_GRIST):project1>adefine.o
+@ C.$(COMPILER).C++ <$(TOOLCHAIN_GRIST):common>print.o
+@ $(C_ARCHIVE) <$(TOOLCHAIN_GRIST):common>common.a
+!NEXT!@ $(C_LINK) <$(TOOLCHAIN_GRIST):project1>project1
 *** updated 7 target(s)...
 ]]
 
@@ -159,8 +159,8 @@ function Test()
 		local pattern3 = [[
 *** found 17 target(s)...
 *** updating 2 target(s)...
-@ C.$(COMPILER).C++ <$(TOOLCHAIN_GRIST):project1>project1.o 
-@ $(C_LINK) <$(TOOLCHAIN_GRIST):project1>project1 
+@ C.$(COMPILER).C++ <$(TOOLCHAIN_GRIST):project1>project1.o
+@ $(C_LINK) <$(TOOLCHAIN_GRIST):project1>project1
 *** updated 2 target(s)...
 ]]
 		TestPattern(pattern3, RunJam())
@@ -173,8 +173,8 @@ function Test()
 		local pattern4 = [[
 *** found 17 target(s)...
 *** updating 2 target(s)...
-@ C.$(COMPILER).C++ <$(TOOLCHAIN_GRIST):project1>adefine.o 
-@ $(C_LINK) <$(TOOLCHAIN_GRIST):project1>project1 
+@ C.$(COMPILER).C++ <$(TOOLCHAIN_GRIST):project1>adefine.o
+@ $(C_LINK) <$(TOOLCHAIN_GRIST):project1>project1
 *** updated 2 target(s)...
 ]]
 		TestPattern(pattern4, RunJam())
@@ -292,7 +292,7 @@ extern void Print(const char* str);
 *** found 33 target(s)...
 ]]
 		TestPattern(pattern2, RunJam())
-	
+
 		if useChecksums then
 			pattern2 = [[
 *** found 35 target(s)...
@@ -335,17 +335,17 @@ extern void Print(const char* str);
 		TestPattern(pattern4, RunJam())
 		TestFiles(pass1Files)
 		TestDirectories(pass1Directories)
-	
+
 	else
 
 		-- First build
 		local pattern = [[
 !NEXT!*** updating 7 target(s)...
-@ C.$(COMPILER).C++ <$(TOOLCHAIN_GRIST):project1>project1.o 
-@ C.$(COMPILER).C++ <$(TOOLCHAIN_GRIST):project1>adefine.o 
-@ C.$(COMPILER).C++ <$(TOOLCHAIN_GRIST):common>print.o 
-@ $(C_ARCHIVE) <$(TOOLCHAIN_GRIST):common>common.a 
-!NEXT!@ $(C_LINK) <$(TOOLCHAIN_GRIST):project1>project1 
+@ C.$(COMPILER).C++ <$(TOOLCHAIN_GRIST):project1>project1.o
+@ C.$(COMPILER).C++ <$(TOOLCHAIN_GRIST):project1>adefine.o
+@ C.$(COMPILER).C++ <$(TOOLCHAIN_GRIST):common>print.o
+@ $(C_ARCHIVE) <$(TOOLCHAIN_GRIST):common>common.a
+!NEXT!@ $(C_LINK) <$(TOOLCHAIN_GRIST):project1>project1
 *** updated 7 target(s)...
 ]]
 
@@ -404,6 +404,7 @@ extern void Print(const char* str);
 *** found 17 target(s)...
 *** updating 2 target(s)...
 @ C.$(COMPILER).C++ <$(TOOLCHAIN_GRIST):project1>project1.o
+!NEXT!@ $(C_LINK) <$(TOOLCHAIN_GRIST):project1>project1
 *** updated 2 target(s)...
 ]]
 				TestPattern(pattern3, RunJam())
@@ -421,7 +422,7 @@ extern void Print(const char* str);
 			local pattern3 = [[
 *** found 17 target(s)...
 *** updating 2 target(s)...
-@ C.$(COMPILER).C++ <$(TOOLCHAIN_GRIST):project1>project1.o 
+@ C.$(COMPILER).C++ <$(TOOLCHAIN_GRIST):project1>project1.o
 !NEXT!@ $(C_LINK) <$(TOOLCHAIN_GRIST):project1>project1
 *** updated 2 target(s)...
 ]]
@@ -441,8 +442,8 @@ extern void Print(const char* str);
 		local pattern4 = [[
 *** found 17 target(s)...
 *** updating 2 target(s)...
-@ C.$(COMPILER).C++ <$(TOOLCHAIN_GRIST):project1>adefine.o 
-@ $(C_LINK) <$(TOOLCHAIN_GRIST):project1>project1 
+@ C.$(COMPILER).C++ <$(TOOLCHAIN_GRIST):project1>adefine.o
+@ $(C_LINK) <$(TOOLCHAIN_GRIST):project1>project1
 *** updated 2 target(s)...
 ]]
 		TestPattern(pattern4, RunJam())

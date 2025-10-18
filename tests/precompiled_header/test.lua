@@ -12,7 +12,7 @@ local originalDirs = {
 
 local pass1Directories
 local pass1Files
-if Platform == 'win32' and not Compiler then
+if Compiler == 'vc' then
 	pass1Directories = {
 		'includes/',
 		'$(TOOLCHAIN_PATH)/',
@@ -34,7 +34,7 @@ if Platform == 'win32' and not Compiler then
 	}
 
 	pass1Pattern = [[
-		*** found 21 target(s)...
+		*** found 23 target(s)...
 		*** updating 5 target(s)...
 		@ C.$(COMPILER).C++ <$(TOOLCHAIN_GRIST):main>mypch.obj
 		mypch.cpp
@@ -44,7 +44,8 @@ if Platform == 'win32' and not Compiler then
 		!NEXT!*** updated 5 target(s)...
 ]]
 
-	pass2Pattern = [[
+	if useHeaderPreScan then
+		pass2Pattern = [[
 		*** found 21 target(s)...
 		*** updating 4 target(s)...
 		@ C.$(COMPILER).C++ <$(TOOLCHAIN_GRIST):main>mypch.obj
@@ -54,8 +55,21 @@ if Platform == 'win32' and not Compiler then
 		@ $(C_LINK) <$(TOOLCHAIN_GRIST):main>main.exe
 		!NEXT!*** updated 4 target(s)...
 ]]
+	else
+		pass2Pattern = [[
+		*** found 21 target(s)...
+		*** updating 3 target(s)...
+		@ C.$(COMPILER).C++ <$(TOOLCHAIN_GRIST):main>mypch.obj
+		mypch.cpp
+		@ C.$(COMPILER).C++ <$(TOOLCHAIN_GRIST):main>main.obj
+		main.cpp
+		@ $(C_LINK) <$(TOOLCHAIN_GRIST):main>main.exe
+		!NEXT!*** updated 3 target(s)...
+]]
+	end
 
-	pass2Pattern_useChecksums = [[
+	if useHeaderPreScan then
+		pass2Pattern_useChecksums = [[
 		*** found 21 target(s)...
 		*** updating 4 target(s)...
 		@ C.$(COMPILER).C++ <$(TOOLCHAIN_GRIST):main>mypch.obj
@@ -65,6 +79,18 @@ if Platform == 'win32' and not Compiler then
 		@ $(C_LINK) <$(TOOLCHAIN_GRIST):main>main.exe
 		!NEXT!*** updated 3 target(s)...
 ]]
+	else
+		pass2Pattern_useChecksums = [[
+		*** found 21 target(s)...
+		*** updating 3 target(s)...
+		@ C.$(COMPILER).C++ <$(TOOLCHAIN_GRIST):main>mypch.obj
+		mypch.cpp
+		@ C.$(COMPILER).C++ <$(TOOLCHAIN_GRIST):main>main.obj
+		main.cpp
+		@ $(C_LINK) <$(TOOLCHAIN_GRIST):main>main.exe
+		!NEXT!*** updated 3 target(s)...
+]]
+	end
 elseif Compiler == 'mingw' then
 	pass1Directories = {
 		'includes/',
@@ -88,8 +114,8 @@ elseif Compiler == 'mingw' then
 		*** found 14 target(s)...
 		*** updating 5 target(s)...
 		&@ C.PCH <main%-%x+>mypch.h.gch
-		@ C.C++ <main>main.o 
-		@ C.C++ <main>mypch.o 
+		@ C.C++ <main>main.o
+		@ C.C++ <main>mypch.o
 		@ C.Link <main>main.exe
 		*** updated 5 target(s)...
 ]]
@@ -98,8 +124,8 @@ elseif Compiler == 'mingw' then
 		*** found 14 target(s)...
 		*** updating 5 target(s)...
 		&@ C.PCH <main%-%x+>mypch.h.gch
-		@ C.C++ <main>main.o 
-		@ C.C++ <main>mypch.o 
+		@ C.C++ <main>main.o
+		@ C.C++ <main>mypch.o
 		@ C.Link <main>main.exe
 		*** updated 5 target(s)...
 ]]
@@ -128,8 +154,8 @@ else
 		*** found 15 target(s)...
 		*** updating 6 target(s)...
 		&@ C.$(COMPILER).PCH <$(TOOLCHAIN_GRIST):main%-%x+>mypch.h.gch
-		@ C.$(COMPILER).C++ <$(TOOLCHAIN_GRIST):main>main.o 
-		@ C.$(COMPILER).C++ <$(TOOLCHAIN_GRIST):main>mypch.o 
+		@ C.$(COMPILER).C++ <$(TOOLCHAIN_GRIST):main>main.o
+		@ C.$(COMPILER).C++ <$(TOOLCHAIN_GRIST):main>mypch.o
 		@ $(C_LINK) <$(TOOLCHAIN_GRIST):main>main
 		*** updated 6 target(s)...
 ]]
@@ -138,8 +164,8 @@ else
 		*** found 15 target(s)...
 		*** updating 4 target(s)...
 		&@ C.$(COMPILER).PCH <$(TOOLCHAIN_GRIST):main%-%x+>mypch.h.gch
-		@ C.$(COMPILER).C++ <$(TOOLCHAIN_GRIST):main>main.o 
-		@ C.$(COMPILER).C++ <$(TOOLCHAIN_GRIST):main>mypch.o 
+		@ C.$(COMPILER).C++ <$(TOOLCHAIN_GRIST):main>main.o
+		@ C.$(COMPILER).C++ <$(TOOLCHAIN_GRIST):main>mypch.o
 		@ $(C_LINK) <$(TOOLCHAIN_GRIST):main>main
 		*** updated 4 target(s)...
 ]]
@@ -171,7 +197,7 @@ function Test()
 	TestPattern(pattern2, RunJam{})
 	TestDirectories(pass1Directories)
 	TestFiles(pass1Files)
-	
+
 	---------------------------------------------------------------------------
 	osprocess.sleep(1)
 	ospath.touch('includes/usefuldefine.h')
@@ -244,14 +270,38 @@ function TestChecksum()
 	TestPattern(pattern2, RunJam{})
 	TestDirectories(pass1Directories)
 	TestFiles(pass1Files)
-	
+
 	---------------------------------------------------------------------------
 	if useChecksums then
-		pattern2 = [[
+		if useHeaderPreScan then
+			pattern2 = [[
 *** found 22 target(s)...
 *** updating 4 target(s)...
 *** updated 0 target(s)...
 ]]
+		else
+			if Compiler == 'gcc' then
+				pattern2 = [[
+*** found 22 target(s)...
+*** updating 4 target(s)...
+*** updated 0 target(s)...
+]]
+			else
+				if useHeaderPreScan then
+					pattern2 = [[
+*** found 22 target(s)...
+*** updating 3 target(s)...
+*** updated 0 target(s)...
+]]
+				else
+					pattern2 = [[
+*** found 22 target(s)...
+*** updating 4 target(s)...
+*** updated 0 target(s)...
+]]
+				end
+			end
+		end
 	end
 	osprocess.sleep(1)
 	ospath.touch('includes/usefuldefine.h')

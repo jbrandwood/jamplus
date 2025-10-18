@@ -53,5 +53,8 @@ Depends $(generatedheader.h) : $(test.dll) ;
 GenerateHeader $(generatedheader.h) : $(test.dll) ;
 Clean clean : $(generatedheader.h) ;
 
+Includes [ C.GristFiles : main.c ] : $(generatedheader.h) ;
+ForceCare $(generatedheader.h) ;
+
 C.IncludeDirectories test : $(LOCATE_SOURCE) ;
 C.Application test : main.c ;

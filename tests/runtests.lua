@@ -4,6 +4,8 @@ local filefind = require 'filefind'
 
 scriptPath = ospath.simplify(ospath.make_absolute(((debug.getinfo(1, "S").source:match("@(.+)[\\/]") or '.') .. '\\'):gsub('\\', '/'):lower()))
 
+useHeaderPreScan = true
+
 function io.writeall(filename, buffer)
     local file = io.open(filename, 'wb')
     file:write(buffer)
@@ -32,13 +34,18 @@ function RunJam(commandLine)
 	table.insert(commandLine, 1, ospath.escape(JAM_EXECUTABLE))
 	table.insert(commandLine, 2, '-j1')
 
-	if Compiler then
+	if Compiler  and  Compiler ~= 'vc' then
 		table.insert(commandLine, 3, 'COMPILER=' .. Compiler)
 	end
 
 	commandLine[#commandLine + 1] = 'c.toolchain=' .. PlatformDir .. '/release'
 	if useChecksums then
 		commandLine[#commandLine + 1] = 'JAM_CHECKSUMS=1'
+	end
+	if useHeaderPreScan then
+		commandLine[#commandLine + 1] = 'JAM_HEADERPRESCAN=1'
+	else
+		commandLine[#commandLine + 1] = 'JAM_HEADERPRESCAN=0'
 	end
 
 	commandLine.stderr_to_stdout = true
@@ -91,6 +98,9 @@ function TestPattern(patterns, lines)
 		local line = lines[lineIndex]:gsub('^%s+', ''):gsub('%s+$', '')
 		line = line:gsub('@%s*%d+%%', '@')
 
+		line = line:gsub('C%.vc%.clang%.', 'C.clang.')
+		line = line:gsub('C%.macosx%.clang%.', 'C.clang.')
+
 		local pattern
 		local ooo
 		local ooogroup = oooGroupPatternsToFind[1] ~= nil
@@ -100,12 +110,16 @@ function TestPattern(patterns, lines)
 				pattern = pattern:gsub('$%(SUFEXE%)', SUFEXE)
 				pattern = pattern:gsub('$%(COMPILER%)', COMPILER)
 				pattern = pattern:gsub('$%(C_CC%)', C_CC)
+				pattern = pattern:gsub('$%(C_CPP%)', C_CPP)
 				pattern = pattern:gsub('$%(C_ARCHIVE%)', C_ARCHIVE)
 				pattern = pattern:gsub('$%(C_LINK%)', C_LINK)
 				pattern = pattern:gsub('$%(PLATFORM%)', PlatformDir)
 				pattern = pattern:gsub('$%(PLATFORM_CONFIG%)', PlatformDir .. '!release')
 				pattern = pattern:gsub('$%(TOOLCHAIN_GRIST%)', PlatformDir .. '/release')
 				pattern = pattern:gsub('$%(CWD%)', patterncwd)
+				pattern = pattern:gsub('$%(PLATFORM_CONFIG_DIR%)', PlatformDir .. '-release')
+				pattern = pattern:gsub('$%(TOOLCHAIN_PATH%)', '.build/' .. PlatformDir .. '-release/TOP')
+				pattern = pattern:gsub('$%(TOOLCHAIN_PATH_RE%)', '.build/' .. PlatformDir .. '%%-release/TOP')
 			end
 		end
 
@@ -123,12 +137,16 @@ function TestPattern(patterns, lines)
 					pattern = pattern:gsub('$%(SUFEXE%)', SUFEXE)
 					pattern = pattern:gsub('$%(COMPILER%)', COMPILER)
 					pattern = pattern:gsub('$%(C_CC%)', C_CC)
+					pattern = pattern:gsub('$%(C_CPP%)', C_CPP)
 					pattern = pattern:gsub('$%(C_ARCHIVE%)', C_ARCHIVE)
 					pattern = pattern:gsub('$%(C_LINK%)', C_LINK)
 					pattern = pattern:gsub('$%(PLATFORM%)', PlatformDir)
 					pattern = pattern:gsub('$%(PLATFORM_CONFIG%)', PlatformDir .. '!release')
-					pattern = pattern:gsub('$%(TOOLCHAIN_GRIST%)', 'c/' .. PlatformDir .. '/release')
+					pattern = pattern:gsub('$%(TOOLCHAIN_GRIST%)', PlatformDir .. '/release')
 					pattern = pattern:gsub('$%(CWD%)', patterncwd)
+					pattern = pattern:gsub('$%(PLATFORM_CONFIG_DIR%)', PlatformDir .. '-release')
+					pattern = pattern:gsub('$%(TOOLCHAIN_PATH%)', '.build/' .. PlatformDir .. '-release/TOP')
+					pattern = pattern:gsub('$%(TOOLCHAIN_PATH_RE%)', '.build/' .. PlatformDir .. '%%-release/TOP')
 					oooGroupPatternsToFind[#oooGroupPatternsToFind + 1] = pattern
 					pattern = nil
 					patternIndex = patternIndex + 1
@@ -169,6 +187,17 @@ function TestPattern(patterns, lines)
 		end
 
 		local patternMatches = false
+
+		if pattern  and  pattern:sub(1, 5) == '!HPS!' then
+			if not useHeaderPreScan then
+				pattern = nil
+				patternMatches = true
+				lineIndex = lineIndex - 1
+			else
+				pattern = pattern:sub(6)
+			end
+		end
+
 		if pattern then
 			if pattern:sub(1, 1) == '&' then
 				patternMatches = not not line:match(pattern:sub(2))
@@ -404,7 +433,11 @@ function TestFiles(expectedFiles)
 	local extraFiles = {}
 	for foundFile in pairs(foundFilesMap) do
 		if foundFile ~= 'test.lua'  and  foundFile ~= 'test.out'  and  not foundFile:match('%.swp')
-				and  not foundFile:match('~$')  and  not foundFile:match('%.swo') then
+				and  not foundFile:match('~$')  and  not foundFile:match('%.swo')
+				and  not foundFile:match('%.cpp%.json$')  and  not foundFile:match('%.c%.json$')
+				and  not foundFile:match('%.cpp%.d$')  and  not foundFile:match('%.c%.d$')  and  not foundFile:match('%.h%.d$')  and  not foundFile:match('%.pch%.d$')
+				and  not foundFile:match('%.pdb$')
+				then
 			if not expectedFilesMap[foundFile] then
 				local found = false
 				for _, fileName in ipairs(newExpectedFiles) do
@@ -450,11 +483,7 @@ end
 if os.getenv("OS") == "Windows_NT"  or  os.getenv("OS") == "NT" then
 	Platform = 'win32'
 	PlatformDir = 'win64'
-	SUFEXE = '.exe'
 	COMPILER = 'vc'
-	C_CC = 'C.vc.CC'
-	C_ARCHIVE = 'C.vc.Archive'
-	C_LINK = 'C.vc.Link'
 else
 	local f = io.popen('uname')
 	if f then
@@ -470,19 +499,22 @@ else
 		PlatformDir = 'macosx32'
 		COMPILER = 'clang'
 		C_CC = 'C.clang.CC'
+		C_CPP = 'C.clang.C++'
 		C_ARCHIVE = 'C.macosx.clang.Archive'
 		C_LINK = 'C.macosx.clang.Link'
 	elseif uname == 'linux' then
 		Platform = 'linux'
 		PlatformDir = 'linux32'
-		if Compiler == 'clang' then
+		if not Compiler  or  Compiler == 'clang' then
 			COMPILER = 'clang'
 			C_CC = 'C.clang.CC'
+			C_CPP = 'C.clang.C++'
 			C_ARCHIVE = 'C.clang.Archive'
 			C_LINK = 'C.clang.Link'
 		else
 			COMPILER = 'gcc'
 			C_CC = 'C.gcc.CC'
+			C_CPP = 'C.gcc.C++'
 			C_ARCHIVE = 'C.gcc.Archive'
 			C_LINK = 'C.gcc.Link'
 		end
@@ -491,6 +523,7 @@ else
 		PlatformDir = 'linux32'
 		COMPILER = 'clang'
 		C_CC = 'C.clang.CC'
+		C_CPP = 'C.clang.C++'
 		C_ARCHIVE = 'C.clang.Archive'
 		C_LINK = 'C.clang.Link'
 	end
@@ -498,6 +531,7 @@ else
 	SUFEXE = ''
 end
 
+Compiler = COMPILER
 
 local dirs
 
@@ -521,19 +555,34 @@ if arg[1] == '--compiler' then
 	table.remove(arg, 1)
 end
 
-if Platform == 'linux' then
-	if Compiler == 'clang' then
-		COMPILER = 'clang'
-		C_CC = 'C.clang.CC'
-		C_ARCHIVE = 'C.clang.Archive'
-		C_LINK = 'C.clang.Link'
-	else
-		COMPILER = 'gcc'
-		C_CC = 'C.gcc.CC'
-		C_ARCHIVE = 'C.gcc.Archive'
-		C_LINK = 'C.gcc.Link'
+if Compiler == 'vc' then
+	SUFEXE = '.exe'
+	COMPILER = 'vc'
+	C_CC = 'C.vc.CC'
+	C_CPP = 'C.vc.C++'
+	C_ARCHIVE = 'C.vc.Archive'
+	C_LINK = 'C.vc.Link'
+elseif Compiler == 'clang' then
+	if Platform == 'win32' then
+		SUFEXE = '.exe'
 	end
+	COMPILER = 'clang'
+	C_CC = 'C.clang.CC'
+	C_CPP = 'C.clang.C++'
+	C_ARCHIVE = 'C.clang.Archive'
+	C_LINK = 'C.clang.Link'
+else
+	if Platform == 'win32' then
+		SUFEXE = '.exe'
+	end
+	COMPILER = 'gcc'
+	C_CC = 'C.gcc.CC'
+	C_CPP = 'C.gcc.C++'
+	C_ARCHIVE = 'C.gcc.Archive'
+	C_LINK = 'C.gcc.Link'
 end
+
+
 
 if arg[1] then
 	dirs = {}

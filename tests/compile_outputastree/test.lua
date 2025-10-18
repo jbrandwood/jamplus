@@ -30,7 +30,7 @@ function Test()
 		"outer/outer.cpp",
 		"outerb/outer.cpp",
 	}
-	
+
 	local originalDirs =
 	{
 		"liba/",
@@ -57,7 +57,7 @@ function Test()
 		TestFiles(originalFiles)
 	end
 
-	if Platform == 'win32'  and  Compiler ~= 'mingw' then
+	if Compiler == 'vc' then
 		local dirs =
 		{
 			'.build/',
@@ -111,7 +111,7 @@ function Test()
 			'libc/src/win32/Loading/',
 			'libc/src/win32/Saving/',
 		}
-	
+
 		local files =
 		{
 			'Jamfile.jam',
@@ -190,7 +190,7 @@ function Test()
 *** updated 20 target(s)...
 ]]
 
-			TestPattern(pattern, RunJam{ 'liba', 'libb', 'libc' })
+			TestPattern(pattern, RunJam{ 'liba,libb,libc' })
 			TestDirectories(dirs)
 			TestFiles(files)
 		end
@@ -201,7 +201,7 @@ function Test()
 *** found 64 target(s)...
 ]]
 
-			TestPattern(pattern, RunJam{ 'liba', 'libb', 'libc' })
+			TestPattern(pattern, RunJam{ 'liba,libb,libc' })
 			TestDirectories(dirs)
 			TestFiles(files)
 		end
@@ -263,7 +263,7 @@ function Test()
 			'libc/src/win32/Loading/',
 			'libc/src/win32/Saving/',
 		}
-	
+
 		local files =
 		{
 			'Jamfile.jam',
@@ -317,31 +317,31 @@ function Test()
 			local pattern = [[
 *** found 54 target(s)...
 *** updating 32 target(s)...
-@ C.$(COMPILER).C++ <$(TOOLCHAIN_GRIST):liba>rootfile.o 
-@ C.$(COMPILER).C++ <$(TOOLCHAIN_GRIST):liba>treea/treeb/deepfile.o 
-@ C.$(COMPILER).C++ <$(TOOLCHAIN_GRIST):liba>../outer/outer.o 
-@ $(C_ARCHIVE) <$(TOOLCHAIN_GRIST):liba>liba.a 
+@ C.$(COMPILER).C++ <$(TOOLCHAIN_GRIST):liba>rootfile.o
+@ C.$(COMPILER).C++ <$(TOOLCHAIN_GRIST):liba>treea/treeb/deepfile.o
+@ C.$(COMPILER).C++ <$(TOOLCHAIN_GRIST):liba>../outer/outer.o
+@ $(C_ARCHIVE) <$(TOOLCHAIN_GRIST):liba>liba.a
 !NEXT!*** updated 8 target(s)...
-@ C.$(COMPILER).C++ <$(TOOLCHAIN_GRIST):libb>filea.o 
-@ C.$(COMPILER).C++ <$(TOOLCHAIN_GRIST):libb>fileb.o 
-@ C.$(COMPILER).C++ <$(TOOLCHAIN_GRIST):libb>filec.o 
-@ C.$(COMPILER).C++ <$(TOOLCHAIN_GRIST):libb>onelevel/oneleveldeeper.o 
-@ C.$(COMPILER).C++ <$(TOOLCHAIN_GRIST):libb>../outerb/outer.o 
-@ $(C_ARCHIVE) <$(TOOLCHAIN_GRIST):libb>libb.a 
+@ C.$(COMPILER).C++ <$(TOOLCHAIN_GRIST):libb>filea.o
+@ C.$(COMPILER).C++ <$(TOOLCHAIN_GRIST):libb>fileb.o
+@ C.$(COMPILER).C++ <$(TOOLCHAIN_GRIST):libb>filec.o
+@ C.$(COMPILER).C++ <$(TOOLCHAIN_GRIST):libb>onelevel/oneleveldeeper.o
+@ C.$(COMPILER).C++ <$(TOOLCHAIN_GRIST):libb>../outerb/outer.o
+@ $(C_ARCHIVE) <$(TOOLCHAIN_GRIST):libb>libb.a
 !NEXT!*** updated 10 target(s)...
-!NEXT!@ C.$(COMPILER).C++ <$(TOOLCHAIN_GRIST):libc>src/Loading/Loading.o 
-!NEXT!@ C.$(COMPILER).C++ <$(TOOLCHAIN_GRIST):libc>src/Saving/Saving1.o 
-!NEXT!@ C.$(COMPILER).C++ <$(TOOLCHAIN_GRIST):libc>src/Saving/Saving3.o 
-!NEXT!@ C.$(COMPILER).C++ <$(TOOLCHAIN_GRIST):libc>src/Saving/SavingB.o 
-!NEXT!@ C.$(COMPILER).C++ <$(TOOLCHAIN_GRIST):libc>src/integral/integral1.o 
-!NEXT!@ C.$(COMPILER).C++ <$(TOOLCHAIN_GRIST):libc>src/integral/integral2.o 
-!NEXT!@ C.$(COMPILER).C++ <$(TOOLCHAIN_GRIST):libc>src/memory/memorya.o 
-!NEXT!@ C.$(COMPILER).C++ <$(TOOLCHAIN_GRIST):libc>src/memory/memoryb.o 
-!NEXT!@ $(C_ARCHIVE) <$(TOOLCHAIN_GRIST):libc>libc.a 
+!NEXT!@ C.$(COMPILER).C++ <$(TOOLCHAIN_GRIST):libc>src/Loading/Loading.o
+!NEXT!@ C.$(COMPILER).C++ <$(TOOLCHAIN_GRIST):libc>src/Saving/Saving1.o
+!NEXT!@ C.$(COMPILER).C++ <$(TOOLCHAIN_GRIST):libc>src/Saving/Saving3.o
+!NEXT!@ C.$(COMPILER).C++ <$(TOOLCHAIN_GRIST):libc>src/Saving/SavingB.o
+!NEXT!@ C.$(COMPILER).C++ <$(TOOLCHAIN_GRIST):libc>src/integral/integral1.o
+!NEXT!@ C.$(COMPILER).C++ <$(TOOLCHAIN_GRIST):libc>src/integral/integral2.o
+!NEXT!@ C.$(COMPILER).C++ <$(TOOLCHAIN_GRIST):libc>src/memory/memorya.o
+!NEXT!@ C.$(COMPILER).C++ <$(TOOLCHAIN_GRIST):libc>src/memory/memoryb.o
+!NEXT!@ $(C_ARCHIVE) <$(TOOLCHAIN_GRIST):libc>libc.a
 !NEXT!*** updated 14 target(s)...
 ]]
 
-			TestPattern(pattern, RunJam{ 'liba', 'libb', 'libc' })
+			TestPattern(pattern, RunJam{ 'liba,libb,libc' })
 			TestDirectories(dirs)
 			TestFiles(files)
 		end
@@ -352,7 +352,7 @@ function Test()
 *** found 54 target(s)...
 ]]
 
-			TestPattern(pattern, RunJam{ 'liba', 'libb', 'libc' })
+			TestPattern(pattern, RunJam{ 'liba,libb,libc' })
 			TestDirectories(dirs)
 			TestFiles(files)
 		end

@@ -3,7 +3,7 @@ DEPCACHE = standard ;
 
 actions TestAction {
 	echo Executing test action for $(<)
-	echo _ >$(<)
+	echo $(COMMAND_LINE_VERSION) >$(<)
 }
 
 rule TestVersion {
@@ -14,6 +14,7 @@ rule Test TARGET {
 	Depends all : $(TARGET) ;
 	Clean clean : $(TARGET) ;
 	UseCommandLine $(TARGET) : [ TestVersion ] ;
+	COMMAND_LINE_VERSION on $(TARGET) = [ TestVersion ] ;
 	TestAction $(TARGET) ;
 }
 

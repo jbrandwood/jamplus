@@ -5,6 +5,7 @@ JamPlus contains an extensive test suite covering a majority of its features. Th
 
 The following is a high-level list of what each directory's purpose is:
 
+  * **actions_updated** - Tests the "actions updated" flag and its ability to remove the target files when the build fails. Visual C++ does not remove .obj files on compilation failure.
   * **alternate_jambase_in_workspace/examples/** - Illustrates overriding the default generated Jambase.jam within an out-of-source build directory created with `jam --workspace -jambase=TheNewJambase.jam`.
   * **autosettings/** - Shows how the third argument to an action is used to further alter the environment the action runs within. For example, within the C module, the third argument is a 'target' containing information about the compiler suite and what applications and settings to use for a build. The **autosettings** test is a simpler version of that.
   * **batch/** - An example of using the `actions` modifier `maxtargets` to limit the number of targets batched to an action at a time.
@@ -31,13 +32,13 @@ The following is a high-level list of what each directory's purpose is:
   * **filecache_luamd5callback/** - A more advanced transformation test showing how to generate custom checksums from `.png` and `.zip` files. The built-in checksum reads the entire file and may be slow depending on your file's size. This test reads just portions of standard `.png` and `.zip` files to generate a reasonable enough checksum for the job.
   * **forceinclude/** - Tests both project-wide and single file force includes for C projects.
   * **fx/** - TODO: Broken.
+  * **generate_libs/** - Used to test performance for a lot of libraries and files.
   * **generatedc/** - Tests generating a C file and then using it to build an executable.
   * **generatedheader/** - A suite of tests generating header files for C code.
     * **circular/** - Tests generating a header used in a circular fashion.
     * **scancontents-multiproject/** - Tests generating a header and using it properly across multiple libraries and an executable.
     * **scancontents-single/** - Tests generating a header and using `ScanContents` to detect whether the generated header file actually changes to initiate a build. Note: The `ScanContents` facility is nowhere near as powerful as the `JAM_CHECKSUMS` support, so consider just using `JAM_CHECKSUMS` instead.
     * **simple/** - Tests generating a simple header and using it in an executable build.
-  * **generate_libs/** - Used to test performance for a lot of libraries and files.
   * **glob/** - Tests the `Glob` and `ListSort` rules.
   * **groupbyvar/** - Tests the `GroupByVar` rule.
   * **helloworld/** - It's a "Hello, world!" test. That is all.
@@ -66,6 +67,7 @@ The following is a high-level list of what each directory's purpose is:
   * **precompiled_header/** - Tests creation and usage of a C++ precompiled header.
   * **precompiled_header_no_cpp/** - Tests creation and usage of a C++ precompiled header without having a `.cpp` file to generate the precompiled header with, a necessity with Visual C++.
   * **precompiled_header_no_cpp_pch/** - Tests automatic creation of a C++ precompiled header without having a `.cpp` file.
+  * **relative_path/** - Tests the built-in `MakeRelativePath` rule.
   * **scancontents/** - Shows simple generation of a `.h` file with the `ScanContents` flag applied. A `JAM_CHECKSUMS` build is far better to use than `ScanContents`, although `ScanContents` works in simple cases.
   * **semicolon/** - Tests JamPlus' extensions for detection of improper usage of colons and semicolons, since Jam is a whitespace-significant language.
   * **sharedlib/** - Tests various scenarios for building a shared library.
@@ -78,4 +80,5 @@ The following is a high-level list of what each directory's purpose is:
   * **workspace/** - Shows some additional workspace generation techniques.
     * **external_project/** - Illustrates how to add an external non-Jam generated project to a generated workspace.
     * **user_configs/** - Illustrates how to add user configurations and altering the toolchain to account for the changes.
+  * **xxh3/** - Tests the `xxh3_128bits` rule.
 
