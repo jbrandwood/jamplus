@@ -1295,7 +1295,7 @@ rule C.RuntimeType TARGET : TYPE {
 }
 
 
-rule C.CStandard TARGET : VERSION {
+rule C.CStandard TARGET : VERSION : OPTIONS {
 	TARGET = [ C.ActiveTarget $(TARGET) ] ;
 	local theRule ;
 	for theRule in $(C._CStandard:Z=$(C.COMPILER_SUITE_SYMBOL)) {
@@ -1312,7 +1312,7 @@ rule C.C++Exceptions TARGET : TYPE {
 	}
 }
 
-rule C.C++Standard TARGET : VERSION {
+rule C.C++Standard TARGET : VERSION : OPTIONS {
 	TARGET = [ C.ActiveTarget $(TARGET) ] ;
 	local theRule ;
 	for theRule in $(C._C++Standard:Z=$(C.COMPILER_SUITE_SYMBOL)) {
