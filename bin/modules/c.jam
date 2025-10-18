@@ -1127,14 +1127,14 @@ rule C.NoPrecompiledHeader TARGET : FILES {
 
 rule C.Flags TARGET : TYPE : FLAGS : OPTIONS {
 	C.ActiveTarget $(TARGET) ;
-	$(TYPE)FLAGS on $(C.ACTIVE_TOOLCHAIN_TARGET) += $(FLAGS) ;
+	$(TYPE)FLAGS on $(C.ACTIVE_TOOLCHAIN_TARGET) |= $(FLAGS) ;
 
 	if public in $(OPTIONS) {
 		__PUBLIC on $(C.ACTIVE_TOOLCHAIN_TARGET) = true ;
-		PUBLIC_$(TYPE)FLAGS on $(C.ACTIVE_TOOLCHAIN_TARGET) += $(FLAGS) ;
+		PUBLIC_$(TYPE)FLAGS on $(C.ACTIVE_TOOLCHAIN_TARGET) |= $(FLAGS) ;
 
 		if ! $(TYPE) in $(PUBLIC_TYPE_FLAGS_USED:Z=$(C.ACTIVE_TOOLCHAIN_TARGET)) {
-			PUBLIC_TYPE_FLAGS_USED on $(C.ACTIVE_TOOLCHAIN_TARGET) += $(TYPE) ;
+			PUBLIC_TYPE_FLAGS_USED on $(C.ACTIVE_TOOLCHAIN_TARGET) |= $(TYPE) ;
 		}
 	}
 }
@@ -1152,12 +1152,12 @@ rule C.C++Flags TARGET : FLAGS : OPTIONS {
 
 rule C.AddFlags TARGET : FLAGS : OPTIONS {
 	C.ActiveTarget $(TARGET) ;
-	FLAGS_TO_ADD on $(C.ACTIVE_TOOLCHAIN_TARGET) += $(FLAGS) ;
+	FLAGS_TO_ADD on $(C.ACTIVE_TOOLCHAIN_TARGET) |= $(FLAGS) ;
 	FLAGS_TO_REMOVE on $(C.ACTIVE_TOOLCHAIN_TARGET) -= $(FLAGS) ;
 
 	if public in $(OPTIONS) {
 		__PUBLIC on $(C.ACTIVE_TOOLCHAIN_TARGET) = true ;
-		PUBLIC_FLAGS_TO_ADD on $(C.ACTIVE_TOOLCHAIN_TARGET) += $(FLAGS) ;
+		PUBLIC_FLAGS_TO_ADD on $(C.ACTIVE_TOOLCHAIN_TARGET) |= $(FLAGS) ;
 		PUBLIC_FLAGS_TO_REMOVE on $(C.ACTIVE_TOOLCHAIN_TARGET) -= $(FLAGS) ;
 	}
 }
@@ -1166,12 +1166,12 @@ rule C.AddFlags TARGET : FLAGS : OPTIONS {
 rule C.RemoveFlags TARGET : FLAGS : OPTIONS {
 	C.ActiveTarget $(TARGET) ;
 	FLAGS_TO_ADD on $(C.ACTIVE_TOOLCHAIN_TARGET) -= $(FLAGS) ;
-	FLAGS_TO_REMOVE on $(C.ACTIVE_TOOLCHAIN_TARGET) += $(FLAGS) ;
+	FLAGS_TO_REMOVE on $(C.ACTIVE_TOOLCHAIN_TARGET) |= $(FLAGS) ;
 
 	if public in $(OPTIONS) {
 		__PUBLIC on $(C.ACTIVE_TOOLCHAIN_TARGET) = true ;
 		PUBLIC_FLAGS_TO_ADD on $(C.ACTIVE_TOOLCHAIN_TARGET) -= $(FLAGS) ;
-		PUBLIC_FLAGS_TO_REMOVE on $(C.ACTIVE_TOOLCHAIN_TARGET) += $(FLAGS) ;
+		PUBLIC_FLAGS_TO_REMOVE on $(C.ACTIVE_TOOLCHAIN_TARGET) |= $(FLAGS) ;
 	}
 }
 
@@ -1227,10 +1227,10 @@ rule C.LinkDirectories TARGET : DIRECTORIES : OPTIONS {
 
 rule C._LinkFlagsHelper TARGET : FLAGS : OPTIONS {
 	C.ActiveTarget $(TARGET) ;
-	LINKFLAGS on $(C.ACTIVE_TOOLCHAIN_TARGET) += $(FLAGS) ;
+	LINKFLAGS on $(C.ACTIVE_TOOLCHAIN_TARGET) |= $(FLAGS) ;
 	if public in $(OPTIONS) {
 		__PUBLIC on $(C.ACTIVE_TOOLCHAIN_TARGET) = true ;
-		PUBLIC_LINKFLAGS on $(C.ACTIVE_TOOLCHAIN_TARGET) += $(FLAGS) ;
+		PUBLIC_LINKFLAGS on $(C.ACTIVE_TOOLCHAIN_TARGET) |= $(FLAGS) ;
 	}
 }
 
@@ -1558,10 +1558,10 @@ rule C._retrieveOutputName TARGET : SUFFIX {
 
 rule C.Defines TARGET : DEFINES : OPTIONS {
 	C.ActiveTarget $(TARGET) ;
-	DEFINES on $(C.ACTIVE_TOOLCHAIN_TARGET) += $(DEFINES) ;
+	DEFINES on $(C.ACTIVE_TOOLCHAIN_TARGET) |= $(DEFINES) ;
 	if public in $(OPTIONS) {
 		__PUBLIC on $(C.ACTIVE_TOOLCHAIN_TARGET) = true ;
-		PUBLIC_DEFINES on $(C.ACTIVE_TOOLCHAIN_TARGET) += $(DEFINES) ;
+		PUBLIC_DEFINES on $(C.ACTIVE_TOOLCHAIN_TARGET) |= $(DEFINES) ;
 	}
 }
 
@@ -1622,8 +1622,10 @@ rule C.Inherits TARGET : INHERITS_TARGETS : OPTIONS {
 	}
 
 	if $(TARGETINFO_LOCATE) {
-		LINKLIBS on $(C.ACTIVE_TOOLCHAIN_TARGET) += $(INHERITS_TARGETS) ;
-		PUBLIC_LINKLIBS on $(C.ACTIVE_TOOLCHAIN_TARGET) += $(INHERITS_TARGETS) ;
+		LINKLIBS on $(C.ACTIVE_TOOLCHAIN_TARGET) |= $(INHERITS_TARGETS) ;
+		#LINKLIBS on $(C.ACTIVE_TOOLCHAIN_TARGET) = [ ListAppendUnique $(LINKLIBS:Z=$(C.ACTIVE_TOOLCHAIN_TARGET)) : $(INHERITS_TARGETS) ] ;
+		PUBLIC_LINKLIBS on $(C.ACTIVE_TOOLCHAIN_TARGET) |= $(INHERITS_TARGETS) ;
+		#PUBLIC_LINKLIBS on $(C.ACTIVE_TOOLCHAIN_TARGET) = [ ListAppendUnique $(PUBLIC_LINKLIBS:Z=$(C.ACTIVE_TOOLCHAIN_TARGET)) : $(INHERITS_TARGETS) ] ;
 	}
 
 	local suflib = $(SUFLIB:Z=$(C.COMPILER_SUITE_SYMBOL)) ;
@@ -1636,8 +1638,10 @@ rule C.Inherits TARGET : INHERITS_TARGETS : OPTIONS {
 			gristLibraries += $(lib) ;
 		}
 	}
-	NEEDLIBS on $(C.ACTIVE_TOOLCHAIN_TARGET) += $(gristLibraries) ;
-	PUBLIC_NEEDLIBS on $(C.ACTIVE_TOOLCHAIN_TARGET) += $(gristLibraries) ;
+	NEEDLIBS on $(C.ACTIVE_TOOLCHAIN_TARGET) |= $(gristLibraries) ;
+	#NEEDLIBS on $(C.ACTIVE_TOOLCHAIN_TARGET) = [ ListAppendUnique $(NEEDLIBS:Z=$(C.ACTIVE_TOOLCHAIN_TARGET)) : $(gristLibraries) ] ;
+	PUBLIC_NEEDLIBS on $(C.ACTIVE_TOOLCHAIN_TARGET) |= $(gristLibraries) ;
+	#PUBLIC_NEEDLIBS on $(C.ACTIVE_TOOLCHAIN_TARGET) = [ ListAppendUnique $(PUBLIC_NEEDLIBS:Z=$(C.ACTIVE_TOOLCHAIN_TARGET)) : $(gristLibraries) ] ;
 
 	local optional ;
 	if optional in $(OPTIONS)  ||  $(C.PLATFORM) = *  ||  $(TARGETINFO_LOCATE) {
@@ -1661,67 +1665,85 @@ rule C.Inherits TARGET : INHERITS_TARGETS : OPTIONS {
 		for type in $(types) {
 			local flags = $(PUBLIC_$(type)FLAGS:Z=$(inheritsTarget)) ;
 			if $(flags) {
-				$(type)FLAGS on $(C.ACTIVE_TOOLCHAIN_TARGET) += $(flags) ;
+				$(type)FLAGS on $(C.ACTIVE_TOOLCHAIN_TARGET) |= $(flags) ;
+				#$(type)FLAGS on $(C.ACTIVE_TOOLCHAIN_TARGET) = [ ListAppendUnique $($(type)FLAGS:Z=$(C.ACTIVE_TOOLCHAIN_TARGET)) : $(flags) ] ;
 				if $(public) {
-					PUBLIC_$(type)FLAGS on $(C.ACTIVE_TOOLCHAIN_TARGET) += $(flags) ;
+					PUBLIC_$(type)FLAGS on $(C.ACTIVE_TOOLCHAIN_TARGET) |= $(flags) ;
+					#PUBLIC_$(type)FLAGS on $(C.ACTIVE_TOOLCHAIN_TARGET) = [ ListAppendUnique $(PUBLIC_$(type)FLAGS:Z=$(C.ACTIVE_TOOLCHAIN_TARGET)) : $(flags) ] ;
 				}
 			}
 		}
 
 		local public_FLAGS_TO_ADD = $(PUBLIC_FLAGS_TO_ADD:Z=$(inheritsTarget)) ;
 		if $(public_FLAGS_TO_ADD) {
-			FLAGS_TO_ADD on $(C.ACTIVE_TOOLCHAIN_TARGET) += $(public_FLAGS_TO_ADD) ;
+			FLAGS_TO_ADD on $(C.ACTIVE_TOOLCHAIN_TARGET) |= $(public_FLAGS_TO_ADD) ;
+			#FLAGS_TO_ADD on $(C.ACTIVE_TOOLCHAIN_TARGET) = [ ListAppendUnique $(FLAGS_TO_ADD:Z=$(C.ACTIVE_TOOLCHAIN_TARGET)) : $(public_FLAGS_TO_ADD) ] ;
 			if $(public) {
-				PUBLIC_FLAGS_TO_ADD on $(C.ACTIVE_TOOLCHAIN_TARGET) += $(public_FLAGS_TO_ADD) ;
+				PUBLIC_FLAGS_TO_ADD on $(C.ACTIVE_TOOLCHAIN_TARGET) |= $(public_FLAGS_TO_ADD) ;
+				#PUBLIC_FLAGS_TO_ADD on $(C.ACTIVE_TOOLCHAIN_TARGET) = [ ListAppendUnique $(PUBLIC_FLAGS_TO_ADD:Z=$(C.ACTIVE_TOOLCHAIN_TARGET)) : $(public_FLAGS_TO_ADD) ] ;
 			}
 		}
 
 		local public_FLAGS_TO_REMOVE = $(PUBLIC_FLAGS_TO_REMOVE:Z=$(inheritsTarget)) ;
 		if $(public_FLAGS_TO_REMOVE) {
-			FLAGS_TO_REMOVE on $(C.ACTIVE_TOOLCHAIN_TARGET) += $(public_FLAGS_TO_REMOVE) ;
+			FLAGS_TO_REMOVE on $(C.ACTIVE_TOOLCHAIN_TARGET) |= $(public_FLAGS_TO_REMOVE) ;
+			#FLAGS_TO_REMOVE on $(C.ACTIVE_TOOLCHAIN_TARGET) = [ ListAppendUnique $(FLAGS_TO_REMOVE:Z=$(C.ACTIVE_TOOLCHAIN_TARGET)) : $(public_FLAGS_TO_REMOVE) ] ;
 			if $(public) {
-				PUBLIC_FLAGS_TO_REMOVE on $(C.ACTIVE_TOOLCHAIN_TARGET) += $(public_FLAGS_TO_REMOVE) ;
+				PUBLIC_FLAGS_TO_REMOVE on $(C.ACTIVE_TOOLCHAIN_TARGET) |= $(public_FLAGS_TO_REMOVE) ;
+				#PUBLIC_FLAGS_TO_REMOVE on $(C.ACTIVE_TOOLCHAIN_TARGET) = [ ListAppendUnique $(PUBLIC_FLAGS_TO_REMOVE:Z=$(C.ACTIVE_TOOLCHAIN_TARGET)) : $(public_FLAGS_TO_REMOVE) ] ;
 			}
 		}
 
 		local publicDefines = $(PUBLIC_DEFINES:Z=$(inheritsTarget)) ;
 		if $(publicDefines) {
-			DEFINES on $(C.ACTIVE_TOOLCHAIN_TARGET) += $(publicDefines) ;
+			DEFINES on $(C.ACTIVE_TOOLCHAIN_TARGET) |= $(publicDefines) ;
+			#DEFINES on $(C.ACTIVE_TOOLCHAIN_TARGET) = [ ListAppendUnique $(DEFINES:Z=$(C.ACTIVE_TOOLCHAIN_TARGET)) : $(publicDefines) ] ;
 			if $(public) {
-				PUBLIC_DEFINES on $(C.ACTIVE_TOOLCHAIN_TARGET) += $(publicDefines) ;
+				PUBLIC_DEFINES on $(C.ACTIVE_TOOLCHAIN_TARGET) |= $(publicDefines) ;
+				#PUBLIC_PUBLIC_DEFINES on $(C.ACTIVE_TOOLCHAIN_TARGET) = [ ListAppendUnique $(DEFINES:Z=$(C.ACTIVE_TOOLCHAIN_TARGET)) : $(publicDefines) ] ;
 			}
 		}
 
 		local publicHdrs = $(PUBLIC_HDRS:Z=$(inheritsTarget)) ;
 		if $(publicHdrs) {
-			HDRS on $(C.ACTIVE_TOOLCHAIN_TARGET) += $(publicHdrs) ;
+			HDRS on $(C.ACTIVE_TOOLCHAIN_TARGET) |= $(publicHdrs) ;
+			#HDRS on $(C.ACTIVE_TOOLCHAIN_TARGET) = [ ListAppendUnique $(HDRS:Z=$(C.ACTIVE_TOOLCHAIN_TARGET)) : $(publicHdrs) ] ;
 			if $(public) {
-				PUBLIC_HDRS on $(C.ACTIVE_TOOLCHAIN_TARGET) += $(publicHdrs) ;
+				PUBLIC_HDRS on $(C.ACTIVE_TOOLCHAIN_TARGET) |= $(publicHdrs) ;
+				#PUBLIC_HDRS on $(C.ACTIVE_TOOLCHAIN_TARGET) = [ ListAppendUnique $(PUBLIC_HDRS:Z=$(C.ACTIVE_TOOLCHAIN_TARGET)) : $(publicHdrs) ] ;
 			}
 		}
 
 		local publicLinkLibs = $(PUBLIC_LINKLIBS:Z=$(inheritsTarget)) ;
 		if $(publicLinkLibs) {
-			LINKLIBS on $(C.ACTIVE_TOOLCHAIN_TARGET) += $(publicLinkLibs) ;
-			PUBLIC_LINKLIBS on $(C.ACTIVE_TOOLCHAIN_TARGET) += $(publicLinkLibs) ;
+			LINKLIBS on $(C.ACTIVE_TOOLCHAIN_TARGET) |= $(publicLinkLibs) ;
+			#LINKLIBS on $(C.ACTIVE_TOOLCHAIN_TARGET) = [ ListAppendUnique $(LINKLIBS:Z=$(C.ACTIVE_TOOLCHAIN_TARGET)) : $(publicLinkLibs) ] ;
+			PUBLIC_LINKLIBS on $(C.ACTIVE_TOOLCHAIN_TARGET) |= $(publicLinkLibs) ;
+			#PUBLIC_PUBLIC_LINKLIBS on $(C.ACTIVE_TOOLCHAIN_TARGET) = [ ListAppendUnique $(LINKLIBS:Z=$(C.ACTIVE_TOOLCHAIN_TARGET)) : $(publicLinkLibs) ] ;
 		}
 
 		local publicNeedLibs = $(PUBLIC_NEEDLIBS:Z=$(inheritsTarget)) ;
 		if $(publicNeedLibs) {
-			NEEDLIBS on $(C.ACTIVE_TOOLCHAIN_TARGET) += $(publicNeedLibs) ;
-			PUBLIC_NEEDLIBS on $(C.ACTIVE_TOOLCHAIN_TARGET) += $(publicNeedLibs) ;
+			NEEDLIBS on $(C.ACTIVE_TOOLCHAIN_TARGET) |= $(publicNeedLibs) ;
+			#NEEDLIBS on $(C.ACTIVE_TOOLCHAIN_TARGET) = [ ListAppendUnique $(NEEDLIBS:Z=$(C.ACTIVE_TOOLCHAIN_TARGET)) : $(publicNeedLibs) ] ;
+			PUBLIC_NEEDLIBS on $(C.ACTIVE_TOOLCHAIN_TARGET) |= $(publicNeedLibs) ;
+			#PUBLIC_NEEDLIBS on $(C.ACTIVE_TOOLCHAIN_TARGET) = [ ListAppendUnique $(PUBLIC_NEEDLIBS:Z=$(C.ACTIVE_TOOLCHAIN_TARGET)) : $(publicNeedLibs) ] ;
 		}
 
 		local publicLinkDirectories = $(PUBLIC_LINKDIRECTORIES:Z=$(inheritsTarget)) ;
 		if $(publicLinkDirectories) {
-			LINKDIRECTORIES on $(C.ACTIVE_TOOLCHAIN_TARGET) += $(publicLinkDirectories) ;
-			PUBLIC_LINKDIRECTORIES on $(C.ACTIVE_TOOLCHAIN_TARGET) += $(publicLinkDirectories) ;
+			LINKDIRECTORIES on $(C.ACTIVE_TOOLCHAIN_TARGET) |= $(publicLinkDirectories) ;
+			#LINKDIRECTORIES on $(C.ACTIVE_TOOLCHAIN_TARGET) = [ ListAppendUnique $(LINKDIRECTORIES:Z=$(C.ACTIVE_TOOLCHAIN_TARGET)) : $(publicLinkDirectories) ] ;
+			PUBLIC_LINKDIRECTORIES on $(C.ACTIVE_TOOLCHAIN_TARGET) |= $(publicLinkDirectories) ;
+			#PUBLIC_LINKDIRECTORIES on $(C.ACTIVE_TOOLCHAIN_TARGET) = [ ListAppendUnique $(PUBLIC_LINKDIRECTORIES:Z=$(C.ACTIVE_TOOLCHAIN_TARGET)) : $(publicLinkDirectories) ] ;
 		}
 
 		local publicLinkFlags = $(PUBLIC_LINKFLAGS:Z=$(inheritsTarget)) ;
 		if $(publicLinkFlags) {
-			LINKFLAGS on $(C.ACTIVE_TOOLCHAIN_TARGET) += $(publicLinkFlags) ;
-			PUBLIC_LINKFLAGS on $(C.ACTIVE_TOOLCHAIN_TARGET) += $(publicLinkFlags) ;
+			LINKFLAGS on $(C.ACTIVE_TOOLCHAIN_TARGET) |= $(publicLinkFlags) ;
+			#LINKFLAGS on $(C.ACTIVE_TOOLCHAIN_TARGET) = [ ListAppendUnique $(LINKFLAGS:Z=$(C.ACTIVE_TOOLCHAIN_TARGET)) : $(publicLinkFlags) ] ;
+			PUBLIC_LINKFLAGS on $(C.ACTIVE_TOOLCHAIN_TARGET) |= $(publicLinkFlags) ;
+			#PUBLIC_LINKFLAGS on $(C.ACTIVE_TOOLCHAIN_TARGET) = [ ListAppendUnique $(PUBLIC_LINKFLAGS:Z=$(C.ACTIVE_TOOLCHAIN_TARGET)) : $(publicLinkFlags) ] ;
 		}
 
 		local theRule ;
