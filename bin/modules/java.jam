@@ -1,0 +1,378 @@
+# Java home
+local ProgramFilesCombined = $(ProgramFiles:J=" ":/) ;
+local javaHome = [ W32_GETREG HKEY_LOCAL_MACHINE SOFTWARE JavaSoft "Java Development Kit" 1.8 "JavaHome" ] ;
+javaHome ?= "$(ProgramFilesCombined)/Microsoft/jdk-11.0.16.101-hotspot" ;
+
+JAVA.HOME = $(javaHome) ;
+JAVA.JAVA = $(javaHome)/bin/java.exe ;
+JAVA.JAVAC = $(javaHome)/bin/javac.exe ;
+JAVA.JAR = $(javaHome)/bin/jar.exe ;
+JAVA.JARSIGNER = $(javaHome)/bin/jarsigner.exe ;
+
+# Java -> Class
+actions response Java._JavaC {
+    $(JAVA.JAVAC:TC) -source 1.8 -target 1.8 $(JFLAGS) @@($(2:TC)) -d $(OUTPUT_FOLDER)
+}
+
+# Class -> Jar
+if $(OS) = NT {
+    actions Java._Jar {
+        cd /d $(OUTPUT_FOLDER:TC)
+        $(JAVA.JAR:TC) cf $(1:TC) -C $(OUTPUT_FOLDER:TC) @($(RELATIVE_CLASSES:R=$(OUTPUT_FOLDER:T)):W=$(OUTPUT_FOLDER:T)/)
+    }
+} else {
+    actions Java._Jar {
+        cd $(OUTPUT_FOLDER:TC)
+        $(JAVA.JAR:TC) cf $(1:TC) -C $(OUTPUT_FOLDER:TC) @($(RELATIVE_CLASSES:R=$(OUTPUT_FOLDER:T)):W=$(OUTPUT_FOLDER:T)/)
+    }
+}
+
+# Recursive glob (through all directories) looking for the given patterns.
+rule Java._GlobRecursive DIRECTORIES : PATTERNS {
+    local _dirPattern  = */ ;
+    local _filePattern = $(PATTERNS)[^/] ;
+
+    local _dirs  = [ Glob $(DIRECTORIES) : $(_dirPattern) ] ;
+
+    local _files = [ Glob $(DIRECTORIES) : $(_filePattern) ] ;
+
+    if $(_dirs) {
+        _files += [ Java._GlobRecursive $(_dirs) : $(PATTERNS) ] ;
+    }
+
+    return $(_files) ;
+}
+
+# Replaces dot separated package with forward slash separated path.
+rule Java._PackageToDirectory DIRECTORY {
+    return [ Subst $(DIRECTORY) : %. : / ] ;
+}
+
+
+# Header scanner rule for Java, takes incoming package names, e.g. com.pawprintgames.pigame.pigameonline and fixes
+# up dependencies to actual files, e.g. <!somedir!>com/pawprintgames/pigame/pigameonline.java
+rule Java._JavaHdrRule SOURCE : HEADERS {
+    # Get all JARs (not prebuilt) that this target relies on.
+    local needJars = $(JAVA.NEEDJARS:Z=$(HDRGRIST)) ;
+
+    # Get source path for this module.
+    local sourcePaths = $(JAVA.SOURCEPATHS:Z=$(HDRGRIST)) ;
+
+    # Add on source path for all JARs (not prebuilt) that this target rlies on.
+    local _needJar ;
+    for _needJar in $(needJars:GB) {
+        sourcePaths += $(JAVA.SOURCEPATHS:Z=$(_needJar:G=$(C.ACTIVE_TOOLCHAIN_GRIST))) ;
+    }
+
+    # Go through each package.
+    local _fixed ;
+    local header ;
+    for header in $(HEADERS) {
+        # If this is a wildcard packge i.e. import com.mycompany.mygame.*
+        if $(header:S) = .* {
+            # Convert the com.mycompany.mygame bit into com/mycompany/mygame
+            local _f = [ Java._PackageToDirectory $(header:S=) ] ;
+
+            # Go through each source path available to this target.
+            local _sourcePath ;
+            for _sourcePath in $(sourcePaths) {
+                # Glob for all Java files in given source path.
+                local _listing = [ Glob $(_sourcePath)/$(_f) : *.java ] ;
+
+                # If we found one or more files.
+                if $(_listing) {
+                    # Set up an includes dependency between source and all found files and then continue to next header.
+                    # Echo Dependency $(SOURCE) -> $(_listing) ;
+                    Echo TODO!!!!!!!! ;
+                    Includes $(SOURCE) : $(_listing) ;
+                    continue ;
+                }
+            }
+        } else {
+            # Not a wild card, just add the fixed up package name to our list that we batch process below.
+            _fixed += [ Java._PackageToDirectory $(header) ] ;
+        }
+    }
+
+    # Add .java to each of our fixed up entries (e.g. com/mycompany/mygame/mygameonline becomes com/mycompany/mygame/mygameonline.java).
+    _fixed = @($(_fixed).java:G=$(HDRGRIST:E)) ;
+
+    # Set search path to all source paths available to this module.
+    SEARCH on $(_fixed) += $(sourcePaths) ;
+
+    # Set up an includes dependency between source and fixed up headers.
+    Includes $(SOURCE) : $(_fixed) ;
+
+    # Indicate we do not care if the fixed up header does not exist (could be a system header).
+    NoCare $(_fixed) ;
+}
+
+
+rule Java._retrieveOutputName TARGET {
+	C.ActiveTarget $(TARGET) ;
+
+	local target = $(OUTPUTNAME:Z=$(C.ACTIVE_TOOLCHAIN_TARGET)) ;
+	target ?= $(C.ACTIVE_TARGET) ;
+
+	return $(target) ;
+}
+
+
+rule Java._retrieveOutputPath TARGET {
+	C.ActiveTarget $(TARGET) ;
+
+	local outputPath = $(LOCATE:Z=$(C.ACTIVE_TOOLCHAIN_TARGET)) ;
+	outputPath ?= $(LOCATE:Z=$(C.ACTIVE_TOOLCHAIN_*)) ;
+	outputPath ?= $(LOCATE_TARGET) ;
+	return $(outputPath) ;
+}
+
+
+#######################################################################################
+# These rules mainly store values per config/platform that can then be accessed later.
+#######################################################################################
+
+#
+rule Java.OutputName TARGET : NAME {
+	C.ActiveTarget $(TARGET) ;
+	OUTPUTNAME on $(C.ACTIVE_TOOLCHAIN_TARGET) = $(NAME) ;
+}
+
+
+#
+rule Java.OutputPath TARGET : OUTPUTPATH {
+	C.ActiveTarget $(TARGET) ;
+	LOCATE on $(C.ACTIVE_TOOLCHAIN_TARGET) = $(OUTPUTPATH:R=$(SUBDIR:E="")) ;
+}
+
+
+# Specify paths to search when locating prebuilt JARs.
+rule Java.JarDirectories TARGET : DIRECTORIES {
+    C.ActiveTarget $(TARGET) ;
+    JAVA.JARDIRECTORIES on $(C.ACTIVE_TOOLCHAIN_TARGET) += $(DIRECTORIES:R=$(SUBDIR:E="")) ;
+}
+
+
+# Specify prebuilt JARs to build against.
+rule Java.PrebuiltJars TARGET : LIBRARIES {
+    TARGET = [ C.ActiveTarget $(TARGET) ] ;
+    local grist = $(TARGET):prebuiltlib ;
+    local gristedLibraries = $(LIBRARIES:G=$(grist)) ;
+    SEARCH on $(gristedLibraries) += $(SUBDIR) $(SUBDIR)/libs ;
+    SEARCH_EXTENSIONS on $(gristedLibraries) = .jar ;
+    JAVA.PREBUILTJARS on $(C.ACTIVE_TOOLCHAIN_TARGET) += $(gristedLibraries) ;
+}
+
+
+# Specify relative source path for target (if inside the current directory there is a
+# 'src' directory which has the com/module/submodule structure inside, then 'src' would
+# be the source path.
+rule Java.SourcePaths TARGET : DIRECTORIES {
+    C.ActiveTarget $(TARGET) ;
+    JAVA.SOURCEPATHS on $(C.ACTIVE_TOOLCHAIN_TARGET) += $(DIRECTORIES:R=$(SUBDIR:E="")) ;
+}
+
+
+# Specify JARs used by this module (not prebuilt ones though).
+rule Java.LinkJars TARGET : LIBRARIES {
+    C.ActiveTarget $(TARGET) ;
+
+    local suflib = .jar ;
+    local gristLibraries ;
+    local lib ;
+    for lib in $(LIBRARIES) {
+        local grist = $(C.ACTIVE_TOOLCHAIN_GRIST):$(lib) ;
+        lib = $(lib:G=$(grist))$(suflib) ;
+        gristLibraries += $(lib) ;
+    }
+    JAVA.NEEDJARS on $(C.ACTIVE_TOOLCHAIN_TARGET) += $(gristLibraries) ;
+}
+
+
+rule Java.ExcludeFromBuild TARGET : SOURCES {
+    C.ActiveTarget $(TARGET) ;
+    JAVA.EXCLUDED_FROM_BUILD on $(SOURCES:G=$(C.ACTIVE_TOOLCHAIN_TARGET_GRIST)) = true ;
+}
+
+
+#######################################################################################
+
+# Create library from given sources.
+rule Java.Library TARGET : SOURCES : OPTIONS {
+    TARGET = [ C.ActiveTarget $(TARGET) ] ;
+
+    # Shove this in a special output directory. That way, we can collect any of the
+    # generated files from javac, since javac doesn't tell us what it is going to
+    # output.
+    local outputClassesDirectory = $(LOCATE_TARGET)/classes ;
+
+    # JARs that we depend on.
+    local needJars = $(JAVA.NEEDJARS:Z=$(C.ACTIVE_TOOLCHAIN_TARGET)) ;
+
+    # Collect all of the available jar directories.
+    local _jarDirectories =
+        $(JAVA.JARDIRECTORIES:Z=$(C.ACTIVE_TOOLCHAIN_TARGET))
+        $(JAVA.JARDIRECTORIES:Z=$(C.ACTIVE_TOOLCHAIN_*)) ;
+
+    local _needJar ;
+    for _needJar in $(needJars:GB) {
+        _jarDirectories += $(JAVA.JARDIRECTORIES:Z=$(_needJar:G=$(C.ACTIVE_TOOLCHAIN_GRIST))) ;
+    }
+
+    # Prebuilt JAR files.
+    local linkLibs = $(JAVA.PREBUILTJARS:Z=$(C.ACTIVE_TOOLCHAIN_TARGET)) ;
+    for _needJar in $(needJars:GB) {
+        linkLibs += $(JAVA.PREBUILTJARS:Z=$(_needJar:G=$(C.ACTIVE_TOOLCHAIN_GRIST))) ;
+    }
+    SEARCH on $(linkLibs) += $(_jarDirectories) ;
+
+    # Lib path
+    JAVA.LIBPATH on $(C.ACTIVE_TOOLCHAIN_TARGET) = $(SUBDIR) ;
+
+    # Source path
+    local sourcePaths = $(JAVA.SOURCEPATHS:Z=$(C.ACTIVE_TOOLCHAIN_TARGET)) ;
+    sourcePaths ?= $(SUBDIR) ;
+    JAVA.SOURCEPATHS on $(C.ACTIVE_TOOLCHAIN_TARGET) = $(sourcePaths) ;
+
+    local _javaFiles = $(SOURCES:I=.java) ;
+    local newsrcs ;
+    local _src ;
+
+    for _src in $(_javaFiles) {
+        local _gristedSrc = $(_src:G=$(C.ACTIVE_TOOLCHAIN_TARGET_GRIST)) ;
+        if $(JAVA.EXCLUDED_FROM_BUILD:Z=$(_gristedSrc)) = true {
+            continue ;
+        }
+        newsrcs += $(_src) ;
+    }
+    _javaFiles = $(newsrcs) ;
+
+    local _sources = [ C.GristFiles $(TARGET) : $(_javaFiles) ] ;
+    if $(_sources[1]) {
+        #SEARCH on $(_sources) = $(SEARCH_SOURCE)/$(_commonStripped) ;
+        SEARCH on $(_sources) = $(sourcePaths) ;
+
+        # Class files.
+        local _classes = [ C.GristFiles $(TARGET) : $(_javaFiles:S=.class) ] ;
+        local _class ;
+        for _class in $(_classes) {
+            MakeLocate $(_class) : $(_class:DR=$(outputClassesDirectory)) ;
+            BINDING on $(_class) = $(_class:BS) ;
+        }
+
+        # The classes depend on the source Java files, the processed resource/AIDL files and any JAR files from other libraries we are compiling.
+        Depends $(_classes) : $(_sources) ;
+
+        # Flags.
+        local nativeListDelimiter ;
+        if $(OS) in MACOSX {
+            nativeListDelimiter = \: ;
+        } else {
+            nativeListDelimiter = \; ;
+        }
+
+        local _classPath = $(SEARCH_SOURCE) $(linkLibs:TC/) $(outputClassesDirectory) $(needJars:TC/) ;
+        JFLAGS on $(_classes) += -classpath $(_classPath:J=$(nativeListDelimiter)) ;
+
+        local _sourcePaths =
+                $(sourcePaths:TC/)
+                $(LOCATE_TARGET)
+        ;
+        JFLAGS on $(_classes) += -sourcepath $(_sourcePaths:J=$(nativeListDelimiter)) ;
+
+        # Determine all of the built .jar files.
+        local builtJars ;
+        local _jar ;
+        for _jar in $(needJars) {
+            if $(BUILT:Z=$(_jar)) {
+                builtJars += $(_jar) ;
+            }
+        }
+
+        Depends $(_classes) : $(linkLibs) $(builtJars) ;
+
+        if $(CONFIG) in debug release {
+            JFLAGS on $(_classes) += -g ;
+        } else {
+            JFLAGS on $(_classes) += -g:none ;
+        }
+
+        # Set up the 'header' scanning rule.
+        HDRRULE on $(_sources) = Java._JavaHdrRule ;
+
+        # Start of line, possible white space, 'import', possible white space, ANYTHING, possible whitespace, ';'
+        HDRSCAN on $(_sources) = "^[     ]*import[     ]*(.*)[     ]*;" ;
+        HDRGRIST on $(_sources) = $(C.ACTIVE_TOOLCHAIN_TARGET_GRIST) ;
+
+        # Output of the compiler goes into the target directory, the compiler will create the output directory tree that
+        # matches the output filenames we have set up in our dependency tree.
+        OUTPUT_FOLDER on $(_classes) = $(outputClassesDirectory) ;
+
+        # Action.
+        Java._JavaC $(_classes) : $(_sources) : $(C.COMPILER_SUITE_SYMBOL) ;
+
+        # JAR file.
+        local _jar = [ C.GristFiles $(TARGET) : $(TARGET).jar ] ;
+        local outputName = [ Java._retrieveOutputName ] ;
+        BINDING on $(_jar) = $(outputName).jar ;
+        local outputPath = [ Java._retrieveOutputPath ] ;
+        MakeLocate $(_jar) : $(outputPath) ;
+        Depends $(C.ACTIVE_TOOLCHAIN_TARGET) : $(_jar) ;
+
+        # Need access to root output folder as JAR tool will package up based on a this directory.
+        OUTPUT_FOLDER on $(_jar) = $(outputClassesDirectory) ;
+
+        # Need the relative class paths in order to archive.
+        local relativeClasses ;
+        local relativeClassWildcard ;
+        for relativeClassWildcard in $(SOURCES:D)/*.class {  # */
+            if ! $(relativeClassWildcard) in $(relativeClasses) {
+                relativeClasses += $(relativeClassWildcard) ;
+            }
+        }
+        RELATIVE_CLASSES on $(_jar) = $(relativeClasses) ;
+        if application in $(OPTIONS) {
+            # JAR file depends on classes (including R.class for libraries) and packaged R.class file.
+            Depends $(_jar) : $(_classes) $(_packageRFile) ;
+            UseCommandLine $(_jar) : $(_classes) $(_packageRFile) ;
+
+            # Also need to package up R.class for each of our libraries...
+            if $(needJars) {
+                local _needJar ;
+                for _needJar in $(needJars:GB) {
+                    # Get package name for library.
+                    local _needJarPackage = $(PACKAGE:Z=$(_needJar:G=$(C.ACTIVE_TOOLCHAIN_GRIST))) ;
+
+                    # Convert package name into a relative directory.
+                    local _needJarPackageDirectory = [ Java._PackageToDirectory $(_needJarPackage) ] ;
+
+                    RELATIVE_CLASSES on $(_jar) += $(_needJarPackageDirectory)/R*.class ;
+                }
+            }
+        } else {
+            # JAR file depends on classes.
+            Depends $(_jar) : $(_classes) ;
+            UseCommandLine $(_jar) : $(_classes) ;
+        }
+
+        # Action to make JAR file.
+        Java._Jar $(_jar) : $(_sources) : $(C.COMPILER_SUITE_SYMBOL) ;
+        Clean $(C.ACTIVE_TOOLCHAIN_CLEAN_TARGET) : $(_jar) ;
+
+        BUILT on $(_jar) = 1 ;
+    }
+
+    # Find all .class files for clean rule.
+    local _classFiles = [ Java._GlobRecursive $(outputClassesDirectory) : * ] ;
+    _classFiles = $(_classFiles:I=.class) ;
+
+    Depends $(TARGET) : $(C.ACTIVE_TOOLCHAIN_TARGET) : $(_l) ;
+
+    # Hook up the project specific clean for this TARGET.
+    Depends clean : clean:$(TARGET) : $(C.ACTIVE_TOOLCHAIN_CLEAN_TARGET) ;
+    NotFile clean:$(TARGET) $(C.ACTIVE_TOOLCHAIN_CLEAN_TARGET) ;
+    Always clean:$(TARGET) $(C.ACTIVE_TOOLCHAIN_CLEAN_TARGET) ;
+    Clean $(C.ACTIVE_TOOLCHAIN_CLEAN_TARGET) : $(_jar) $(_classes) $(resourceOutputFiles) $(_classFiles) $(_packageRFile) $(resourceOutputFiles) $(_aidlCompiledFiles) ;
+}
+
+
