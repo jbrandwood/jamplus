@@ -802,6 +802,41 @@ int main( int argc, char **argv, char **arg_environ )
 	    var_defines( symv );
 	}
 
+	/* Add to ARGS.symbol */
+	{
+		BUFFER buff;
+		size_t startPos;
+		int n;
+		LIST *l = L0;
+		buffer_init(&buff);
+		buffer_addstringx(&buff, "JAM_COMMAND_LINE_SETTINGS.");
+		startPos = buffer_pos(&buff);
+		for (n = 0; (s = getoptval(optv, 's', n)); n++)
+		{
+			const char *symv[2];
+			char* ptr;
+
+			ptr = strchr(s, '=');
+			if (!ptr)
+			{
+				continue;
+			}
+			buffer_setpos(&buff, startPos);
+			buffer_addstring(&buff, s, ptr - s);
+			buffer_addchar(&buff, 0);
+			l = list_append(l, newstr(buffer_ptr(&buff) + startPos), 0);
+			buffer_setpos(&buff, buffer_pos(&buff) - 1);
+			buffer_addstringx(&buff, ptr);
+
+			symv[0] = buffer_ptr(&buff);
+			symv[1] = 0;
+			var_defines(symv);
+		}
+		buffer_free(&buff);
+
+		var_set("JAM_COMMAND_LINE_SETTINGS", l, VAR_SET);
+	}
+
 	/* Initialize built-in rules */
 
 	load_builtins();
