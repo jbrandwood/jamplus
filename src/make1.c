@@ -1164,20 +1164,42 @@ make1d(
 	if( status != EXEC_CMD_OK )
 	{
 		if ( !( cmd->rule->flags & RULE_UPDATED ) ) {
-	    LIST *targets = lol_get( &cmd->args, 0 );
-	    LISTITEM* target;
+			LIST *targets = lol_get( &cmd->args, 0 );
+			LISTITEM* target;
 
 #ifdef OPT_NODELETE_READONLY
-	    for(target = list_first(targets) ; target; target = list_next(target) )
-		if( file_writeable(list_value(target)) &&
-		    !unlink(list_value(target)) )
-		    printf( "*** removing %s\n", list_value(target) );
+			for(target = list_first(targets) ; target; target = list_next(target) )
+				if( file_writeable(list_value(target)) &&
+					!unlink(list_value(target)) )
+					printf( "*** removing %s\n", list_value(target) );
 #else
-	    for(target = list_first(targets) ; target; target = list_next( target ) )
-		if( !unlink( list_value(target) ) )
-		    printf( "*** removing %s\n", list_value(target) );
+			for(target = list_first(targets) ; target; target = list_next( target ) )
+				if( !unlink( list_value(target) ) )
+					printf( "*** removing %s\n", list_value(target) );
 #endif
-	}
+		} else {
+			LISTITEM* targetitem;
+			for ( targetitem = list_first( cmd->targetsunbound ); targetitem; targetitem = list_next( targetitem ) ) {
+				TARGET *target = bindtarget( list_value( targetitem ) );
+
+				LISTITEM* sourcetargetitem;
+				for ( sourcetargetitem = list_first( cmd->sourcesunbound ); sourcetargetitem; sourcetargetitem = sourcetargetitem = list_next( sourcetargetitem ) ) {
+					TARGET *sourcetarget = bindtarget( list_value( sourcetargetitem ) );
+					TARGETS *c;
+					for ( c = target->depends; c; c = c->next )
+					{
+						if ( sourcetarget == c->target )
+						{
+							if ( file_writeable( target->boundname ) &&
+								!unlink( target->boundname ) ) {
+								printf( "*** removing %s\n", target->boundname );
+							}
+							break;
+						}
+					}
+				}
+			}
+		}
 	}
 #ifdef OPT_BUILTIN_MD5CACHE_EXT
 	else
