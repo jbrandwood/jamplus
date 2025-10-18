@@ -1336,6 +1336,7 @@ make0(
 		for ( actions = t->actions; actions; actions = actions->next )
 		{
 			TARGETS *targets;
+#if 0
 			for ( targets = actions->action->targets; targets; targets = targets->next )
 			{
 				if ( targets->target == t )
@@ -1344,6 +1345,8 @@ make0(
 					break;
 				}
 			}
+#endif
+#if 1
 			for ( targets = actions->action->sources; targets; targets = targets->next )
 			{
 				for( c = t->depends; c; c = c->next )
@@ -1354,11 +1357,8 @@ make0(
 						break;
 					}
 				}
-				//if ( targets->parentcommandlineoutofdate )
-				//{
-					//break;
-				//}
 			}
+#endif // 1
 		}
 
 		fate = T_FATE_UPDATE;
