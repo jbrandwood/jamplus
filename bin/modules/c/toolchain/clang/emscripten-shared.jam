@@ -1,6 +1,7 @@
 rule C.Toolchain.clang.emscripten-shared {
 }
 
+
 rule C.emscripten._ApplicationFromObjects_CleanIntermediates {
     # Clean the extra files.
     local sufexe = $(_linkTargets[1]:S) ;
@@ -18,6 +19,10 @@ rule C.emscripten._ApplicationFromObjects_CleanIntermediates {
 
 
 rule C.emscripten._ApplicationFromObjects_LinkFlags {
+    linkFlags += "--js-library $(JS_LIBS:T:Z=$(C.ACTIVE_TOOLCHAIN_TARGET))" ;
+    linkFlags += "--pre-js $(JS_PRE:T:Z=$(C.ACTIVE_TOOLCHAIN_TARGET))" ;
+    linkFlags += "--post-js $(JS_POST:T:Z=$(C.ACTIVE_TOOLCHAIN_TARGET))" ;
+    #linkFlags += "--externs $(JS_EXTERNS:T:Z=$(C.ACTIVE_TOOLCHAIN_TARGET))" ;
 }
 
 
@@ -27,3 +32,81 @@ rule C.emscripten._ApplicationFromObjects_Setup {
     }
 }
 
+
+rule C.emscripten._Inherits {
+    local public_JS_LIBS = $(PUBLIC_JS_LIBS:Z=$(inheritsTarget)) ;
+    if $(public_JS_LIBS) {
+        JS_LIBS on $(C.ACTIVE_TOOLCHAIN_TARGET) |= $(public_JS_LIBS) ;
+        PUBLIC_JS_LIBS on $(C.ACTIVE_TOOLCHAIN_TARGET) |= $(public_JS_LIBS) ;
+    }
+
+    local public_JS_PRE = $(PUBLIC_JS_PRE:Z=$(inheritsTarget)) ;
+    if $(public_JS_PRE) {
+        JS_PRE on $(C.ACTIVE_TOOLCHAIN_TARGET) |= $(public_JS_PRE) ;
+        PUBLIC_JS_PRE on $(C.ACTIVE_TOOLCHAIN_TARGET) |= $(public_JS_PRE) ;
+    }
+
+    local public_JS_POST = $(PUBLIC_JS_POST:Z=$(inheritsTarget)) ;
+    if $(public_JS_POST) {
+        JS_POST on $(C.ACTIVE_TOOLCHAIN_TARGET) |= $(public_JS_POST) ;
+        PUBLIC_JS_POST on $(C.ACTIVE_TOOLCHAIN_TARGET) |= $(public_JS_POST) ;
+    }
+
+    local public_JS_EXTERNS = $(PUBLIC_JS_EXTERNS:Z=$(inheritsTarget)) ;
+    if $(public_JS_EXTERNS) {
+        JS_EXTERNS on $(C.ACTIVE_TOOLCHAIN_TARGET) |= $(public_JS_EXTERNS) ;
+        PUBLIC_JS_EXTERNS on $(C.ACTIVE_TOOLCHAIN_TARGET) |= $(public_JS_EXTERNS) ;
+    }
+}
+
+
+rule C.emscripten.JSLibraries TARGET : SOURCES : OPTIONS {
+    TARGET = [ C.ActiveTarget $(TARGET) ] ;
+    SOURCES = [ ExpandFileList $(SOURCES) : 0 : $(SEARCH_SOURCE) ] ;
+    SOURCES = $(SOURCES:G=$(C.ACTIVE_TOOLCHAIN_TARGET_GRIST)) ;
+    SEARCH on $(SOURCES) ?= $(SEARCH_SOURCE) ;
+    JS_LIBS on $(C.ACTIVE_TOOLCHAIN_TARGET) |= $(SOURCES) ;
+    if public in $(OPTIONS) {
+        __PUBLIC on $(C.ACTIVE_TOOLCHAIN_TARGET) = true ;
+        PUBLIC_JS_LIBS on $(C.ACTIVE_TOOLCHAIN_TARGET) |= $(SOURCES) ;
+    }
+}
+
+
+rule C.emscripten.JSPre TARGET : SOURCES : OPTIONS {
+    TARGET = [ C.ActiveTarget $(TARGET) ] ;
+    SOURCES = [ ExpandFileList $(SOURCES) : 0 : $(SEARCH_SOURCE) ] ;
+    SOURCES = $(SOURCES:G=$(C.ACTIVE_TOOLCHAIN_TARGET_GRIST)) ;
+    SEARCH on $(SOURCES) ?= $(SEARCH_SOURCE) ;
+    JS_PRE on $(C.ACTIVE_TOOLCHAIN_TARGET) |= $(SOURCES) ;
+    if public in $(OPTIONS) {
+        __PUBLIC on $(C.ACTIVE_TOOLCHAIN_TARGET) = true ;
+        PUBLIC_JS_PRE on $(C.ACTIVE_TOOLCHAIN_TARGET) |= $(SOURCES) ;
+    }
+}
+
+
+rule C.emscripten.JSPost TARGET : SOURCES : OPTIONS {
+    TARGET = [ C.ActiveTarget $(TARGET) ] ;
+    SOURCES = [ ExpandFileList $(SOURCES) : 0 : $(SEARCH_SOURCE) ] ;
+    SOURCES = $(SOURCES:G=$(C.ACTIVE_TOOLCHAIN_TARGET_GRIST)) ;
+    SEARCH on $(SOURCES) ?= $(SEARCH_SOURCE) ;
+    JS_POST on $(C.ACTIVE_TOOLCHAIN_TARGET) |= $(SOURCES) ;
+    if public in $(OPTIONS) {
+        __PUBLIC on $(C.ACTIVE_TOOLCHAIN_TARGET) = true ;
+        PUBLIC_JS_POST on $(C.ACTIVE_TOOLCHAIN_TARGET) |= $(SOURCES) ;
+    }
+}
+
+
+rule C.emscripten.JSExterns TARGET : SOURCES : OPTIONS {
+    TARGET = [ C.ActiveTarget $(TARGET) ] ;
+    SOURCES = [ ExpandFileList $(SOURCES) : 0 : $(SEARCH_SOURCE) ] ;
+    SOURCES = $(SOURCES:G=$(C.ACTIVE_TOOLCHAIN_TARGET_GRIST)) ;
+    SEARCH on $(SOURCES) ?= $(SEARCH_SOURCE) ;
+    JS_EXTERNS on $(C.ACTIVE_TOOLCHAIN_TARGET) |= $(SOURCES) ;
+    if public in $(OPTIONS) {
+        __PUBLIC on $(C.ACTIVE_TOOLCHAIN_TARGET) = true ;
+        PUBLIC_JS_EXTERNS on $(C.ACTIVE_TOOLCHAIN_TARGET) |= $(SOURCES) ;
+    }
+}

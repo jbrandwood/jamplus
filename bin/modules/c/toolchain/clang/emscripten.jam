@@ -21,17 +21,19 @@ rule C.Toolchain.clang.emscripten.Detect {
     local SUFEXE = .js ;
     C.Toolchain.clang.Setup $(EMSCRIPTEN_PATH) : .o $(SUFEXE) ;
 
-    C.AR on $(C.COMPILER_SUITE_SYMBOL) = $(EMSCRIPTEN_PATH)/emar ;
-    C.CC on $(C.COMPILER_SUITE_SYMBOL) = $(EMSCRIPTEN_PATH)/emcc ;
-    C.C++ on $(C.COMPILER_SUITE_SYMBOL) = $(EMSCRIPTEN_PATH)/em++ ;
-    C.LINK on $(C.COMPILER_SUITE_SYMBOL) = $(EMSCRIPTEN_PATH)/emcc ;
-    C.RANLIB on $(C.COMPILER_SUITE_SYMBOL) = $(EMSCRIPTEN_PATH)/emranlib ;
+    #C.AR on $(C.COMPILER_SUITE_SYMBOL) = $(EMSCRIPTEN_PATH)/emar rcs ;
+    C.AR on $(C.COMPILER_SUITE_SYMBOL) = emar ruc ;
+    C.CC on $(C.COMPILER_SUITE_SYMBOL) = emcc ;
+    C.C++ on $(C.COMPILER_SUITE_SYMBOL) = em++ ;
+    C.LINK on $(C.COMPILER_SUITE_SYMBOL) = emcc ;
+    #C.RANLIB on $(C.COMPILER_SUITE_SYMBOL) = $(EMSCRIPTEN_PATH)/emranlib ;
 
     C.Toolchain.$(C.COMPILER_SUITE).emscripten-shared ;
 
     C._ApplicationFromObjects_CleanIntermediates on $(C.COMPILER_SUITE_SYMBOL) = C.emscripten._ApplicationFromObjects_CleanIntermediates ;
     C._ApplicationFromObjects_LinkFlags on $(C.COMPILER_SUITE_SYMBOL) = C.emscripten._ApplicationFromObjects_LinkFlags ;
     C._ApplicationFromObjects_Setup on $(C.COMPILER_SUITE_SYMBOL) = C.emscripten._ApplicationFromObjects_Setup ;
+    C._Inherits on $(C.COMPILER_SUITE_SYMBOL) += C.emscripten._Inherits ;
 
     return $(C.COMPILER) ;
 }

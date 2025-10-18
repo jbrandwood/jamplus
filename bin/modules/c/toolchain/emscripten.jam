@@ -1,7 +1,13 @@
 rule C.Toolchain.emscripten.* {
     C.ToolchainSpecKeys C.PLATFORM/PLATFORM C.CONFIG/CONFIG ;
 
-    return [ C.Toolchain.clang.emscripten.Detect ] ;
+    if ! [ C.Toolchain.clang.emscripten.Detect ] {
+        return ;
+    }
+
+    if [ RuleExists C.Toolchain.$(C.COMPILER_SUITE).$(C.PLATFORM)-$(C.CONFIG) : 1 ] {
+        C.Toolchain.$(C.COMPILER_SUITE).$(C.PLATFORM)-$(C.CONFIG) ;
+    }
 }
 
 
