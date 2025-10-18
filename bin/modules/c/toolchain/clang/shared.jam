@@ -140,24 +140,26 @@ rule C.clang._SharedLibraryFromObjects_LinkFlags {
 
 
 actions updated together piecemeal C.clang.Archive {
-    "$(C.AR)" $(LIBFLAGS) $(<:C) $(>:C)
+    "$(C.AR)" $(LIBFLAGS) $(1:C) @^^^($(2:CJ=$(NEWLINE)))
 }
 
 
 #
 # NOARUPDATE - can't update an archive
 #
+        #"$(C.AR)" $(LIBFLAGS) $(<:C) $(>:C)
 
 if $(NOARUPDATE) {
     actions C.clang.Archive {
-        "$(C.AR)" $(LIBFLAGS) $(<:C) $(>:C)
+        "$(C.AR)" $(LIBFLAGS) $(1:C) @^^^($(2:CJ=$(NEWLINE)))
     }
 }
 
 
 actions C.clang.Link {
-	$(C.LINK:C) $(LINKFLAGS) -o $(<[1]:C) @^^^($(>:J=$(NEWLINE))) $(NEEDLIBS:TC) $(LINKLIBS:TC)
+	$(C.LINK:C) -o $(<[1]:C) @^^^($(>:J=$(NEWLINE))) @^^^($(LINKFLAGS:J=$(NEWLINE))) @^^^($(NEEDLIBS:TCJ=$(NEWLINE)) $(NEWLINE) $(LINKLIBS:TCJ=$(NEWLINE)))
 }
+    #"$(C.LINK:\\)" $(C.RC_NOLOGO) @@($(LINKFLAGS) $(>:C) $(NEEDLIBS:CT) $(LINKLIBS:CT)) /out:$(<[1]:C)
 
 
 actions updated response C.clang.CC {
