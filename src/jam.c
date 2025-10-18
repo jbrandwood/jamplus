@@ -1088,6 +1088,11 @@ int main( int argc, char **argv, char **arg_environ )
 		{
 			usechecksums = 1;
 		}
+
+		if (usechecksums)
+		{
+			globs.newestfirst = 0;
+		}
 	}
 #endif /* OPT_USE_CHECKSUMS_EXT */
 
