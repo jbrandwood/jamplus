@@ -1165,6 +1165,12 @@ rule C.C++Flags TARGET : FLAGS : OPTIONS {
 }
 
 
+rule C.CCFlags TARGET : FLAGS : OPTIONS {
+	C.Flags $(TARGET) : CC C++ : $(FLAGS) : $(OPTIONS) ;
+}
+
+
+
 rule C.AddFlags TARGET : FLAGS : OPTIONS {
 	C.ActiveTarget $(TARGET) ;
 	FLAGS_TO_ADD on $(C.ACTIVE_TOOLCHAIN_TARGET) |= $(FLAGS) ;
