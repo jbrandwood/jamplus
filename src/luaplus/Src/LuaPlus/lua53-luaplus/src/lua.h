@@ -470,7 +470,7 @@ LUA_API void lua_getfastref (lua_State *L, int ref);
 
 #else
 
-#include "lauxlib.h"
+//#include "lauxlib.h"
 
 #define LUA_FASTREFNIL LUA_REFNIL
 
