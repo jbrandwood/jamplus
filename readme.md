@@ -46,7 +46,7 @@ d:\jamplus>bootstrap-win64-vc.bat
 
 ## Prerequisites
 
-* FILL ME IN.
+* `brew install readline`
 
 ## Build JamPlus
 
