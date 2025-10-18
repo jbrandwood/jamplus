@@ -120,13 +120,13 @@ static void make0( TARGET *t, TARGET *p, int depth,
 
 static TARGETS *make0sort( TARGETS *c );
 #ifdef OPT_BUILTIN_MD5CACHE_EXT
-void make0calcmd5sum( TARGET *t, int source, int depth, int force );
+void make0calcmd5sum( TARGET *t, int source, int depth, int force, int phase );
 #endif
 #ifdef OPT_GRAPH_DEBUG_EXT
 static void dependGraphOutput( TARGET *t, int depth );
 #endif
 
-void make1buildchecksum( const char* makestage, TARGET* t, XXH128_hash_t* buildmd5sum, int force );
+void make1buildchecksum( const char* makestage, TARGET* t, XXH128_hash_t* buildmd5sum, int force, int phase );
 
 static const char *target_fate[] =
 {
@@ -1304,7 +1304,7 @@ make0(
 					++make0calcmd5sum_epoch;
 					++make0calcmd5sum_timestamp_epoch;
 					//make0calcmd5sum(t, 1, 1);
-					make1buildchecksum("make0", t, &buildmd5sum, 0);
+					make1buildchecksum("make0", t, &buildmd5sum, 0, 0);
 
 					if (checksum_retrieve(t, buildmd5sum, 0) == 0)
 					{
@@ -1616,7 +1616,7 @@ int make0calcmd5sum_dependssorted_stage = 0;
 
 int make0recurseincludes_epoch = -1000000000;
 
-static void make0recurseincludesmd5sum( XXH3_state_t *state, TARGET *t, int depth )
+static void make0recurseincludesmd5sum( XXH3_state_t *state, TARGET *t, int depth, int phase )
 {
 	TARGETS *c;
 
@@ -1668,7 +1668,7 @@ static void make0recurseincludesmd5sum( XXH3_state_t *state, TARGET *t, int dept
 
 		if ( c->target->includes )
 		{
-			make0recurseincludesmd5sum( state, c->target->includes, depth + 1 );
+			make0recurseincludesmd5sum( state, c->target->includes, depth + 1, phase );
 		}
 	}
 }
@@ -1677,7 +1677,7 @@ static void make0recurseincludesmd5sum( XXH3_state_t *state, TARGET *t, int dept
 /*
  * make0calcmd5sum() - calculate md5sum for a buildable target
  */
-void make0calcmd5sum( TARGET *t, int source, int depth, int force )
+void make0calcmd5sumhelper( TARGET *t, int source, int depth, int force, int phase )
 {
 	XXH3_state_t *state;
 	TARGETS *c;
@@ -1794,7 +1794,7 @@ void make0calcmd5sum( TARGET *t, int source, int depth, int force )
 		if( DEBUG_MD5HASH )
 			printf( "\t\t%s#includes:\n", spaces( depth ) );
 		++make0recurseincludes_epoch;
-		make0recurseincludesmd5sum( state, t->includes, depth + 1 );
+		make0recurseincludesmd5sum( state, t->includes, depth + 1, phase );
 	}
 
     /* for each of your dependencies */
@@ -1810,7 +1810,7 @@ void make0calcmd5sum( TARGET *t, int source, int depth, int force )
 		{
 			continue;
 		}
-		make0calcmd5sum( c->target, 1, depth + 1, force );
+		make0calcmd5sum( c->target, 1, depth + 1, force, phase );
 
 		/* add name of the dependency and its contents */
 		if ( c->target->buildmd5sum_calculated )
@@ -1840,6 +1840,13 @@ void make0calcmd5sum( TARGET *t, int source, int depth, int force )
 
 	t->buildmd5sum_calculated = 1;
 }
+
+
+void make0calcmd5sum( TARGET *t, int source, int depth, int force, int phase )
+{
+	make0calcmd5sumhelper( t, source, depth, force, phase );
+}
+
 #endif
 
 #ifdef OPT_GRAPH_DEBUG_EXT

@@ -115,8 +115,8 @@ static void printResponseFiles(CMD *cmd);
 extern int make0calcmd5sum_epoch;
 extern int make0calcmd5sum_timestamp_epoch;
 extern int make0calcmd5sum_dependssorted_stage;
-void make0calcmd5sum( TARGET *t, int source, int depth, int force );
-void make1buildchecksum( const char* makestage, TARGET *t, XXH128_hash_t* buildmd5sum, int force );
+void make0calcmd5sum( TARGET *t, int source, int depth, int force, int phase );
+void make1buildchecksum( const char* makestage, TARGET *t, XXH128_hash_t* buildmd5sum, int force, int phase );
 #endif
 
 extern int clean_unused_files(int usealltargets);
@@ -488,7 +488,7 @@ make1b( TARGET *t )
 					++make0calcmd5sum_epoch;
 					++make0calcmd5sum_timestamp_epoch;
 					//make0calcmd5sum( t, 1, 1 );
-					make1buildchecksum("make1b", t, &buildmd5sum, 1);
+					make1buildchecksum("make1b", t, &buildmd5sum, 1, 1);
 
 					if (checksum_retrieve(t, buildmd5sum, 1) == 1)
 					{
@@ -1205,7 +1205,7 @@ make1d(
 					t->buildmd5sum_calculated = 0;
 					++make0calcmd5sum_epoch;
 					++make0calcmd5sum_timestamp_epoch;
-					//make0calcmd5sum( t, 1, 1 );
+					//make0calcmd5sum( t, 1, 1, 1, 1 );
 #if 0
 					if (t->contentchecksum->contentmd5sum_changed) {
 						SETTINGS *s = copysettings( t->settings );
@@ -1215,7 +1215,8 @@ make1d(
 						freesettings( s );
 					}
 #endif
-					make1buildchecksum( "make1d", t, &buildmd5sum, 1 );
+
+					make1buildchecksum( "make1d", t, &buildmd5sum, 1, 1 );
 
 #ifdef OPT_USE_CHECKSUMS_EXT
 					checksum_update(t, buildmd5sum);
@@ -1252,7 +1253,7 @@ make1d(
 TARGETS *
 make0sortbyname( TARGETS *chain );
 
-void make1buildchecksum( const char* makestage, TARGET *t, XXH128_hash_t* buildmd5sum, int force )
+void make1buildchecksum( const char* makestage, TARGET *t, XXH128_hash_t* buildmd5sum, int force, int phase )
 {
 	TARGETS *c;
 	XXH3_state_t* state;
@@ -1309,7 +1310,7 @@ void make1buildchecksum( const char* makestage, TARGET *t, XXH128_hash_t* buildm
 
 		/* add name of the dependency and its contents */
 		make0calcmd5sum_epoch++;
-		make0calcmd5sum( c->target, 1, 2, force );
+		make0calcmd5sum( c->target, 1, 2, force, phase );
 		if ( c->target->buildmd5sum_calculated )
 		{
 			if( DEBUG_MD5HASH )
@@ -1564,7 +1565,7 @@ make1cmds( ACTIONS *a0 )
 						if ( filecache ) {
 							outt->settings = addsettings( outt->settings, VAR_SET, "FILECACHE", list_append( L0, list_value(list_first(filecache)), 1 ) );
 						}
-						make1buildchecksum( "make1cmds", t, &outt->buildmd5sum, 1 );
+						make1buildchecksum( "make1cmds", t, &outt->buildmd5sum, 1, 1 );
 
 						if (DEBUG_MD5HASH)
 						{
