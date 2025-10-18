@@ -599,9 +599,9 @@ rule SubInclude TOKENS : FILENAME : OPTIONS
 	}
 
 	local jamfile ;
-	if $(FILENAME)
+	if $(FILENAME[1])
 	{
-		jamfile = $(FILENAME) ;
+		jamfile = $(FILENAME[1]) ;
 		if ! $(jamfile:S)
 		{
 			jamfile = $(jamfile:S=.jam) ;
@@ -622,7 +622,8 @@ rule SubInclude TOKENS : FILENAME : OPTIONS
 	SubDirPush ;
 	SubDir $(TOKENS) ;
 
-	local TARGET = $(FILENAME:B) ;
+	local TARGET = $(FILENAME[2]) ;
+	TARGET ?= $(FILENAME[1]:B) ;
 	if ! $(TARGET)
 	{
 		local token ;
