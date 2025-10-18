@@ -637,21 +637,83 @@ make(
 	int i;
 	COUNTS counts[1];
 	int status = 0;		/* 1 if anything fails */
+	int needsMultipass = 1;
+	LOL lolTargetPasses;
+	LIST* targetsInThisPass = L0;
+	int whichTargetPass;
+	LIST *list;
 
 #ifdef OPT_INTERRUPT_FIX
 	signal( SIGINT, onintr );
 #endif
 
+	lol_init(&lolTargetPasses);
+	for ( i = 0; i < n_targets; i++ )
+	{
+		const char* comma = strstr( targets[i], "," );
+		if (comma)
+		{
+			needsMultipass = 1;
+			break;
+		}
+	}
+
+	if (!needsMultipass)
+	{
+		LIST* newlist = L0;
+		for ( i = 0; i < n_targets; i++ )
+		{
+			newlist = list_append(newlist, targets[i], 0);
+		}
+		lol_add(&lolTargetPasses, newlist);
+	}
+	else
+	{
+		BUFFER buff;
+		buffer_init(&buff);
+		for ( i = 0; i < n_targets; i++ )
+		{
+			LIST* newlist = L0;
+			const char* ptr = targets[i];
+			const char* lastPtr = targets[i];
+
+			while ( *ptr ) {
+				if ( *ptr == ',' )
+				{
+					size_t count = ptr - lastPtr;
+					if ( count > 0 ) {
+						buffer_reset( &buff );
+						buffer_addstring( &buff, lastPtr, count );
+						buffer_addchar( &buff, 0 );
+
+						newlist = list_append( newlist, buffer_ptr( &buff ), 0 );
+					}
+					lastPtr = ptr + 1;
+				}
+				++ptr;
+			}
+			if ( ptr > lastPtr )
+			{
+				newlist = list_append( newlist, lastPtr, 0 );
+			}
+			lol_add(&lolTargetPasses, newlist);
+		}
+	}
+
 #ifdef OPT_MULTIPASS_EXT
+	whichTargetPass = 0;
 pass:
+	list = lol_get(&lolTargetPasses, whichTargetPass);
 #endif
 	++make0calcmd5sum_dependssorted_stage;
 
 	memset( (char *)counts, 0, sizeof( *counts ) );
 
-	for( i = 0; i < n_targets; i++ )
+	LISTITEM *item;
+
+	for ( i = 0, item = list_first(list); item; ++i, item = list_next(item) )
 	{
-	    TARGET *t = bindtarget( targets[i] );
+		TARGET* t = bindtarget(list_value(item));
 
 #ifdef OPT_CIRCULAR_GENERATED_HEADER_FIX
 	    make0( t, 0, i, 0, counts, anyhow );
@@ -662,9 +724,9 @@ pass:
 #ifdef OPT_GRAPH_DEBUG_EXT
 	if( DEBUG_GRAPH )
 	{
-		for( i = 0; i < n_targets; i++ )
+		for ( item = list_first(list); item; item = list_next(item) )
 		{
-			TARGET *t = bindtarget( targets[i] );
+			TARGET *t = bindtarget(list_value(item));
 			dependGraphOutput( t, 0 );
 		}
 	}
@@ -699,10 +761,35 @@ pass:
 
 	++make0calcmd5sum_dependssorted_stage;
 
-	for( i = 0; i < n_targets; i++ )
-	    status |= make1( bindtarget( targets[i] ) );
+	for ( item = list_first(list); item; item = list_next(item) )
+	{
+		status |= make1( bindtarget( list_value( item ) ) );
+	}
 
 #ifdef OPT_MULTIPASS_EXT
+	if ( (lolTargetPasses.count > 1 && (whichTargetPass != lolTargetPasses.count)))
+	{
+		for ( item = list_first(list); item; item = list_next(item) )
+		{
+			//make_fixprogress( bindtarget( list_value( item ) ) );
+		}
+
+#ifdef OPT_BUILTIN_MD5CACHE_EXT
+		checksums_nextpass();
+#endif /* OPT_BUILTIN_MD5CACHE_EXT */
+		donestamps();
+#ifdef OPT_HEADER_CACHE_EXT
+		//if ( globs.noexec == 0 )
+			//hcache_done();
+#endif
+		//++actionpass;
+		++whichTargetPass;
+
+		//printf( "*** executing pass %d...\n", actionpass + 1 );
+
+		goto pass;
+	}
+	else
 	if ( list_first(queuedjamfiles) )
 	{
 		LIST *origqueuedjamfiles = queuedjamfiles;
