@@ -484,7 +484,7 @@ actions android._APKPackage {
 
 # Apk -> Signed APK
 actions android._SignApk {
-    $(JAVA.JARSIGNER:TC) -keystore $(KEYSTORE_PATH:TC) -storepass $(KEYSTORE_PASSWORD) -signedjar $(1:TC) $(2:TC) $(KEYSTORE_KEY_ALIAS)
+    $(JAVA.JARSIGNER:TC) -keystore $(KEYSTORE_PATH:TC) -storepass "$(KEYSTORE_PASSWORD)" -signedjar $(1:TC) $(2:TC) $(KEYSTORE_KEY_ALIAS)
 }
 
 
@@ -496,7 +496,13 @@ actions android._ZipAlign {
 
 # aab -> Signed aab
 actions android._SignAab {
-    $(JAVA.JARSIGNER:TC) -verbose -sigalg SHA256withRSA -digestalg SHA-256 -keystore $(KEYSTORE_PATH:TC) -storepass $(KEYSTORE_PASSWORD) -keypass $(KEYSTORE_KEY_PASSWORD) $(1:TC) $(KEYSTORE_KEY_ALIAS)
+    $(JAVA.JARSIGNER:TC) -verbose -sigalg SHA256withRSA -digestalg SHA-256 -keystore $(AAB_KEYSTORE_PATH:TC) -storepass "$(AAB_KEYSTORE_PASSWORD:C)" -keypass "$(AAB_KEYSTORE_KEY_PASSWORD:C)" $(1:TC) $(AAB_KEYSTORE_KEY_ALIAS)
+}
+
+
+# aab -> Signed aab Error Message
+actions android._SignAabError {
+    Echo *** error : Must call android.SignAab and specify keystore path, keystore password, key alias, and key password ;
 }
 
 
@@ -561,7 +567,7 @@ rule android._StripCommonPathInternal VAR : COMMON {
     return $($(VAR)) ;
 }
 
-# Strips the common path away from var, e.g. if var is c:\test\fish and common in c:\test then the 
+# Strips the common path away from var, e.g. if var is c:\test\fish and common in c:\test then the
 # returned result will be fish.
 rule android._StripCommonPath VAR : COMMON {
     local _var = $(VAR) ;
@@ -1978,61 +1984,80 @@ assetPack {
             }
 
             # Set up the .aab dependencies.
-            local _aab = $(TARGET)-$(ANDROID.VERSION_NAME:Z=$(C.ACTIVE_TOOLCHAIN_TARGET))-$(C.CONFIG).aab ;
-            _aab = [ C.GristFiles $(TARGET) : $(_aab) ] ;
-            AAB_TARGET on $(C.ACTIVE_TOOLCHAIN_TARGET) = $(_aab) ;
+            local _aabKeyStorePath =
+                $(ANDROID.AAB_KEYSTORE_PATH:Z=$(C.ACTIVE_TOOLCHAIN_TARGET))
+                $(ANDROID.AAB_KEYSTORE_PATH:Z=$(C.ACTIVE_TOOLCHAIN_*)) ;
+            local _aabKeyStorePassword =
+                $(ANDROID.AAB_KEYSTORE_PASSWORD:Z=$(C.ACTIVE_TOOLCHAIN_TARGET))
+                $(ANDROID.AAB_KEYSTORE_PASSWORD:Z=$(C.ACTIVE_TOOLCHAIN_*)) ;
+            local _aabKeyStoreKeyAlias =
+                $(ANDROID.AAB_KEYSTORE_KEY_ALIAS:Z=$(C.ACTIVE_TOOLCHAIN_TARGET))
+                $(ANDROID.AAB_KEYSTORE_KEY_ALIAS:Z=$(C.ACTIVE_TOOLCHAIN_*)) ;
+            local _aabKeyStoreKeyPassword =
+                $(ANDROID.AAB_KEYSTORE_KEY_PASSWORD:Z=$(C.ACTIVE_TOOLCHAIN_TARGET))
+                $(ANDROID.AAB_KEYSTORE_KEY_PASSWORD:Z=$(C.ACTIVE_TOOLCHAIN_*)) ;
 
-            MakeLocate $(_aab) : $(packageOutputPath:E=$(LOCATE_TARGET)) ;
-            Depends $(_aab) : $(gradleTarget) ;
+            if $(_aabKeyStorePath) && $(_aabKeyStorePassword) && $(_aabKeyStoreKeyAlias) && $(_aabKeyStoreKeyPassword) {
+                local _aab = $(TARGET)-$(ANDROID.VERSION_NAME:Z=$(C.ACTIVE_TOOLCHAIN_TARGET))-$(C.CONFIG).aab ;
+                _aab = [ C.GristFiles $(TARGET) : $(_aab) ] ;
+                AAB_TARGET on $(C.ACTIVE_TOOLCHAIN_TARGET) = $(_aab) ;
 
-            if $(C.CONFIG) = debug {
-                GRADLE_COMMAND on $(_aab) = bundleDebug ;
+                MakeLocate $(_aab) : $(packageOutputPath:E=$(LOCATE_TARGET)) ;
+                Depends $(_aab) : $(gradleTarget) ;
+
+                if $(C.CONFIG) = debug {
+                    GRADLE_COMMAND on $(_aab) = bundleDebug ;
+                } else {
+                    GRADLE_COMMAND on $(_aab) = bundleRelease ;
+                }
+                Always $(_aab) ;
+                MightNotUpdate $(_aab) ;
+                android._Gradle $(_aab) : [ DependsList $(gradleTarget) ] : $(C.COMPILER_SUITE_SYMBOL) ;
+
+                # Make target depend on our aligned (signed) APK.
+                #Depends all : $(TARGET) : $(_apk) ;
+                # Set up the build-aab target.
+                local _signed.aab = $(_aab:S=.signed.aab) ;
+                SIGNED_AAB_TARGET on $(C.ACTIVE_TOOLCHAIN_TARGET) = $(_signed.aab) ;
+                MakeLocate $(_signed.aab) : $(packageOutputPath)/_signed ;
+                BINDING on $(_signed.aab) = $(_aab:BS) ;
+                Depends build-aab:$(TARGET) : $(_signed.aab) : $(_aab) ;
+                Always build-aab:$(TARGET) ;
+                NotFile build-aab:$(TARGET) ;
+
+                # Sign the .aab.
+                AAB_KEYSTORE_PATH on $(_signed.aab) = $(_aabKeyStorePath) ;
+                AAB_KEYSTORE_PASSWORD on $(_signed.aab) = [ Subst $(_aabKeyStorePassword) : "%%" : "%%%%" ] ;
+                AAB_KEYSTORE_KEY_ALIAS on $(_signed.aab) = $(_aabKeyStoreKeyAlias) ;
+                AAB_KEYSTORE_KEY_PASSWORD on $(_signed.aab) = [ Subst $(_aabKeyStoreKeyPassword) : "%%" : "%%%%" ] ;
+
+                Depends $(_signed.aab) : $(_aabKeystorePath) ;
+                UseCommandLine $(_signed.aab) : $(_aabKeyStorePassword) $(_aabKeyStoreKeyAlias) $(_aabKeyStoreKeyPassword) ;
+
+                Copy1File $(_signed.aab) : $(_aab) ;
+                android._SignAab $(_signed.aab) : $(_aab) : $(C.COMPILER_SUITE_SYMBOL) ;
+
+                # Set up the build-apks target.
+                local _apks = $(_aab:S=.apks) ;
+                MakeLocate $(_apks) : $(packageOutputPath:E=$(LOCATE_TARGET)) ;
+                Depends $(_apks) : $(_signed.aab) ;
+                #MightNotUpdate $(_apks) ;
+                android._bundletool_build-apks $(_apks) : $(_signed.aab) : $(C.COMPILER_SUITE_SYMBOL) ;
+
+                Depends build-apks:$(TARGET) : $(_apks) ;
+    #            Always build-apks:$(TARGET) ;
+                NotFile build-apks:$(TARGET) ;
+
+                # Set up an install target.
+                Depends install-apks:$(TARGET) : $(_apks) ;
+                Always install-apks:$(TARGET) ;
+                NotFile install-apks:$(TARGET) ;
+                android._bundletool_install-apks install-apks:$(TARGET) : $(_apks) : $(C.COMPILER_SUITE_SYMBOL) ;
             } else {
-                GRADLE_COMMAND on $(_aab) = bundleRelease ;
+                Always build-aab:$(TARGET) ;
+                NotFile build-aab:$(TARGET) ;
+                android._SignAabError build-aab:$(TARGET) ;
             }
-            Always $(_aab) ;
-            MightNotUpdate $(_aab) ;
-            android._Gradle $(_aab) : [ DependsList $(gradleTarget) ] : $(C.COMPILER_SUITE_SYMBOL) ;
-
-            # Make target depend on our aligned (signed) APK.
-            #Depends all : $(TARGET) : $(_apk) ;
-            # Set up the build-aab target.
-            local _signed.aab = $(_aab:S=.signed.aab) ;
-            SIGNED_AAB_TARGET on $(C.ACTIVE_TOOLCHAIN_TARGET) = $(_signed.aab) ;
-            MakeLocate $(_signed.aab) : $(packageOutputPath)/_signed ;
-            BINDING on $(_signed.aab) = $(_aab:BS) ;
-            Depends build-aab:$(TARGET) : $(_signed.aab) : $(_aab) ;
-            Always build-aab:$(TARGET) ;
-            NotFile build-aab:$(TARGET) ;
-
-            # Sign the .aab.
-            KEYSTORE_PATH on $(_signed.aab) = $(_keyStorePath) ;
-            KEYSTORE_PASSWORD on $(_signed.aab) = $(_keyStorePassword) ;
-            KEYSTORE_KEY_ALIAS on $(_signed.aab) = $(_keyStoreKeyAlias) ;
-            KEYSTORE_KEY_PASSWORD on $(_signed.aab) = $(_keyStoreKeyPassword) ;
-
-            Depends $(_signed.aab) : $(_keystorePath) ;
-            UseCommandLine $(_signed.aab) : $(_keyStorePassword) $(_keyStoreKeyAlias) $(_keyStoreKeyPassword) ;
-
-            Copy1File $(_signed.aab) : $(_aab) ;
-            android._SignAab $(_signed.aab) : $(_aab) : $(C.COMPILER_SUITE_SYMBOL) ;
-
-            # Set up the build-apks target.
-            local _apks = $(_aab:S=.apks) ;
-            MakeLocate $(_apks) : $(packageOutputPath:E=$(LOCATE_TARGET)) ;
-            Depends $(_apks) : $(_signed.aab) ;
-            #MightNotUpdate $(_apks) ;
-            android._bundletool_build-apks $(_apks) : $(_signed.aab) : $(C.COMPILER_SUITE_SYMBOL) ;
-
-            Depends build-apks:$(TARGET) : $(_apks) ;
-#            Always build-apks:$(TARGET) ;
-            NotFile build-apks:$(TARGET) ;
-
-            # Set up an install target.
-            Depends install-apks:$(TARGET) : $(_apks) ;
-            Always install-apks:$(TARGET) ;
-            NotFile install-apks:$(TARGET) ;
-            android._bundletool_install-apks install-apks:$(TARGET) : $(_apks) : $(C.COMPILER_SUITE_SYMBOL) ;
 
             #return ;
         }
@@ -2757,6 +2782,18 @@ rule android.Sign TARGET : KEYSTORE_PATH_PASSWORD_KEY {
     ANDROID.KEYSTORE_PASSWORD on $(C.ACTIVE_TOOLCHAIN_TARGET) = $(KEYSTORE_PATH_PASSWORD_KEY[2]) ;
     ANDROID.KEYSTORE_KEY_ALIAS on $(C.ACTIVE_TOOLCHAIN_TARGET) = $(KEYSTORE_PATH_PASSWORD_KEY[3]) ;
     ANDROID.KEYSTORE_KEY_PASSWORD on $(C.ACTIVE_TOOLCHAIN_TARGET) = $(KEYSTORE_PATH_PASSWORD_KEY[4]) ;
+}
+
+
+# Specify aab code signing details (key store path, password and key).
+rule android.SignAab TARGET : KEYSTORE_PATH_PASSWORD_KEY {
+    C.ActiveTarget $(TARGET) ;
+    ANDROID.AAB_KEYSTORE_PATH on $(C.ACTIVE_TOOLCHAIN_TARGET) = $(KEYSTORE_PATH_PASSWORD_KEY[1]) ;
+    SEARCH on $(KEYSTORE_PATH_PASSWORD_KEY[1]) = $(SUBDIR) ;
+
+    ANDROID.AAB_KEYSTORE_PASSWORD on $(C.ACTIVE_TOOLCHAIN_TARGET) = $(KEYSTORE_PATH_PASSWORD_KEY[2]) ;
+    ANDROID.AAB_KEYSTORE_KEY_ALIAS on $(C.ACTIVE_TOOLCHAIN_TARGET) = $(KEYSTORE_PATH_PASSWORD_KEY[3]) ;
+    ANDROID.AAB_KEYSTORE_KEY_PASSWORD on $(C.ACTIVE_TOOLCHAIN_TARGET) = $(KEYSTORE_PATH_PASSWORD_KEY[4]) ;
 }
 
 
