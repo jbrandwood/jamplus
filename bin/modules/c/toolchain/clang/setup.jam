@@ -1,4 +1,5 @@
-rule C.Toolchain.clang.Setup COMPILER_BIN_PATH : SUFFIXES {
+# COMPILER_ACTIONS = CC C++ PCH
+rule C.Toolchain.clang.Setup COMPILER_BIN_PATH : SUFFIXES : COMPILER_ACTIONS {
     COMPILER_BIN_PATH ?= "" ;
 
     C.COMPILER = clang ;
@@ -30,12 +31,13 @@ rule C.Toolchain.clang.Setup COMPILER_BIN_PATH : SUFFIXES {
     NOARSCAN on $(C.COMPILER_SUITE_SYMBOL) = true ;
     NOARUPDATE on $(C.COMPILER_SUITE_SYMBOL) = true ;
 
+    COMPILER_ACTIONS ?= C.clang.CC C.clang.C++ C.clang.PCH ;
     C.BUILD_EXTENSIONS on $(C.COMPILER_SUITE_SYMBOL) = $(SUFOBJ) ;
-    C.AddBuildExtensions CC : .c .s : C.clang.CC : $(SUFOBJ) "" : 1 1 0 : 1 ;
-    C.AddBuildExtensions C++ : .cc .cpp .cxx : C.clang.C++ : $(SUFOBJ) "" : 1 0 1 : 1 ;
-    C.AddBuildExtensions M : .m : C.clang.CC : $(SUFOBJ) "" : 1 1 0 : 1 ;
-    C.AddBuildExtensions MM : .mm : C.clang.C++ : $(SUFOBJ) "" : 1 0 1 : 1 ;
-    C.AddBuildExtensions PCH : .h .pch : C.clang.PCH : "" .gch ;
+    C.AddBuildExtensions CC : .c .s : $(COMPILER_ACTIONS[1]) : $(SUFOBJ) "" : 1 1 0 : 1 ;
+    C.AddBuildExtensions C++ : .cc .cpp .cxx : $(COMPILER_ACTIONS[2]) : $(SUFOBJ) "" : 1 0 1 : 1 ;
+    C.AddBuildExtensions M : .m : $(COMPILER_ACTIONS[1]) : $(SUFOBJ) "" : 1 1 0 : 1 ;
+    C.AddBuildExtensions MM : .mm : $(COMPILER_ACTIONS[2]) : $(SUFOBJ) "" : 1 0 1 : 1 ;
+    C.AddBuildExtensions PCH : .h .pch : $(COMPILER_ACTIONS[3]) : "" .gch ;
 
     PCHCCFLAGS on $(C.COMPILER_SUITE_SYMBOL) = -x c-header ;
     PCHC++FLAGS on $(C.COMPILER_SUITE_SYMBOL) = -x c++-header ;

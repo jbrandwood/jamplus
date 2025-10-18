@@ -1,16 +1,125 @@
+rule C.Toolchain.clang.msvc.FindMSVCHighestVersion MSVC_ROOT {
+    local dirs = [ Glob $(MSVC_ROOT) : */ ] ;
+    local highestMajor = 0 ;
+    local highestMinor = 0 ;
+    local highestBuild = 0 ;
+    local dir ;
+    for dir in @($(dirs:P):D=) {
+        local binDir = [ Glob $(MSVC_ROOT)/$(dir) : bin/ ] ;
+        if $(binDir) {
+            local version = [ Match ([0-9]*)\.([0-9]*)\.([0-9]*) : $(dir) ] ;
+            if [ Math $(version[1]) ">" $(highestMajor) ] = 1 {
+                highestMajor = $(version[1]) ;
+                highestMinor = $(version[2]) ;
+                highestBuild = $(version[3]) ;
+            } else if [ Math $(version[1]) "=" $(highestMajor) ] = 1 {
+                if [ Math $(version[2]) ">" $(highestMinor) ] = 1 {
+                    highestMinor = $(version[2]) ;
+                    highestBuild = $(version[3]) ;
+                } else if [ Math $(version[2]) "=" $(highestMinor) ] = 1 {
+                    if [ Math $(version[3]) ">" $(highestBuild) ] = 1 {
+                        highestBuild = $(version[3]) ;
+                    }
+                }
+            }
+        }
+    }
+
+    if $(highestMajor) = 0  &&  $(highestMinor) = 0  &&  $(highestBuild) = 0 {
+        return ;
+    }
+
+    return $(highestMajor).$(highestMinor).$(highestBuild) ;
+}
+
+
+rule C.Toolchain.clang.msvc.FindHighestValidSDKVersion {
+    local dirs = [ Glob $(MSSDK)/Include : */ ] ;
+    local versions = [ Match 10\.0\.(.*)\.0 : $(dirs) ] ;
+    local highestDir ;
+    local dir ;
+    for dir in $(dirs) {
+        local windows.h = [ Glob $(dir)um : Windows.h ] ;
+        if $(windows.h) {
+            local version = [ Match 10\.0\.(.*)\.0 : $(dir) ] ;
+            local highestVersion = [ Match 10\.0\.(.*)\.0 : $(highestDir) ] ;
+            if ! $(highestVersion) {
+                highestVersion = 0 ;
+            }
+            if [ Math $(version) ">" $(highestVersion) ] = 1 {
+                highestDir = $(dir) ;
+            }
+        }
+    }
+
+    local highestVersion = $(highestDir:P) ;
+    return $(highestVersion:D=) ;
+}
+
+
+
+
 rule C.Toolchain.clang.win64.Detect {
     local foundPath = [ Glob
         $(ProgramFiles(x86):J=$(SPACE))/LLVM/bin
         c:/llvm-mingw/bin
         $(PATH)
         : clang.exe ] ;
+
+    local isClangCl ;
     if ! $(foundPath) {
-        return ;
+        local pf = $(ProgramFiles:/J=" ") ;
+        foundPath = [ Glob
+            "$(pf)/Microsoft Visual Studio/2022/Professional/VC/Tools/Llvm/bin"
+            "$(pf)/Microsoft Visual Studio/2022/Community/VC/Tools/Llvm/bin"
+            : clang.exe ] ;
+        if $(foundPath) {
+            isClangCl = true ;
+        } else {
+            return ;
+        }
     }
 
     foundPath = [ Match (.+)/ : $(foundPath[1]) ] ;
-    if ! [ C.Toolchain.clang.Setup $(foundPath) ] {
-        return ;
+
+    if $(isClangCl) {
+        if ! [ C.Toolchain.clang.Setup $(foundPath) : : C.vc.clang.CC C.vc.clang.C++ C.vc.clang.PCH ] {
+            return ;
+        }
+
+        local compiler = vs2022 ;
+        local MSVC = @(../MSVC:R=$(foundPath[1]:D)) ;
+        switch $(compiler) {
+            case vs2022 :
+                local key = HKEY_LOCAL_MACHINE SOFTWARE Microsoft "Windows Kits" "Installed Roots" KitsRoot10 ;
+                MSSDK10 = [ W32_GETREG $(key) ] ;
+                MSSDK = $(MSSDK10) ;
+
+                local MSVC_VERSION = [ C.Toolchain.clang.msvc.FindMSVCHighestVersion $(MSVC) ] ;
+                local MSVCNT = $(MSVC)/$(MSVC_VERSION) ;
+
+                local MSSDK_VERSION = [ C.Toolchain.clang.msvc.FindHighestValidSDKVersion $(MSVC) ] ;
+                C.STDHDRS on $(C.COMPILER_SUITE_SYMBOL) =
+                    $(MSVCNT)/include
+                    $(MSVCNT)/../../../Auxiliary/VS/include
+                    $(MSSDK)/Include/$(MSSDK_VERSION)/ucrt
+                    $(MSSDK)/Include/$(MSSDK_VERSION)/um
+                    $(MSSDK)/Include/$(MSSDK_VERSION)/shared
+                    $(MSSDK)/Include/$(MSSDK_VERSION)/winrt
+                ;
+                C.LINKDIRECTORIES on $(C.COMPILER_SUITE_SYMBOL) =
+                    $(MSVCNT)/lib/x64
+                    $(MSVCNT)/lib/onecore/x64
+                    $(MSSDK)/lib/$(MSSDK_VERSION)/ucrt/x64
+                    $(MSSDK)/lib/$(MSSDK_VERSION)/um/x64
+                ;
+
+                CLANG-CL on $(C.COMPILER_SUITE_SYMBOL) = true ;
+        }
+    } else {
+        if ! [ C.Toolchain.clang.Setup $(foundPath) ] {
+            return ;
+        }
     }
 
     C.AR on $(C.COMPILER_SUITE_SYMBOL) = @(llvm-ar:R=$(foundPath)) ru ;
@@ -39,3 +148,23 @@ rule C.clang.win64._SharedLibraryFromObjects_ExportLib {
 
 }
 
+
+if $(NT) {
+
+actions updated response C.vc.clang.CC {
+    SET INCLUDE=$(C.STDHDRS:\\J=;)
+	$(C.CC:C) -c $(MFLAGS) $(>:C)
+}
+
+
+actions updated response C.vc.clang.C++ {
+    SET INCLUDE=$(C.STDHDRS:\\J=;)
+	$(C.C++:C) -c $(MFLAGS) $(>:C)
+}
+
+
+actions updated response C.vc.clang.PCH {
+	$(C.C++:C) -c $(MFLAGS) $(>:C)
+}
+
+} # if $(NT)

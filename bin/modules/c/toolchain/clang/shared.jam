@@ -3,7 +3,7 @@ rule C.Toolchain.clang.Shared { }
 if ! $(TARGETINFO_LOCATE) {
 
 rule C.clang.FDefines { return -D$(<) ; }
-rule C.clang.FIncludes { return -I$(<) ; }
+rule C.clang.FIncludes { return -I$(<:C) ; }
 rule C.clang.FLibraryPaths { return -L$(<) ; }
 
 
