@@ -500,7 +500,12 @@ int LS_jam_getvar(ls_lua_State *L)
 
     if (numParams == 1)
     {
-        list = var_get(ls_lua_tostring(L, 1));
+        const char* variableName = ls_lua_tostring(L, 1);
+        list = var_get(variableName);
+        if (!list)
+        {
+	        return 0;
+        }
     }
     else
     {
