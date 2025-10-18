@@ -299,11 +299,15 @@ function M.getOpt (argIn, options)
   local function parseOpt (opt, arg)
     local o = options.name[opt]
     if o ~= nil then
+      local value = getArg (o, opt, arg)
       if o.var then
         optOut[o.name[1]] = optOut[o.name[1]] or {}
-        table.insert (optOut[o.name[1]], getArg (o, opt, arg))
+        table.insert (optOut[o.name[1]], value)
+        if o.func then
+          o.func(value)
+        end
       else
-        optOut[o.name[1]] = getArg (o, opt, arg)
+        optOut[o.name[1]] = value
       end
     else
       table.insert (errors, "unrecognized option `-" .. opt .. "'")
@@ -322,6 +326,7 @@ function M.getOpt (argIn, options)
       parseOpt (opt, arg)
     end
   end
+
   return argOut, optOut, errors
 end
 
@@ -334,7 +339,7 @@ end
 -- @field type type of argument (if any): <code>Req</code>(uired),
 -- <code>Opt</code>(ional)
 -- @field var descriptive name for the argument
-M.Option = Object {_init = {"name", "desc", "type", "var"}}
+M.Option = Object {_init = {"name", "desc", "type", "var", "func"}}
 
 --- Options table constructor: adds lookup tables for the option names
 function M.makeOptions (t)
