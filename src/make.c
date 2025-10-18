@@ -1512,7 +1512,7 @@ make0(
 		}
 		else
 		{
-#endif
+#endif /* OPT_MULTIPASS_EXT */
 		if( t->flags & T_FLAG_NOCARE )
 		{
 #ifdef OPT_GRAPH_DEBUG_EXT
@@ -1531,7 +1531,7 @@ make0(
 		}
 #ifdef OPT_MULTIPASS_EXT
 		}
-#endif
+#endif /* OPT_MULTIPASS_EXT */
 	}
 
 	/* Step 4f: propagate dependents' time & fate. */
