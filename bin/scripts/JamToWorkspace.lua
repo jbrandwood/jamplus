@@ -173,7 +173,13 @@ end
 
 
 function ProcessCommandLine()
+	BuildFlags = { }
 	JambaseFlags = { }
+	JamfileFlags = { }
+
+	function ProcessBuildFlag(newarg, oldarg)
+		BuildFlags[#BuildFlags + 1] = newarg
+	end
 
 	function ProcessJambaseFlags(newarg, oldarg)
 		local key, value = newarg:match('(.+)=(.+)')
@@ -183,8 +189,6 @@ function ProcessCommandLine()
 		end
 		JambaseFlags[#JambaseFlags + 1] = { Key = key, Value = value }
 	end
-
-	JamfileFlags = { }
 
 	function ProcessJamfileFlags(newarg, oldarg)
 		local key, value = newarg:match('(.+)=(.+)')
@@ -202,6 +206,7 @@ function ProcessCommandLine()
 		getopt.Option {{"platform"}, "Set the default platform used to build with", "Req", 'PLATFORM'},
 		getopt.Option {{"config"}, "Filename of additional configuration file", "Req", 'CONFIG'},
 		getopt.Option {{"compiler"}, "Set the default compiler used to build with", "Req", 'COMPILER'},
+		getopt.Option {{"buildflag"}, "Extra flags to pass for workspace creation.  Specify in KEY=VALUE form.", "Req", 'BUILD_FLAG', ProcessBuildFlag },
 		getopt.Option {{"jambaseflags"}, "Extra flags to make available for each invocation of Jam.  Specify in KEY=VALUE form.", "Req", 'JAMBASE_FLAGS', ProcessJambaseFlags },
 		getopt.Option {{"jamfileflags"}, "Extra flags to make available for each invocation of Jam.  Specify in KEY=VALUE form.", "Req", 'JAMFILE_FLAGS', ProcessJamfileFlags },
 		getopt.Option {{"jamexepath"}, "The full path to the Jam executable when the default location won't suffice.", "Req", 'JAMEXEPATH' },
@@ -333,6 +338,9 @@ function CreateTargetInfoFiles(outPath)
 			'-d0',
 			'-S'
 		}
+		for _, flag in ipairs(BuildFlags) do
+			collectConfigurationArgs[#collectConfigurationArgs + 1] = flag
+		end
 
 		print('    Parsing toolchain ' .. platform .. '/' .. config .. '...')
 		--print(table.concat(collectConfigurationArgs, ' '))
@@ -1077,7 +1085,7 @@ include $$(CUSTOMSETTINGS) ;
 # Enter your own settings here.
 ]])
 	end
-	
+
 	-- Write the Jamfile variables out.
 	if Config.JamfileVariables then
 		for _, variable in ipairs(Config.JamfileVariables) do
@@ -1225,6 +1233,7 @@ Config.SubIncludes =
 	{ 'AppRoot', '"$(sourceRootPath)"', sourceJamfile },
 }
 
+Config.BuildFlags = BuildFlags
 Config.JambaseFlags = JambaseFlags
 Config.JamfileFlags = JamfileFlags
 
