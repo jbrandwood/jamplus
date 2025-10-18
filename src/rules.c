@@ -127,8 +127,7 @@ int ruleexists( const char *rulename )
 extern int actionpass;
 #endif
 
-TARGET *
-bindtarget( const char *targetname )
+TARGET *bindtargetactual( const char *targetname )
 {
 	TARGET target, *t = &target;
 
@@ -143,6 +142,33 @@ bindtarget( const char *targetname )
 	    t->name = newstr( targetname );	/* never freed */
 	    t->boundname = t->name;		/* default for T_FLAG_NOTFILE */
 	}
+
+	return t;
+}
+
+TARGET *
+bindtarget( const char *targetname )
+{
+	TARGET *t = bindtargetactual( targetname );
+
+	while ( t->aliastarget )
+	{
+		t = t->aliastarget;
+	}
+
+	return t;
+}
+
+/*
+ * aliastarget() -
+ */
+
+TARGET *aliastarget( const char *aliasname, const char *targetname )
+{
+	TARGET *aliast = bindtargetactual( aliasname );
+	TARGET *t = bindtarget( targetname );
+
+	aliast->aliastarget = t;
 
 	return t;
 }

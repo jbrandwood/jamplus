@@ -77,6 +77,7 @@
 # define P0 (PARSE *)0
 # define C0 (char *)0
 
+LIST *builtin_aliastarget( PARSE *parse, LOL *args, int *jmp );
 LIST *builtin_depends( PARSE *parse, LOL *args, int *jmp );
 LIST *builtin_dependsunique( PARSE *parse, LOL *args, int *jmp );
 LIST *builtin_echo( PARSE *parse, LOL *args, int *jmp );
@@ -158,6 +159,9 @@ int glob( const char *s, const char *c );
 void
 load_builtins()
 {
+	bindrule( "AliasTarget" )->procedure =
+		parse_make( builtin_aliastarget, P0, P0, P0, C0, C0, 0 );
+
     bindrule( "Always" )->procedure =
     bindrule( "ALWAYS" )->procedure =
 	parse_make( builtin_flags, P0, P0, P0, C0, C0, T_FLAG_TOUCHED );
@@ -371,6 +375,34 @@ load_builtins()
 
 	bindrule( "CompareTimestamp" )->procedure =
 		parse_make( builtin_comparetimestamp, P0, P0, P0, C0, C0, 0 );
+}
+
+/*
+ * builtin_aliastarget() - AliasTarget rule
+ */
+
+LIST *builtin_aliastarget( PARSE *parse, LOL *args, int *jmp )
+{
+	LIST *aliastargetslist = lol_get( args, 0 );
+	LIST *targetlist = lol_get( args, 1 );
+	LISTITEM *al;
+	const char *targetname;
+
+	if ( !aliastargetslist || !targetlist )
+	{
+		return L0;
+	}
+
+	targetname = list_value( list_first( targetlist ) );
+
+	for ( al = list_first( aliastargetslist ); al; al = list_next( al ) )
+	{
+		const char *aliastargetname = list_value( al );
+
+		aliastarget( aliastargetname, targetname );
+	}
+
+	return L0;
 }
 
 /*

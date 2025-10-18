@@ -189,6 +189,7 @@ struct _target {
 
 	TARGETS		*depends;	/* dependencies */
 	TARGET		*includes;	/* includes */
+	TARGET		*aliastarget;
 
 	int dependssorted;
 	time_t		time;		/* update time */
@@ -259,6 +260,7 @@ RULE 	*bindrule( const char *rulename );
 int actionexists( const char *rulename );
 int ruleexists( const char *rulename );
 TARGET *bindtarget( const char *targetname );
+TARGET *aliastarget( const char *aliasname, const char *targetname );
 TARGET *copytarget( const TARGET *t );
 void 	touchtarget( const char *t );
 #ifdef OPT_BUILTIN_NEEDS_EXT
