@@ -1784,6 +1784,16 @@ void make0calcmd5sumhelper( TARGET *t, int source, int depth, int force, int pha
 		return;
 	}
 
+	if( ( t->binding == T_BIND_UNBOUND ) && !( t->flags & T_FLAG_NOTFILE )
+			&& t->timestamp_epoch != make0calcmd5sum_timestamp_epoch )
+	{
+		t->timestamp_epoch = make0calcmd5sum_timestamp_epoch;
+		pushsettings( t->settings );
+		t->boundname = search( t->name, &t->time );
+		popsettings( t->settings );
+		t->binding = t->time ? T_BIND_EXISTS : T_BIND_MISSING;
+	}
+
 	getcachedmd5sum( t, 0 );
 
 	//if ( !t->contentchecksum  ||  ismd5empty( t->contentchecksum->contentmd5sum ) )
