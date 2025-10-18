@@ -189,8 +189,10 @@ struct _target {
 
 	TARGETS		*depends;	/* dependencies */
 	TARGET		*includes;	/* includes */
+	TARGETS		*includesspecial;	/* special includes */
 	TARGET		*aliastarget;
 
+	int scannedheaders;
 	int dependssorted;
 	time_t		time;		/* update time */
 	time_t		leaf;		/* update time of leaf sources */

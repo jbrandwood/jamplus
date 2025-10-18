@@ -6,6 +6,14 @@ rule C.clang.FDefines { return -D$(<) ; }
 rule C.clang.FIncludes { return -I$(<:C) ; }
 rule C.clang.FLibraryPaths { return -L$(<) ; }
 
+rule C.clang.HdrRule SOURCE : HEADERS {
+    local s = $(HEADERS:G?=$(HDRGRIST:E)) ;
+
+    #Includes $(SOURCE) : $(s) ;
+    DependsUnique $(SOURCE) : $(s) ;
+    IncludesSpecial $(SOURCE) : $(s) ;
+}
+
 
 rule C.clang._LinkPrebuiltLibraries {
     local lib ;
@@ -75,41 +83,83 @@ rule C.clang._MultiCppCompile_SetupFlags {
                 MFLAGS on $(_pchName) += "-include $(objectForceIncludes:G=)" ;
             }
 
+            local depFile = $(LOCATE:Z=$(_pchFilename))/$(_pchName:BS).d ;
+            Clean $(C.ACTIVE_TOOLCHAIN_CLEAN_TARGET) : $(depFile) ;
+            MFLAGS on $(_pchName) += -MMD -MF $(depFile:TC) ;
+
             Depends $(_pchFilename) : $(_pchName) ;
             IgnoreContents $(_pchFilename) ;
             SEARCH on $(_pchName) = $(_hdrs) ;
 
             # source needs to be scanned for header dependencies
-            HDRRULE on $(_pchName) = C.HdrRule ;
-            HDRSCAN on $(_pchName) = $(C.HDRPATTERN) ;
-            HDRGRIST on $(_pchName) = $(C.ACTIVE_TOOLCHAIN_TARGET_GRIST) ;
-            HDRSEARCH on $(_pchName) = $(_hdrs) ;
+            if ! $(JAM_HEADERPRESCAN) || $(JAM_HEADERPRESCAN) = 0 {
+                HDRDEPFILE on $(_pchFilename) = $(depFile) ;
+                HDRSCAN on $(_pchFilename) = "^            \"(.*)\".*$" ;
+                HDRGRIST on $(_pchFilename) = ;
+                HDRRULE on $(_pchFilename) = C.clang.HdrRule ;
+            } else {
+                HDRRULE on $(_pchName) = C.HdrRule ;
+                HDRSCAN on $(_pchName) = $(C.HDRPATTERN) ;
+                HDRGRIST on $(_pchName) = $(C.ACTIVE_TOOLCHAIN_TARGET_GRIST) ;
+                HDRSEARCH on $(_pchName) = $(_hdrs) ;
+            }
         }
 
         _flags += -include $(_pchFilename:T:S=:C) ;
 
-        HDREXTRA on $(_src) += $(_pchName:T) ;
+        if $(JAM_HEADERPRESCAN) = 1 {
+            HDREXTRA on $(_src) += $(_pchName:T) ;
+        }
 
         # if the source should use pch
         if $(_pch[2]) {
             # mark that compilation will depend on it
-            Includes $(_src) : $(_pchFilename) ;
+            if ! $(JAM_HEADERPRESCAN) || $(JAM_HEADERPRESCAN) = 0 {
+                DependsUnique $(_obj) : $(_pchFilename) ;
+                IncludesSpecial $(_obj) : $(_pchFilename) ;
+            } else {
+                Includes $(_src) : $(_pchFilename) ;
+            }
         }
 
         if $(_pch[3]) {
-            #Depends $(_obj) : $(_pchFilename) ;
+            DependsUnique $(_obj) : $(_pchFilename) ;
         }
     }
 
     if $(objectForceIncludes[1]) {
         SEARCH on $(objectForceIncludes) = $(_hdrs) ;
         _flags += "-include $(objectForceIncludes:G=)" ;
+
+        if ! $(JAM_HEADERPRESCAN) || $(JAM_HEADERPRESCAN) = 0 {
+            DependsUnique $(_obj) : $(objectForceIncludes) ;
+            IncludesSpecial $(_obj) : $(objectForceIncludes) ;
+        }
     }
 
     _flags += "-o \"$(_obj:T)\"" ;
 
     if $(C_LIBRARY_SHARED_MODULE) {
         _flags += $(SHAREDLIBDEFAULTFLAG:Z=$(C.COMPILER_SUITE_SYMBOL)) ;
+    }
+
+    local depFile = $(_obj:TD)/$(_src:BS).d ;
+    Clean $(C.ACTIVE_TOOLCHAIN_CLEAN_TARGET) : $(depFile) ;
+
+    if ! $(JAM_HEADERPRESCAN) || $(JAM_HEADERPRESCAN) = 0 {
+        # Write out a dependencies file from the compilation.
+
+        HDRDEPFILE on $(_obj) = $(depFile) ;
+        HDRSCAN on $(_obj) = "^            \"(.*)\".*$" ;
+        HDRGRIST on $(_obj) = ;
+        HDRRULE on $(_obj) = C.clang.HdrRule ;
+#        HDRDEPFILE on $(_src) = $(depFile) ;
+#        HDRSCAN on $(_src) = "^            \"(.*)\".*$" ;
+#        HDRGRIST on $(_src) = ;
+#        HDRRULE on $(_src) = C.clang.HdrRule ;
+#        HDRPARENT on $(_src) = $(_obj) ;
+
+        _flags += -MMD -MF $(depFile:TC) ;
     }
 }
 

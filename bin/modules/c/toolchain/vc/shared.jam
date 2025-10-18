@@ -11,6 +11,17 @@ rule C.vc.FDefines { return /D$(<) ; }
 rule C.vc.FIncludes { return /I"\"$(<)\"" ; }
 rule C.vc.FLibraryPaths { return \"/LIBPATH:$(<)\" ; }
 
+rule C.vc.HdrRule SOURCE : HEADERS {
+    local s = $(HEADERS:G?=$(HDRGRIST:E)) ;
+
+    #Includes $(SOURCE) : $(s) ;
+    DependsUnique $(SOURCE) : $(s) ;
+    IncludesSpecial $(SOURCE) : $(s) ;
+}
+
+
+
+
 rule C.vc._CStandard {
     C.Flags : CC : /std:c$(VERSION) : $(OPTIONS) ;
     C.Flags : M : /std:c$(VERSION) : $(OPTIONS) ;
@@ -236,8 +247,9 @@ rule C.vc._MultiCppCompile_SetupFlags {
         if ! [ Search $(_pchSourceFilename) ] {
             BINDING on $(_pchSourceFilename) = $(_pch[1]:BS) ;
 
-            if ! $(built-$(_pchSourceFilename)) {
-                built-$(_pchSourceFilename) = 1 ;
+            local builtobj = $(built-$(_pchSourceFilename)) ;
+            if ! $(builtobj) {
+                built-$(_pchSourceFilename) = $(_obj) ;
 
                 local pchext = $(_pchSourceFilename:S) ;
 
@@ -251,11 +263,15 @@ rule C.vc._MultiCppCompile_SetupFlags {
             }
         }
 
-        local _pchFilename = $(_pch[3]:LBS).pch ;
+        local _pchFilename = $(_pch[3]:BS).pch ;
         local _pchDiskFilename = [ FDirName $(LOCATE_TARGET) $(_pchFilename:BS) ] ;
         _pchFilename = $(_pchFilename:G=$(C.ACTIVE_TOOLCHAIN_TARGET_GRIST)) ;
 
+        local _pchObjFilename = $(_pchSourceFilename:S=$(SUFOBJ)) ;
+
         if $(_pch[4]) {
+            built-$(_pchSourceFilename) = $(_obj) ;
+
             # add extra flags to enable pch creation
             _flags += /Fp\"$(_pchDiskFilename:\\)\" /Yc\"$(_pch[2])\" /Yl\"__jp__$(TARGET)\" ;
             # mark that it will be created by compilation through srcref
@@ -269,23 +285,53 @@ rule C.vc._MultiCppCompile_SetupFlags {
         } else if $(_pch[2]) {
             # add extra flags to enable pch loading
             _flags += /Fp\"$(_pchDiskFilename:\\)\" /Yu\"$(_pch[2])\" ;
-            # mark that compilation will depend on it
-            Includes $(_src) : $(_pchFilename) ;
+            if $(JAM_HEADERPRESCAN) = 1 {
+                # mark that compilation will depend on it
+                Includes $(_src) : $(_pchFilename) ;
+            } else {
+                DependsUnique $(_obj) : $(_pchFilename) $(_pchObjFilename) ;
+                IncludesSpecial $(_obj) : $(_pchFilename) $(_pchObjFilename) ;
+            }
         }
     }
 
     if $(objectForceIncludes[1]) {
         SEARCH on $(objectForceIncludes) = $(_hdrs) ;
         _flags += "/FI\"$(objectForceIncludes:G=)\"" ;
+
+        #local resolvedObjectForceIncludes = $(objectForceIncludes:T) ;
+        #DependsUnique $(_obj) : $(resolvedObjectForceIncludes) ;
+        #IncludesSpecial $(_obj) : $(resolvedObjectForceIncludes) ;
+        #Echo IncludesSpecial $(_obj) \: $(resolvedObjectForceIncludes) ;
     }
 
     # bind flags, defines and includes to the target
     _flags += $(_postmflags) ;
+
+    # Clean the depFile regardless of settings.
+    local depFile = $(_obj:TD)/$(_src:BS).json ;
+    Clean $(C.ACTIVE_TOOLCHAIN_CLEAN_TARGET) : $(depFile) ;
+
+    if ! $(JAM_HEADERPRESCAN) || $(JAM_HEADERPRESCAN) = 0 {
+        # Write out a dependencies file from the compilation.
+
+        HDRVCDEPFILE on $(_obj) = $(depFile) ;
+        HDRSCAN on $(_obj) = "^            \"(.*)\".*$" ;
+        HDRGRIST on $(_obj) = ;
+        HDRRULE on $(_obj) = C.vc.HdrRule ;
+#        HDRSOURCE on $(_obj) = $(_src) ;
+#        HDRVCDEPFILE on $(_src) = $(depFile) ;
+#        HDRSCAN on $(_src) = "^            \"(.*)\".*$" ;
+#        HDRGRIST on $(_src) = ;
+#        HDRRULE on $(_src) = C.vc.HdrRule ;
+
+        _flags += /sourceDependencies $(_obj:TDC) ;
+    }
 }
 
 rule C.vc._MultiCppCompile_PchDeps {
     if $(_pch1[4]) {
-        local _pchFilename = $(_pch1[3]:LBS).pch ;
+        local _pchFilename = $(_pch1[3]:BS).pch ;
         _pchFilename = $(_pchFilename:G=$(C.ACTIVE_TOOLCHAIN_TARGET_GRIST)) ;
         #Depends $(objects) : $(_pchFilename) ;
         # add that pch as output

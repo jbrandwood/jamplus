@@ -80,6 +80,7 @@
 LIST *builtin_aliastarget( PARSE *parse, LOL *args, int *jmp );
 LIST *builtin_depends( PARSE *parse, LOL *args, int *jmp );
 LIST *builtin_dependsunique( PARSE *parse, LOL *args, int *jmp );
+LIST *builtin_includesspecial( PARSE *parse, LOL *args, int *jmp );
 LIST *builtin_echo( PARSE *parse, LOL *args, int *jmp );
 LIST *builtin_exit( PARSE *parse, LOL *args, int *jmp );
 LIST *builtin_flags( PARSE *parse, LOL *args, int *jmp );
@@ -200,6 +201,9 @@ load_builtins()
 
     bindrule( "IncludesUnique" )->procedure =
 		parse_make( builtin_dependsunique, P0, P0, P0, C0, C0, 1 );
+
+	bindrule( "IncludesSpecial" )->procedure =
+		parse_make( builtin_includesspecial, P0, P0, P0, C0, C0, 0 );
 
     bindrule( "Leaves" )->procedure =
     bindrule( "LEAVES" )->procedure =
@@ -520,6 +524,44 @@ builtin_dependsunique(
 
     return L0;
 }
+
+/*
+ * builtin_includesspecial() -
+ */
+
+LIST *
+builtin_includesspecial(
+	PARSE	*parse,
+	LOL	*args,
+	int	*jmp )
+{
+	int curindex = 0;
+	while ( 1 )
+	{
+		LIST *targets = lol_get( args, curindex );
+		LIST *sources = lol_get( args, curindex + 1 );
+		LISTITEM *l;
+
+		if ( !sources )
+			break;
+
+		for( l = list_first(targets); l; l = list_next( l ) )
+		{
+			TARGET *t = bindtarget( list_value(l) );
+
+			/* If doing INCLUDES, switch to the TARGET's include */
+			/* TARGET, creating it if needed.  The internal include */
+			/* TARGET shares the name of its parent. */
+
+			t->includesspecial = targetlistunique( t->includesspecial, sources, (char)(parse->num==2) );
+		}
+
+		++curindex;
+	}
+
+	return L0;
+}
+
 
 /*
  * builtin_echo() - ECHO rule

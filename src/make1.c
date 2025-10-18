@@ -117,6 +117,7 @@ extern int make0calcmd5sum_timestamp_epoch;
 extern int make0calcmd5sum_dependssorted_stage;
 void make0calcmd5sum( TARGET *t, int source, int depth, int force, int phase );
 void make1buildchecksum( const char* makestage, TARGET *t, XXH128_hash_t* buildmd5sum, int force, int phase );
+void make1scanheaders( TARGET *t, int force );
 #endif
 
 extern int clean_unused_files(int usealltargets);
@@ -1209,6 +1210,8 @@ make1d(
 		for (target = list_first(cmd->targetsunbound); target; target = list_next(target)) {
 			XXH128_hash_t buildmd5sum;
 			TARGET *t = bindtarget(list_value(target));
+			t->scannedheaders = 0;
+
 			//if ((usechecksums  ||  (t->flags & T_FLAG_SCANCONTENTS))  &&  !(t->flags & (T_FLAG_NOUPDATE | T_FLAG_NOTFILE))) {
 			if (!(t->flags & (T_FLAG_NOUPDATE | T_FLAG_NOTFILE))) {
 				int generatechecksum = 0;
@@ -1229,21 +1232,24 @@ make1d(
 					++make0calcmd5sum_timestamp_epoch;
 					//make0calcmd5sum( t, 1, 1, 1, 1 );
 #if 0
-					if (t->contentchecksum->contentmd5sum_changed) {
+					if (t->contentchecksum->contentmd5sum_changed  ||  hcache_entryisdirty(t) ) {
 						SETTINGS *s = copysettings( t->settings );
 						pushsettings( s );
-						headers( t );
+						headers( t, 1 );
 						popsettings( s );
 						freesettings( s );
 					}
 #endif
 
 					make1buildchecksum( "make1d", t, &buildmd5sum, 1, 1 );
+					t->scannedheaders = 0;
 
 #ifdef OPT_USE_CHECKSUMS_EXT
 					checksum_update(t, buildmd5sum);
 #endif /* OPT_USE_CHECKSUMS_EXT */
 					filecache_update(t, buildmd5sum);
+				} else {
+					make1scanheaders( t, 1 );
 				}
 			}
 		}
@@ -1310,6 +1316,16 @@ void make1buildchecksum( const char* makestage, TARGET *t, XXH128_hash_t* buildm
 		}
 	}
 
+	/* includes updates */
+	if ( ( !t->includes  ||  hcache_entryisdirty( t ) ) && !t->scannedheaders )
+	{
+		SETTINGS *s = copysettings( t->settings );
+		pushsettings( s );
+		headers( t, phase );
+		popsettings( s );
+		freesettings( s );
+	}
+
 	if ( t->dependssorted != make0calcmd5sum_dependssorted_stage || force)
 	{
 		targetlist_free(t->dependssortedbyname);
@@ -1360,6 +1376,154 @@ void make1buildchecksum( const char* makestage, TARGET *t, XXH128_hash_t* buildm
 	XXH3_freeState(state);
 	if( DEBUG_MD5HASH )
 		printf( "\t\tmake1buildchecksum returned buildmd5sum: %s\n", md5tostring(*buildmd5sum) );
+}
+
+
+extern int make0recurseincludes_epoch;
+
+static void make1recurseincludesforheaders( TARGET *t, int depth )
+{
+	TARGETS *c;
+
+	if ( t->dependssorted != make0calcmd5sum_dependssorted_stage )
+	{
+		//t->depends = make0sortbyname( t->depends );
+		//t->dependssorted = make0calcmd5sum_dependssorted_stage;
+	}
+
+	for( c = t->depends; c; c = c->next )
+	{
+		if ( c->target->recurseincludesepoch == make0recurseincludes_epoch)
+		{
+			continue;
+		}
+
+		//c->target->epoch = make0calcmd5sum_epoch;
+		c->target->recurseincludesepoch = make0recurseincludes_epoch;
+
+		if( ( c->target->binding == T_BIND_UNBOUND /*|| c->target->time == 0*/ ) && !( c->target->flags & T_FLAG_NOTFILE )
+				&& c->target->timestamp_epoch != make0calcmd5sum_timestamp_epoch )
+		{
+			c->target->timestamp_epoch = make0calcmd5sum_timestamp_epoch;
+			pushsettings( c->target->settings );
+			c->target->boundname = search( c->target->name, &c->target->time );
+			popsettings( c->target->settings );
+			c->target->binding = c->target->time ? T_BIND_EXISTS : T_BIND_MISSING;
+		}
+
+		/* add includes */
+		if ( !c->target->includes && !( c->target->flags & T_FLAG_NOTFILE ) )
+		{
+			LIST *hdrscan;
+			SETTINGS *s = copysettings( c->target->settings );
+			pushsettings( s );
+			if ( list_first( hdrscan = var_get( "HDRSCAN" ) ) )
+			{
+				hcache( c->target, hdrscan, 1 );
+			}
+			popsettings( s );
+			freesettings( s );
+		}
+
+		if ( c->target->includes )
+		{
+			make1recurseincludesforheaders( c->target->includes, depth + 1 );
+		}
+	}
+}
+
+
+/*
+ *
+ */
+void make1scanheadersinternal( TARGET *t, int source, int depth, int force )
+{
+	if ( !force )
+		return;
+
+	if (t->calcchecksum_epoch == make0calcmd5sum_epoch)
+	{
+		return;
+	}
+
+	t->calcchecksum_epoch = make0calcmd5sum_epoch;
+
+	if ( ( t->flags & T_FLAG_NOUPDATE ) || ( t->flags & T_FLAG_INTERNAL ) )
+	{
+		return;
+	}
+	if ( ( t->flags & T_FLAG_NOTFILE ) )
+	{
+	}
+	if ( !source )
+	{
+		return;
+	}
+
+	if ( ( !t->includes  &&  !t->includesspecial )  ||  hcache_entryisdirty( t ) )
+	{
+		LIST *hdrscan;
+		SETTINGS *s = copysettings( t->settings );
+		pushsettings( s );
+		if ( list_first( hdrscan = var_get( "HDRSCAN" ) ) )
+		{
+			hcache( t, hdrscan, 1 );
+		}
+		popsettings( s );
+		freesettings( s );
+	}
+
+	if ( t->includes )
+	{
+		++make0recurseincludes_epoch;
+		make1recurseincludesforheaders( t->includes, depth + 1 );
+	}
+}
+
+
+void make1scanheaders( TARGET *t, int force )
+{
+	TARGETS *c;
+
+	int dirty = ( !t->includes  &&  !t->includesspecial )  ||  hcache_entryisdirty( t );
+	if ( !dirty )
+	{
+		LIST *hdrsource = var_get( "HDRSOURCECHECK" );
+		if ( hdrsource )
+		{
+			TARGET *hdrsourcet = bindtarget( list_value( list_first( hdrsource ) ) );
+			if ( hdrsourcet  &&  hdrsourcet->fate > T_FATE_STABLE )
+			{
+				dirty = 1;
+			}
+		}
+	}
+
+	if ( dirty )
+	{
+		LIST *hdrscan;
+		SETTINGS *s = copysettings( t->settings );
+		pushsettings( s );
+		if ( list_first( hdrscan = var_get( "HDRSCAN" ) ) )
+		{
+			hcache( t, hdrscan, 1 );
+		}
+		popsettings( s );
+		freesettings( s );
+	}
+
+	/* for each dependencies */
+	for( c = t->depends; c; c = c->next )
+	{
+		/* If this is a "Needs" dependency, don't care about its contents. */
+		if (c->needs)
+		{
+			continue;
+		}
+
+		/* add name of the dependency and its contents */
+		make1scanheadersinternal( c->target, 1, 2, force );
+	}
 }
 
 #endif

@@ -23,7 +23,8 @@ struct checksumdata {
 
 /*void hcache_init(void);*/
 void hcache_done(void);
-LIST *hcache( TARGET *t, LIST *hdrscan );
+LIST *hcache( TARGET *t, LIST *hdrscan, int phase );
+int hcache_entryisdirty( TARGET *t );
 const char* hcache_get_builtinfilename(void);
 #ifdef OPT_BUILTIN_MD5CACHE_EXT
 int read_md5sum_string( const char* str, XXH128_hash_t* sum);

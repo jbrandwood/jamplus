@@ -94,8 +94,9 @@ static void checksums_readfile();
 #endif
 
 struct hcachedata {
-	const char		*boundname;
+	const char		*name;
 	time_t		time;
+	time_t		deptime;
 	LIST		*includes;
 	LIST		*hdrscan; /* the HDRSCAN value for this target */
 	int			age;	  /* if too old, we'll remove it from cache */
@@ -131,7 +132,7 @@ static int queries = 0;
 static int hits = 0;
 
 #ifdef OPT_BUILTIN_MD5CACHE_EXT
-#define CACHE_FILE_VERSION "version 3-xxhashcl"
+#define CACHE_FILE_VERSION "version 4-xxhashcl"
 #define CHECKSUM_FILE_VERSION "version 3-xxhashchecksums"
 #else
 #define CACHE_FILE_VERSION "version 1"
@@ -430,11 +431,12 @@ hcache_readfile(HCACHEFILE *file)
 
 		c = &cachedata;
 
-		c->boundname = _hcache_read_string( &buff );
-		if( !c->boundname ) /* Test for eof */
+		c->name = _hcache_read_string( &buff );
+		if( !c->name ) /* Test for eof */
 			break;
 
 		c->time = read_int( &buff );
+		c->deptime = read_int( &buff );
 		c->age = read_int( &buff ) + 1; /* we're getting older... */
 
 #ifdef OPT_BUILTIN_MD5CACHE_EXT
@@ -442,7 +444,7 @@ hcache_readfile(HCACHEFILE *file)
 		memcpy( &c->currentrulemd5sum, &c->rulemd5sum, MD5_SUMSIZE );
 #endif
 
-		if( !c->boundname )
+		if( !c->name )
 			goto bail;
 
 		/* headers */
@@ -496,7 +498,7 @@ hcache_readfile(HCACHEFILE *file)
 bail:
 	/* If its bad, no worries, it'll be overwritten in hcache_done() */
 	if( bad_cache )
-		printf( "jam: warning: the cache was invalid: %s\n", file->cachefilename );
+		printf( "jam: warning: the depcache was invalid: %s\n", file->cachefilename );
 	buffer_free( &buff );
 }
 
@@ -610,8 +612,9 @@ void
 		else if( c->age > maxage )
 			continue;
 
-		write_string( f, c->boundname );
+		write_string( f, c->name );
 		write_int( f, (int)c->time );
+		write_int( f, (int)c->deptime );
 		write_int( f, c->age );
 
 #ifdef OPT_BUILTIN_MD5CACHE_EXT
@@ -877,21 +880,61 @@ void hcache_done()
 int  md5matchescommandline( TARGET *t );
 #endif
 
-LIST *
-	hcache( TARGET *t, LIST *hdrscan )
+int hcacheentry_usingboundname( TARGET *t )
+{
+//#define TODO_PER_TARGET 1
+#if TODO_PER_TARGET
+	// tests/generatedheader/circular: <win64/release:foo>generated.h does not have HDRUSEBOUNDNAME.
+	SETTINGS *hdruseboundname = quicksettingslookup( t, "HDRUSEBOUNDNAME" );
+	if ( hdruseboundname )
+	{
+		char const* str = list_value(list_first( hdruseboundname->value ));
+		if ( strcmp( str, "1" ) == 0  ||  strcmp( str, "true" ) == 0 )
+		{
+			return 1;
+		}
+	}
+#endif	
+//#else
+	LIST *list = var_get( "HDRUSEBOUNDNAME" );
+	if ( list )
+	{
+		char const* str = list_value(list_first( list ));
+		if ( strcmp( str, "1" ) == 0  ||  strcmp( str, "true" ) == 0 )
+		{
+			return 1;
+		}
+	}
+//#endif // TODO_PER_TARGET
+
+	return 0;
+}
+
+
+int hcache_entryisdirty( TARGET *t )
 {
 	HCACHEDATA	cachedata, *c = &cachedata;
 	HCACHEFILE	*file;
 	LIST	*l = 0;
 	int		use_cache = 1;
 	const char *target;
+#if 0
 # ifdef DOWNSHIFT_PATHS
 	char path[ MAXJPATH ];
 	char *p;
 # endif
+#endif
+	int scansucceeded = 0;
+	time_t deptime = -2;
 
-	target = t->boundname;
+	target = t->name;
 
+	if ( hcacheentry_usingboundname( t ) )
+	{
+		target = t->boundname;
+	}
+
+#if 0
 # ifdef DOWNSHIFT_PATHS
 	p = path;
 
@@ -899,27 +942,148 @@ LIST *
 
 	target = path;
 # endif
+#endif // 0
 
-	++queries;
-
-	c->boundname = target;
+	c->name = target;
 
 	file = hcachefile_get( t );
 	if ( file )
 	{
-		if( hashcheck( hcachehash, (HASHDATA **) &c ) )
+		if ( hashcheck( hcachehash, (HASHDATA **) &c ) )
 		{
 #ifdef OPT_BUILTIN_MD5CACHE_EXT
-			if( c->time == t->time  &&  md5matchescommandline( t ) )
+			if ( c->time == t->time  &&  md5matchescommandline( t ) )
 #else
-			if( c->time == t->time )
+			if ( c->time == t->time )
 #endif
 			{
-				if( !list_equal(hdrscan, c->hdrscan) )
-					use_cache = 0;
+				{
+					deptime = headers_depfiletime( t );
+					if ( deptime != -1  &&  c->deptime != deptime )
+					{
+						use_cache = 0;
+					}
+				}
 			}
 			else
+			{
 				use_cache = 0;
+			}
+		}
+		else
+		{
+			use_cache = 0;
+		}
+	}
+
+	return !use_cache;
+}
+
+
+LIST *
+	hcache( TARGET *t, LIST *hdrscan, int phase )
+{
+	HCACHEDATA	cachedata, *c = &cachedata;
+	HCACHEFILE	*file;
+	LIST	*l = 0;
+	int		use_cache = 1;
+	const char *target;
+# ifdef DOWNSHIFT_PATHS
+	//char path[ MAXJPATH ];
+	//char *p;
+# endif
+	int scansucceeded = 0;
+	time_t targettime = -1;
+	time_t deptime = -2;
+
+	target = t->name;
+
+	if ( hcacheentry_usingboundname( t ) )
+	{
+		target = t->boundname;
+	}
+
+#if 0
+# ifdef DOWNSHIFT_PATHS
+	p = path;
+
+	do *p++ = (char)tolower( *target ); while( *target++ );
+
+	target = path;
+# endif
+#endif // 0
+
+	++queries;
+
+	c->name = target;
+
+	file = hcachefile_get( t );
+	if ( file )
+	{
+		timestamp( t->boundname, &targettime, 0 );
+		if( hashcheck( hcachehash, (HASHDATA **) &c ) )
+		{
+			if ( usechecksums  &&  c->time != targettime )
+			{
+				if ( getcachedmd5sum( t, 0 ) != 0 )
+				{
+					use_cache = 0;
+				}
+			}
+
+			if ( ( !usechecksums  &&  c->time == targettime )  ||  ( usechecksums  &&  use_cache ) )
+			{
+#ifdef OPT_BUILTIN_MD5CACHE_EXT
+				if ( phase == 0 )
+				{
+					TARGET *parentt = t;
+					SETTINGS *hdrparent = quicksettingslookup( t, "HDRPARENT" );
+					if ( hdrparent )
+					{
+						parentt = bindtarget( list_value( list_first( hdrparent->value ) ) );
+					}
+
+					if ( !md5matchescommandline( parentt ) )
+					{
+						use_cache = 0;
+					}
+				}
+#endif
+				if( !list_equal(hdrscan, c->hdrscan) )
+					use_cache = 0;
+				if ( use_cache )
+				{
+					deptime = headers_depfiletime( t );
+					if ( deptime != -1  &&  c->deptime != deptime )
+					{
+						use_cache = 0;
+					}
+				}
+			}
+			else
+			{
+				use_cache = 0;
+			}
+
+			if (0) //use_cache)
+			{
+				LISTITEM* l;
+				for ( l = list_first( c->includes ); l; l = list_next( l ) )
+				{
+					time_t t;
+					const char* target = list_value( l );
+					if ( target[ 0 ] != '<' )
+					{
+						timestamp( target, &t, 0 );
+						if ( t == 0 )
+						{
+							scansucceeded = -1;
+							use_cache = 0;
+							break;
+						}
+					}
+				}
+			}
 
 			if( use_cache ) {
 				if( DEBUG_HEADER )
@@ -949,10 +1113,15 @@ LIST *
 				list_free( c->hdrscan );
 				c->includes = 0;
 				c->hdrscan = 0;
+				if ( phase == 0 )
+				{
+					int hi = 5;
+					//headers_removedepfile( t );
+				}
 			}
 		} else {
 			if( hashenter( hcachehash, (HASHDATA **)&c ) ) {
-				c->boundname = newstr( c->boundname );
+				c->name = newstr( c->name );
 				c->file = file;
 				c->next = c->file->hcachelist;
 				c->file->hcachelist = c;
@@ -960,6 +1129,7 @@ LIST *
 				memset( &c->rulemd5sum, 0, MD5_SUMSIZE );
 				memset( &c->currentrulemd5sum, 0, MD5_SUMSIZE );
 #endif
+				c->deptime = 0;
 			}
 		}
 	}
@@ -968,12 +1138,37 @@ LIST *
 
 	/* 'c' points at the cache entry.  Its out of date. */
 
-	l = headers1( c->boundname, hdrscan );
+	if ( scansucceeded == 0 )
+	{
+		SETTINGS *hdrsharedsource;
 
-	l = list_appendList( list_copy( 0, var_get( "HDREXTRA" ) ), l );
+		l = list_copy( 0, var_get( "HDREXTRA" ) );
 
-	c->includes = list_copy( 0, l );
+		hdrsharedsource = quicksettingslookup( t, "HDRSHAREDSOURCE" );
+		if ( hdrsharedsource )
+		{
+			char const* str = list_value(list_first( hdrsharedsource->value ));
+			if ( strcmp( str, "1" ) == 0  ||  strcmp( str, "true" ) == 0 )
+			{
+				TARGET *sourcet = bindtarget( t->boundname );
+				if ( sourcet != t )
+				{
+					LIST *sourceincludes = hcache( sourcet, hdrscan, phase );
+					l = list_appendList( l, sourceincludes );
+				}
+				else
+				{
+					l = list_appendList( l, headers1( t, t->boundname, hdrscan, &scansucceeded, phase ) );
+				}
+			}
+		}
+		else
+		{
+			l = list_appendList( l, headers1( t, t->boundname, hdrscan, &scansucceeded, phase ) );
+		}
+	}
 
+	if ( l != L0 )
 	{
 		LIST *hdrfilter = var_get( "HDRFILTER" );
 		if (list_first(hdrfilter))
@@ -988,10 +1183,28 @@ LIST *
 		}
 	}
 
-	c->time = t->time;
+	c->includes = list_copy( 0, l );
+
+	c->time = targettime;
+	if (deptime == -2)
+	{
+		deptime = headers_depfiletime( t );
+	}
+	c->deptime = deptime;
 	c->age = 0;
 
-	c->hdrscan = list_copy( 0, hdrscan );
+	if (scansucceeded == 1)
+	{
+		c->hdrscan = list_copy( 0, hdrscan );
+	}
+	else if (scansucceeded = -1)
+	{
+		c->hdrscan = list_copy( 0, hdrscan );
+	}
+	else
+	{
+		//c->hdrscan = L0;
+	}
 
 	return l;
 }
@@ -1733,15 +1946,23 @@ int hcache_getrulemd5sum( TARGET *t )
 {
 	HCACHEDATA cachedata, *c = &cachedata;
 	const char *target = t->name;
+#if 0
 # ifdef DOWNSHIFT_PATHS
 	char path[ MAXJPATH ];
 	char *p;
 # endif
+#endif
 
 	HCACHEFILE	*file = hcachefile_get( t );
 	if ( !file->cachefilename )
 		return 1;
 
+	if ( hcacheentry_usingboundname( t ) )
+	{
+		target = t->boundname;
+	}
+
+#if 0
 # ifdef DOWNSHIFT_PATHS
 	p = path;
 
@@ -1749,8 +1970,9 @@ int hcache_getrulemd5sum( TARGET *t )
 
 	target = path;
 # endif
+#endif
 
-	c->boundname = target;
+	c->name = target;
 
 	if( hashcheck( hcachehash, (HASHDATA **) &c ) )
 	{
@@ -1764,13 +1986,14 @@ int hcache_getrulemd5sum( TARGET *t )
 		// Enter it into the cache.
 		if( hashenter( hcachehash, (HASHDATA **)&c ) )
 		{
-			c->boundname = newstr( c->boundname );
+			c->name = newstr( c->name );
 			c->file = file;
 			c->next = c->file->hcachelist;
 			c->file->hcachelist = c;
 			memcpy( &c->currentrulemd5sum, &t->rulemd5sum, MD5_SUMSIZE );
 			memset( &c->rulemd5sum, 0, MD5_SUMSIZE );
 			c->time = 0;
+			c->deptime = 0;
 			c->age = 0;
 			c->includes = NULL;
 			c->hdrscan = NULL;
@@ -1789,15 +2012,23 @@ void hcache_finalizerulemd5sum( TARGET *t )
 {
 	HCACHEDATA cachedata, *c = &cachedata;
 	const char *target = t->name;
+#if 0
 # ifdef DOWNSHIFT_PATHS
 	char path[ MAXJPATH ];
 	char *p;
 # endif
+#endif // 0
 
 	HCACHEFILE	*file = hcachefile_get( t );
 	if ( !file->cachefilename )
 		return;
 
+	if ( hcacheentry_usingboundname( t ) )
+	{
+		target = t->boundname;
+	}
+
+#if 0
 # ifdef DOWNSHIFT_PATHS
 	p = path;
 
@@ -1806,8 +2037,9 @@ void hcache_finalizerulemd5sum( TARGET *t )
 
 	target = path;
 # endif
+#endif // 0
 
-	c->boundname = target;
+	c->name = target;
 
 	if( hashcheck( hcachehash, (HASHDATA **) &c )  &&  memcmp( &c->rulemd5sum, &c->currentrulemd5sum, MD5_SUMSIZE ) != 0 )
 	{

@@ -53,6 +53,7 @@ static LIST *headers1( const char *file, LIST *hdrscan );
 # include "filesys.h"
 #endif
 
+#include "jsmn.h"
 
 /*
  * headers() - scan a target for include files and call HDRRULE
@@ -61,27 +62,52 @@ static LIST *headers1( const char *file, LIST *hdrscan );
 # define MAXINC 10
 
 void
-headers( TARGET *t )
+headers( TARGET *t, int phase )
 {
 	LIST	*hdrscan;
 	LIST	*hdrrule;
+	LIST	*hdrsource;
+	TARGET *sourcet;
 	LOL	lol;
+
+	if ( t->scannedheaders )
+	{
+		return;
+	}
 
 	if( !list_first( hdrscan = var_get( "HDRSCAN" ) ) ||
 	    !list_first( hdrrule = var_get( "HDRRULE" ) ) )
 	        return;
 
+	t->scannedheaders = 1;
+
 	/* Doctor up call to HDRRULE rule */
 	/* Call headers1() to get LIST of included files. */
+
+	if ( 0 ) //t->includes )
+	{
+		targetlist_free( t->includes->depends );
+		t->includes->depends = NULL;
+	}
+
+	hdrsource = var_get( "HDRSOURCE" );
+	if ( hdrsource )
+	{
+		sourcet = bindtarget( list_value( list_first( hdrsource ) ) );
+	}
+	else
+	{
+		sourcet = t;
+	}
 
 	if( DEBUG_HEADER )
 	    printf( "header scan %s\n", t->name );
 
 	lol_init( &lol );
 
-	lol_add( &lol, list_append( L0, t->name, 1 ) );
+	lol_add( &lol, list_append( L0, sourcet->name, 1 ) );
 #ifdef OPT_HEADER_CACHE_EXT
-	lol_add( &lol, hcache( t, hdrscan ) );
+	lol_add( &lol, hcache( t, hdrscan, phase ) );
 #else
 	lol_add( &lol, headers1( t->boundname, hdrscan ) );
 #endif
@@ -91,14 +117,38 @@ headers( TARGET *t )
 #ifdef OPT_HDRRULE_BOUNDNAME_ARG_EXT
 	    /* The third argument to HDRRULE is the bound name of
 	     * $(<) */
-	    lol_add( &lol, list_append( L0, t->boundname, 0 ) );
+	    lol_add( &lol, list_append( L0, sourcet->boundname, 0 ) );
 #endif
 	    list_free( evaluate_rule( list_value(list_first(hdrrule)), &lol, L0 ) );
 	}
 
+	addsettings( t->settings, VAR_SET, "HDRPROCESSED", list_append( L0, "1", 0 ) );
+
 	/* Clean up */
 
 	lol_free( &lol );
+}
+
+LIST* headerscan( TARGET *t )
+{
+	LIST	*hdrscan;
+	LIST	*list;
+
+	if( !list_first( hdrscan = var_get( "HDRSCAN" ) ) )
+		return L0;
+
+	/* Call headers1() to get LIST of included files. */
+
+	if( DEBUG_HEADER )
+		printf( "header scan %s\n", t->name );
+
+#ifdef OPT_HEADER_CACHE_EXT
+	list = hcache( t, hdrscan, 0 );
+#else
+	list = headers1( t, t->boundname, hdrscan );
+#endif
+
+	return list;
 }
 
 #ifdef OPT_HDRPIPE_EXT
@@ -127,7 +177,9 @@ static LIST *headers1helper(
 	regexp	*re[ MAXINC ];
 	char	buf[ 1024 ];
 	LIST	*hdrdownshift;
-	int	dodownshift = 1;
+	int	dodownshift = 0;
+	LIST	*hdrforceforwardslash;
+	int	doforwardslash = 1;
 	LISTITEM* pattern;
 
 #ifdef OPT_IMPROVED_PATIENCE_EXT
@@ -142,6 +194,13 @@ static LIST *headers1helper(
 	{
 		char const* str = list_value(list_first(hdrdownshift));
 	    dodownshift = strcmp( str, "false" ) != 0  &&
+		    strcmp( str, "0" ) != 0;
+	}
+	hdrforceforwardslash = var_get( "HDRFORCEFORWARDSLASH" );
+	if ( list_first(hdrforceforwardslash) )
+	{
+		char const* str = list_value(list_first(hdrforceforwardslash));
+	    doforwardslash = strcmp( str, "false" ) != 0  &&
 		    strcmp( str, "0" ) != 0;
 	}
 
@@ -171,26 +230,49 @@ static LIST *headers1helper(
 
 		char buf2[ MAXSYM ];
 		int l = (int)(re[i]->endp[1] - re[i]->startp[1]);
+		if (doforwardslash)
+		{
+			const char* target = re[i]->startp[1];
+			char* p = buf2;
+
+			while (l > 0)
+			{
+				char ch = *target++;
+				if (ch == '\\')
+				{
+					*p++ = '/';
+					if (*target == '\\')
+					{
+						++target;
+						--l;
+					}
+				}
+				else
+				{
+					*p++ = ch;
+				}
+				--l;
+			}
+
+			*p = 0;
+		}
+		else
+		{
+			memcpy( buf2, re[i]->startp[1], l );
+			buf2[ l ] = 0;
+		}
+
 # ifdef DOWNSHIFT_PATHS
 		if ( dodownshift )
 		{
-		    const char *target = re[i]->startp[1];
-		    char *p = buf2;
+			char* p = buf2;
 
-		    if ( l > 0 )
-		    {
-			do *p++ = (char)tolower( *target++ );
-			while( --l );
-		    }
-
-		    *p = 0;
+			while (*p)
+			{
+				*p++ = (char)tolower(*p);
+			}
 		}
-		else
 # endif
-		{
-		memcpy( buf2, re[i]->startp[1], l );
-		buf2[ l ] = 0;
-		}
 
 		result = list_append( result, buf2, 0 );
 
@@ -202,15 +284,254 @@ static LIST *headers1helper(
 	return result;
 }
 
+static int jsoneq(const char* json, jsmntok_t* tok, const char* s)
+{
+	if (tok->type == JSMN_STRING && (int)strlen(s) == tok->end - tok->start &&
+		strncmp(json + tok->start, s, tok->end - tok->start) == 0)
+	{
+		return 0;
+	}
+	return -1;
+}
+
+static LIST *vc_sourcedependencies_parser( const char *file, int *scansucceeded )
+{
+	jsmn_parser parser;
+	int numtokens = -1;
+	char *json = NULL;
+	jsmntok_t *tokens = NULL;
+	LIST *list = L0;
+
+	FILE *f = fopen( file, "rb" );
+	if ( f )
+	{
+		int size;
+		int ret;
+		fseek( f, 0, SEEK_END );
+		size = ftell( f );
+		fseek( f, 0, SEEK_SET );
+
+		json = malloc( size );
+		fread( json, size, 1, f );
+
+		fclose( f );
+
+		jsmn_init(&parser);
+		numtokens = jsmn_parse(&parser, json, size, NULL, 0);
+		if ( numtokens > 0 )
+		{
+			tokens = (jsmntok_t*)malloc( sizeof( jsmntok_t ) * numtokens );
+			jsmn_init(&parser);
+			ret = jsmn_parse(&parser, json, size, tokens, numtokens);
+			if ( ret >= 0 )
+			{
+				int index;
+
+				if ( tokens[ 0 ].type != JSMN_OBJECT )
+				{
+					list_free(list);
+					goto done;
+				}
+
+				for ( index = 1; index < numtokens; ++index )
+				{
+					if (jsoneq(json, &tokens[index], "Version") == 0)
+					{
+						++index;
+					}
+					else if (jsoneq(json, &tokens[index], "Data") == 0)
+					{
+						int data_index;
+						if (tokens[index + 1].type != JSMN_OBJECT)
+						{
+							list_free(list);
+							goto done;
+						}
+
+						for ( data_index = index + 2; data_index < numtokens; ++data_index )
+						{
+							if (jsoneq(json, &tokens[data_index], "Source") == 0)
+							{
+								++data_index;
+							}
+							else if (jsoneq(json, &tokens[data_index], "ProvidedModule") == 0)
+							{
+								++data_index;
+							}
+							else if (jsoneq(json, &tokens[data_index], "Includes") == 0)
+							{
+								int includes_index;
+								if (tokens[data_index + 1].type != JSMN_ARRAY)
+								{
+									list_free(list);
+									goto done;
+								}
+								for (includes_index = 0; includes_index < tokens[data_index + 1].size; includes_index++) {
+									int pos;
+									jsmntok_t* token = &tokens[data_index + includes_index + 2];
+									BUFFER buff;
+									buffer_init(&buff);
+									for (pos = token->start; pos < token->end; ++pos)
+									{
+										char ch = json[pos];
+										if (ch == '\\')
+										{
+											buffer_addchar(&buff, '/');
+											ch = '/';
+											if (pos < token->end  &&  json[pos + 1] == '\\')
+											{
+												++pos;
+											}
+										}
+										else
+										{
+											buffer_addchar(&buff, tolower(ch));
+										}
+									}
+									buffer_addchar(&buff, 0);
+									list = list_append(list, buffer_ptr(&buff), 0);
+									buffer_free(&buff);
+								}
+								data_index += tokens[data_index + 1].size + 1;
+							}
+						}
+						index = data_index;
+					}
+				}
+			}
+		}
+
+		if ( scansucceeded )
+		{
+			*scansucceeded = 1;
+		}
+	}
+
+done:
+	free( json );
+	free( tokens );
+	return list;
+}
+
+
+static LIST *gcc_clang_dependencies_parser( const char *file, int *scansucceeded )
+{
+	char *buffer = NULL;
+	LIST *list = L0;
+
+	FILE *f = fopen( file, "rb" );
+	if ( f )
+	{
+		char *ptr = NULL;
+		BUFFER buff;
+		int phase = 0;
+
+		int size;
+		fseek( f, 0, SEEK_END );
+		size = ftell( f );
+		fseek( f, 0, SEEK_SET );
+
+		buffer = malloc( size );
+		fread( buffer, size, 1, f );
+
+		fclose( f );
+
+		ptr = buffer;
+
+		while (ptr < buffer + size)
+		{
+			switch (phase)
+			{
+				case 0:
+				{
+					// Search for the main file line end.
+					if (*ptr == ':'  &&  *(ptr + 1) == ' ')
+					{
+						phase = 1;
+					}
+					++ptr;
+					break;
+				}
+				case 1:
+				{
+					if (*ptr == ' '  ||  *ptr == '\\'  ||  *ptr == '\r'  ||  *ptr == '\n')
+					{
+						++ptr;
+						continue;
+					}
+
+					phase = 2;
+					buffer_init(&buff);
+					break;
+				}
+				case 2:
+				{
+					if (*ptr == ' '  ||  *ptr == '\r'  ||  *ptr == '\n')
+					{
+						++ptr;
+						buffer_addchar(&buff, 0);
+						list = list_append(list, buffer_ptr(&buff), 0);
+						buffer_free(&buff);
+						phase = 1;
+						continue;
+					}
+
+					if (*ptr == '\\')
+					{
+						if (*(ptr + 1) == ' ')
+						{
+							buffer_addchar(&buff, ' ');
+							ptr += 2;
+							continue;
+						}
+						buffer_addchar(&buff, '/');
+						++ptr;
+						continue;
+					}
+
+					//buffer_addchar(&buff, tolower(*ptr++));
+					buffer_addchar(&buff, *ptr++);
+				}
+			}
+		}
+
+		if (buffer_size(&buff) > 0)
+		{
+			buffer_addchar(&buff, 0);
+			list = list_append(list, buffer_ptr(&buff), 0);
+			buffer_free(&buff);
+		}
+
+		if ( scansucceeded )
+		{
+			*scansucceeded = 1;
+		}
+	}
+
+	free( buffer );
+	return list;
+}
+
 LIST *
 headers1(
+	TARGET *t,
 	const char *file,
-	LIST *hdrscan )
+	LIST *hdrscan,
+	int *scansucceeded,
+	int phase )
 {
 	FILE	*f;
 	LIST	*result = 0;
 	LIST    *hdrpipe;
 	LIST	*hdrpipefile;
+	LIST	*hdrvcdepfile;
+	LIST	*hdrdepfile;
+
+	if ( scansucceeded )
+	{
+		*scansucceeded = 0;
+	}
+
 
 	if ( list_first(hdrpipe = var_get( "HDRPIPE" )) )
 	{
@@ -230,30 +551,119 @@ headers1(
 		}
 		buffer_free( &buff );
 		lol_free( &args );
+
+		result = headers1helper( f, hdrscan );
+
+		if ( list_first(hdrpipe) )
+			file_pclose( f );
+
+		if ( list_first(hdrpipefile = var_get( "HDRPIPEFILE" )) )
+		{
+			if( !( f = fopen( list_value(list_first(hdrpipefile)), "r" ) ) )
+				return result;
+			result = headers1helper( f, hdrscan );
+			fclose( f );
+		}
+
+		if (scansucceeded)
+		{
+			*scansucceeded = 1;
+		}
+
+		return result;
 	}
-	else
+	else if ( list_first( hdrvcdepfile = var_get( "HDRVCDEPFILE" ) ) )
 	{
-		if( !( f = fopen( file, "r" ) ) )
-		    return result;
+		if ( phase == 1 )
+		{
+			result = vc_sourcedependencies_parser( list_value( list_first( hdrvcdepfile ) ), scansucceeded );
+		}
+		return result;
 	}
+	else if ( list_first( hdrdepfile = var_get( "HDRDEPFILE" ) ) )
+	{
+		if ( phase == 1 )
+		{
+			result = gcc_clang_dependencies_parser( list_value( list_first( hdrdepfile ) ), scansucceeded );
+		}
+		return result;
+	}
+	else if ( list_first(hdrpipefile = var_get( "HDRPIPEFILE" )) )
+	{
+		if( f = fopen( list_value(list_first(hdrpipefile)), "r" ) )
+		{
+			result = headers1helper( f, hdrscan );
+			fclose( f );
+
+			if (scansucceeded)
+			{
+				*scansucceeded = 1;
+			}
+		}
+
+		return result;
+	}
+
+	if( !( f = fopen( file, "r" ) ) )
+		return result;
 
 	result = headers1helper( f, hdrscan );
 
-	if ( list_first(hdrpipe) )
-		file_pclose( f );
-	else
-		fclose( f );
+	fclose( f );
 
-	if ( list_first(hdrpipefile = var_get( "HDRPIPEFILE" )) )
+	if (scansucceeded)
 	{
-		if( !( f = fopen( list_value(list_first(hdrpipefile)), "r" ) ) )
-		    return result;
-		result = headers1helper( f, hdrscan );
-		fclose( f );
+		*scansucceeded = 1;
 	}
 
 	return result;
 }
+
+
+time_t headers_depfiletime( TARGET *t )
+{
+	SETTINGS* settings;
+	settings = quicksettingslookup( t, "HDRVCDEPFILE" );
+	if ( !settings )
+	{
+		settings = quicksettingslookup( t, "HDRDEPFILE" );
+	}
+	if ( !settings )
+	{
+		settings = quicksettingslookup( t, "HDRPIPEFILE" );
+	}
+	if ( !settings )
+	{
+		return -1;
+	}
+	if ( settings->value )
+	{
+		time_t t;
+		if ( file_time( list_value( list_first( settings->value ) ), &t ) != -1 )
+		{
+			return t;
+		}
+	}
+	return -1;
+}
+
+
+void headers_removedepfile( TARGET *t )
+{
+	SETTINGS* settings;
+	settings = quicksettingslookup( t, "HDRVCDEPFILE" );
+	if ( !settings )
+	{
+		settings = quicksettingslookup( t, "HDRDEPFILE" );
+	}
+	if ( !settings || !settings->value )
+	{
+		return;
+	}
+
+	unlink( list_value( list_first( settings->value ) ) );
+}
+
 
 #else
 

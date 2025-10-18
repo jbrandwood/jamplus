@@ -1,8 +1,14 @@
 rule C.Use {
 }
 
+JAM_HEADERPRESCAN ?= 1 ;
 FILECACHE.code.GENERATE = 0 ;
 FILECACHE.code.USE = 0 ;
+
+if $(NT) {
+	#HDRDOWNSHIFT = 1 ;
+}
+HDRDOWNSHIFT = 0 ;
 
 SUBDIRRESET += ASFLAGS HDRS C++FLAGS CCFLAGS ;
 
@@ -146,7 +152,7 @@ rule C.HdrRule SOURCE : HEADERS {
 
 	local s = $(HEADERS:G?=$(HDRGRIST:E)) ;
 
-	Includes $(SOURCE) : $(s) ;
+	IncludesUnique $(SOURCE) : $(s) ;
 ## LOCAL CHANGE
 
 	# If the directory holding this header isn't in HDRSEARCH,
@@ -170,6 +176,8 @@ rule C.HdrRule SOURCE : HEADERS {
 	HDRSCAN on $(s) = $(HDRSCAN) ;
 	HDRRULE on $(s) = $(HDRRULE) ;
 	HDRGRIST on $(s) = $(HDRGRIST) ;
+	#HDRUSEBOUNDNAME on $(s) = 1 ;
+	HDRSHAREDSOURCE on $(s) = 1 ;
 }
 
 
@@ -339,6 +347,8 @@ rule C._MultiCppCompile SOURCES {
 	local dollar = $ ;
 	local colon = ":" ;
 	local listIncludes = @(I=\\$(C.BUILD_EXTENSIONS)$:J=$(colon)) ;
+	local includeExtensions = .h .hh .hpp .inc ;
+	local listHeaders = @(I=\\$(includeExtensions)$:J=$(colon)) ;
 
 	local newsrcs ;
 
@@ -348,12 +358,26 @@ rule C._MultiCppCompile SOURCES {
 	}
 
 	local sources = @($(dollar)(SOURCES$(colon)$(listIncludes)):A:G?=$(C.ACTIVE_TOOLCHAIN_TARGET_GRIST)) ;
+
+	local headers = @($(dollar)(SOURCES$(colon)$(listHeaders)):A:G?=$(C.ACTIVE_TOOLCHAIN_TARGET_GRIST)) ;
+
 	SOURCES = ;
 
 	# source needs to be scanned for header dependencies
-	HDRRULE on $(sources) = C.HdrRule ;
-	HDRSCAN on $(sources) = $(C.HDRPATTERN) ;
-	HDRGRIST on $(sources) = $(C.ACTIVE_TOOLCHAIN_TARGET_GRIST) ;
+	if $(JAM_HEADERPRESCAN) = 1 {
+		HDRRULE on $(sources) = C.HdrRule ;
+		HDRSCAN on $(sources) = $(C.HDRPATTERN) ;
+		HDRGRIST on $(sources) = $(C.ACTIVE_TOOLCHAIN_TARGET_GRIST) ;
+		#HDRUSEBOUNDNAME on $(sources) = 1 ;
+
+		HDRRULE on $(headers) ?= C.HdrRule ;
+		HDRSCAN on $(headers) ?= $(C.HDRPATTERN) ;
+		HDRGRIST on $(headers) ?= $(C.ACTIVE_TOOLCHAIN_TARGET_GRIST) ;
+		#HDRUSEBOUNDNAME on $(headers) = 1 ;
+		HDRSEARCH on $(headers) ?= $(postHDRS) $(C.STDHDRS) ;
+	}
+	# HACK: tests/generatedheader/circular: <win64/release:foo>generated.h does not have HDRUSEBOUNDNAME.
+	#HDRUSEBOUNDNAME on $(sources) = 1 ;
 
 	SEARCH on $(sources) ?= $(SEARCH_SOURCE) ;
 
@@ -480,7 +504,9 @@ rule C._MultiCppCompile SOURCES {
 			$(theRule) ;
 		}
 
-		HDREXTRA on $(_src) += $(objectForceIncludes) ;
+		if $(JAM_HEADERPRESCAN) = 1 {
+			HDREXTRA on $(_src) += $(objectForceIncludes) ;
+		}
 
 		MFLAGS on $(_src) = $(_flags) ;
 	}

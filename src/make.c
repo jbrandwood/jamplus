@@ -957,6 +957,7 @@ make0(
 	int	savedFate, oldTimeStamp;
 #endif
 	LIST* hdrextra;
+	int process_headers = 0;
 
 	/*
 	 * Step 1: initialize
@@ -1019,11 +1020,36 @@ make0(
 		ptime = p;
 	}
 
-	hdrextra = var_get("HDREXTRA");
+	/* Step 2c: If it is a file, search for headers. */
+	if ( t->binding == T_BIND_EXISTS )
+	{
+		process_headers = 1;
+	}
+	else
+	{
+		hdrextra = var_get("HDREXTRA");
+		if ( hdrextra )
+		{
+			process_headers = 1;
+		}
+		else
+		{
+			LIST *hdrsource = var_get( "HDRSOURCECHECK" );
+			if ( hdrsource )
+			{
+				TARGET *hdrsourcet = bindtarget( list_value( list_first( hdrsource ) ) );
+				if ( hdrsourcet && hdrsourcet != t )
+				{
+					process_headers = 1;
+				}
+			}
+		}
+	}
 
-	/* Step 2c: If its a file, search for headers. */
-	if( t->binding == T_BIND_EXISTS || hdrextra )
-		headers( t );
+	if ( process_headers )
+	{
+		headers( t, 0 );
+	}
 
 #ifdef OPT_SEMAPHORE
 	{
@@ -1379,6 +1405,39 @@ make0(
 
 		fate = T_FATE_UPDATE;
 	}
+
+	if ( t->includesspecial )
+	{
+		ACTIONS *actions;
+		for ( actions = t->actions; actions; actions = actions->next )
+		{
+			TARGETS *sourcetargets;
+			for ( sourcetargets = actions->action->sources; sourcetargets; sourcetargets = sourcetargets->next )
+			{
+				for ( c = t->depends; c; c = c->next )
+				{
+					if ( sourcetargets->target == c->target )
+					{
+						TARGETS *includesspecialtargets;
+						for ( includesspecialtargets = t->includesspecial; includesspecialtargets; includesspecialtargets = includesspecialtargets->next )
+						{
+							if ( includesspecialtargets->target->fate > T_FATE_STABLE )
+							{
+								sourcetargets->parentcommandlineoutofdate = 1;
+								break;
+							}
+						}
+					}
+					if ( sourcetargets->parentcommandlineoutofdate )
+					{
+						break;
+					}
+				}
+			}
+		}
+
+	}
+
 #endif
 
 	if (usechecksums && fate == T_FATE_STABLE)
@@ -1400,6 +1459,25 @@ make0(
 					{
 						t->flags |= T_FLAG_WRONGCHECKSUM;
 						fate = T_FATE_UPDATE;
+
+						{
+							ACTIONS *actions;
+							for ( actions = t->actions; actions; actions = actions->next )
+							{
+								TARGETS *sourcetargets;
+								for ( sourcetargets = actions->action->sources; sourcetargets; sourcetargets = sourcetargets->next )
+								{
+									for( c = t->depends; c; c = c->next )
+									{
+										if ( sourcetargets->target == c->target )
+										{
+											sourcetargets->parentcommandlineoutofdate = 1;
+											break;
+										}
+									}
+								}
+							}
+						}
 					}
 				}
 			}
@@ -1747,14 +1825,29 @@ static void make0recurseincludesmd5sum( XXH3_state_t *state, TARGET *t, int dept
 		}
 
 		/* add sum of your includes */
-		if ( !c->target->includes && !( c->target->flags & T_FLAG_NOTFILE ) )
+#if 1
+		c->target->scannedheaders = 0;
+		if ( !c->target->includes && !( c->target->flags & T_FLAG_NOTFILE ) && !c->target->scannedheaders )
 		{
 			SETTINGS *s = copysettings( c->target->settings );
 			pushsettings( s );
-			headers( c->target );
+			headers( c->target, phase );
 			popsettings( s );
 			freesettings( s );
 		}
+#endif // 0
+
+#if 0
+		if ( c->target->depends )
+		{
+			make0recurseincludesmd5sum( state, c->target, depth + 1, phase );
+			//TARGETS *innerc;
+			//for ( innerc = c->target->depends; innerc; innerc = innerc->next )
+			//{
+				//make0recurseincludesmd5sum( state, innerc->target, depth + 1, phase );
+			//}
+		}
+#endif // 0
 
 		if ( c->target->includes )
 		{
@@ -1771,6 +1864,7 @@ void make0calcmd5sumhelper( TARGET *t, int source, int depth, int force, int pha
 {
 	XXH3_state_t *state;
 	TARGETS *c;
+	int rescanheaders;
 
 	if ( t->buildmd5sum_calculated && !force )
 		return;
@@ -1877,11 +1971,35 @@ void make0calcmd5sumhelper( TARGET *t, int source, int depth, int force, int pha
 	/* add sum of your includes */
 	//if ( t->flags & T_FLAG_INTERNAL )
 	//if (0)
-	if ( !t->includes )
+	rescanheaders = !t->includes  ||  hcache_entryisdirty( t );
+	if (!rescanheaders  &&  t->includes )
+	{
+		for( c = t->includes->depends; c; c = c->next )
+		{
+			if ( c->target->fate > T_FATE_STABLE  &&  !c->needs )
+			{
+				if ( usechecksums  ||  ( c->target->flags & T_FLAG_SCANCONTENTS ) )
+				{
+					if ( getcachedmd5sum( c->target, 0 )  ||  !md5matchescommandline( c->target ) )
+					{
+						rescanheaders = 1;
+						break;
+					}
+				}
+				else
+				{
+					rescanheaders = 1;
+					break;
+				}
+			}
+		}
+	}
+	if ( rescanheaders )
 	{
 		SETTINGS *s = copysettings( t->settings );
 		pushsettings( s );
-		headers( t );
+		t->scannedheaders = 0;
+		headers( t, phase );
 		popsettings( s );
 		freesettings( s );
 	}
