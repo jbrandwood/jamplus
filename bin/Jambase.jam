@@ -107,12 +107,21 @@ rule IncludeModule MODULE_NAME : OPTIONS
 	$(include_marker) = true ;
 
 	local moduleName = <jam:modules>$(MODULE_NAME).jam ;
+	local components = [ Split $(MODULE_NAME) : "/" ] ;
+	local componentsLength = [ ListLength $(components) ] ;
+	local lastName = $(components[$(componentsLength)]) ;
+
 	local searchPaths = $(SUBDIR) $(CWD) $(CWD)/jam $(JAM_MODULES_USER_PATH) $(JAM_MODULES_PATH) ;
 	local searchPath ;
 	local foundPath ;
 	for searchPath in $(searchPaths) {
-		searchPath = $(moduleName:G=:R=$(searchPath)) ;
-		foundPath = [ Glob $(searchPath:D) : $(searchPath:D=) ] ;
+		local adjustedSearchPath = $(moduleName:G=:R=$(searchPath)) ;
+		foundPath = [ Search $(adjustedSearchPath) ] ;
+		if $(foundPath) {
+			break ;
+		}
+		adjustedSearchPath = @($(lastName):S=.jam:R=$(searchPath)/$(MODULE_NAME)) ;
+		foundPath = [ Search $(adjustedSearchPath) ] ;
 		if $(foundPath) {
 			break ;
 		}
