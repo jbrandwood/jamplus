@@ -1245,6 +1245,22 @@ make0(
 
 	for( c = t->depends; c; c = c->next )
 	{
+		if( c->target->includes )
+		{
+			TARGETS *n;
+			for ( n = c->target->includes->depends; n; n = n->next )
+			{
+				if (n->target->fate >= T_FATE_BROKEN)
+				{
+					fate = T_FATE_UPDATE;
+					break;
+				}
+			}
+		}
+	}
+
+	for( c = t->depends; c; c = c->next )
+	{
 #ifdef OPT_BUILTIN_NEEDS_EXT
 		/* If this is a "Needs" dependency, don't care about its timestamp. */
 		if (c->needs  ||  (t->flags & T_FLAG_MIGHTNOTUPDATE)) {
