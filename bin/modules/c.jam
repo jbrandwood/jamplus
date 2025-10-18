@@ -314,7 +314,7 @@ rule C._MultiCppCompile SOURCES {
 		SOURCES -= [ Match ($(excludePatternsFromBuild)) : $(SOURCES) ] ;
 	}
 
-	preDEFINES = [ C.$(C.COMPILER_SUITE).FDefines $(preDEFINES) ] ;
+	local fpreDEFINES = [ C.$(C.COMPILER_SUITE).FDefines $(preDEFINES) ] ;
 
 	# choose the right output method
 	local makeobj_pass1 ;
@@ -388,7 +388,6 @@ rule C._MultiCppCompile SOURCES {
 		BINDING on $(_obj) = $(_obj:BS) ;
 		ForceContentsOnly $(_obj) ;
 
-		$(makeobj_pass1) ;
 
 		local collectHdrs = ;
 		local objectForceIncludes ;
@@ -398,6 +397,14 @@ rule C._MultiCppCompile SOURCES {
 		local objectFlagsToRemove ;
 		local objectFlagsToAdd ;
 		on $(_obj) {
+			if $(__MULTICPPCOMPILE_PROCESSED) {
+				Echo * The file $(_src) was already bound by $(__MULTICPPCOMPILE_PROCESSED). ;
+				Exit * Please remove it from the sources list for $(TARGET). ;
+			}
+			__MULTICPPCOMPILE_PROCESSED on $(_obj) = $(TARGET) ;
+
+			$(makeobj_pass1) ;
+
 			collectHdrs += $(HDRS) ;
 			objectForceIncludes = $(FORCE_INCLUDES) ;
 			objflags = $($($(BUILD_EXT).FLAGS)) ;
@@ -443,7 +450,7 @@ rule C._MultiCppCompile SOURCES {
 		_flags += [ C.$(C.COMPILER_SUITE).FIncludes $(_hdrs) ] ;
 		_hdrs = $(SEARCH_SOURCE) $(_hdrs) ;
 
-		_flags += $(preDEFINES) ;
+		_flags += $(fpreDEFINES) ;
 		if $(objdefines[1]) {
 			_flags += [ C.$(C.COMPILER_SUITE).FDefines $(objdefines) ] ;
 		}
