@@ -87,6 +87,7 @@ LIST *builtin_flags_forcecare( PARSE *parse, LOL *args, int *jmp );
 LIST *builtin_flags_nocare( PARSE *parse, LOL *args, int *jmp );
 LIST *builtin_glob( PARSE *parse, LOL *args, int *jmp );
 LIST *builtin_listappendunique( PARSE *parse, LOL *args, int *jmp );
+LIST *builtin_listlength( PARSE *parse, LOL *args, int *jmp );
 LIST *builtin_match( PARSE *parse, LOL *args, int *jmp );
 #ifdef OPT_BUILTIN_SUBST_EXT
 LIST *builtin_subst( PARSE *parse, LOL *args, int *jmp );
@@ -185,6 +186,9 @@ load_builtins()
 
     bindrule( "ListAppendUnique" )->procedure =
 	parse_make( builtin_listappendunique, P0, P0, P0, C0, C0, 0 );
+
+	bindrule( "ListLength" )->procedure =
+		parse_make( builtin_listlength, P0, P0, P0, C0, C0, 0 );
 
     bindrule( "Glob" )->procedure =
     bindrule( "GLOB" )->procedure =
@@ -660,6 +664,26 @@ LIST *builtin_listappendunique( PARSE	*parse, LOL	*args, int	*jmp )
 	}
 
 	return list;
+}
+
+
+/*
+ * builtin_listlength() -
+ */
+
+LIST *builtin_listlength( PARSE	*parse, LOL	*args, int	*jmp )
+{
+	char buffer[100];
+	LIST *list = lol_get( args, 0 );
+	int length = 0;
+	if ( list )
+	{
+		length = list_length( list );
+	}
+
+	sprintf( buffer, "%d", length );
+
+	return list_append(L0, buffer, 0);
 }
 
 
