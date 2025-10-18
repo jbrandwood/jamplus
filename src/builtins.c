@@ -917,8 +917,8 @@ LIST *builtin_subst_literalize( PARSE	*parse, LOL	*args, int	*jmp )
 		for ( patternString = list_value(pattern); *patternString; ++patternString )
 		{
 			if ( *patternString == '('  ||  *patternString == ')'  ||  *patternString == '.'  ||
-					*patternString == '%'  ||  *patternString == '+'  ||  *patternString == '-'  ||  
-					*patternString == '*'  ||  *patternString == '?'  ||  *patternString == '['  ||  
+					*patternString == '%'  ||  *patternString == '+'  ||  *patternString == '-'  ||
+					*patternString == '*'  ||  *patternString == '?'  ||  *patternString == '['  ||
 					*patternString == ']'  ||  *patternString == '^'  ||  *patternString == '$' )
 			{
 				buffer_addchar( &patternBuff, '%' );
@@ -1591,7 +1591,7 @@ builtin_groupbyvar(
 	for (f = list_first(all); f; f = list_next( f ) ) {
 		LIST* testVars;
 		int equal;
-		
+
 		vars = quicksettingslookup( bindtarget( list_value(f) ), varname );
 		if ( !vars )
 			continue;
@@ -1791,7 +1791,7 @@ LIST *builtin_dependslist(PARSE *parse, LOL *args, int *jmp)
 	LIST *result = L0;
 	LIST *parents = lol_get(args, 0);
 	LISTITEM* parent;
-	
+
     for (parent = list_first(parents); parent; parent = list_next(parent)) {
 		TARGET *t = bindtarget(list_value(parent));
 		TARGETS *child;
@@ -1801,7 +1801,7 @@ LIST *builtin_dependslist(PARSE *parse, LOL *args, int *jmp)
 			result = list_append(result, child->target->name, 1);
 	    }
 	}
-	
+
 	return result;
 }
 
