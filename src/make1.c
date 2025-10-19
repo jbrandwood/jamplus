@@ -1184,7 +1184,7 @@ make1d(
 				TARGET *target = bindtarget( list_value( targetitem ) );
 
 				LISTITEM* sourcetargetitem;
-				for ( sourcetargetitem = list_first( cmd->sourcesunbound ); sourcetargetitem; sourcetargetitem = sourcetargetitem = list_next( sourcetargetitem ) ) {
+				for ( sourcetargetitem = list_first( cmd->sourcesunbound ); sourcetargetitem; sourcetargetitem = list_next( sourcetargetitem ) ) {
 					TARGET *sourcetarget = bindtarget( list_value( sourcetargetitem ) );
 					TARGETS *c;
 					for ( c = target->depends; c; c = c->next )

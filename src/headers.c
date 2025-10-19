@@ -269,7 +269,8 @@ static LIST *headers1helper(
 
 			while (*p)
 			{
-				*p++ = (char)tolower(*p);
+				*p = (char)tolower(*p);
+				++p;
 			}
 		}
 # endif
