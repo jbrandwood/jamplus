@@ -1,21 +1,6 @@
 SDL2_ROOT = $(SUBDIR) ;
 
 rule Build.sdl2 TOOLCHAINS {
-	if $(C.PLATFORM) = android {
-		C.ActiveTarget sdl2-hidapi ;
-
-		local SRCS =
-				src/hidapi/android/hid.cpp
-				src/hidapi/hidapi/hidapi.h
-		;
-		C.Defines : ANDROID ;
-		C.ForcePublic ;
-		C.OutputName : libhidapi ;
-		C.OutputPostfix ;
-		C.LinkPrebuiltLibraries : android c++abi c++_static log ;
-		C.Library : $(SRCS) : shared ;
-	}
-
 	C.ActiveTarget sdl2 ;
 
 	local SRCS =
@@ -113,11 +98,6 @@ rule Build.sdl2 TOOLCHAINS {
 		SRCS +=
 				src/loadso/windows/*.c
 				src/loadso/windows/*.h
-		;
-
-		SRCS +=
-				src/core/windows/*.c
-				src/core/windows/*.h
 		;
 
 		SRCS +=
@@ -458,32 +438,15 @@ rule Build.sdl2 TOOLCHAINS {
 		SRCS +=
 				cpufeatures/cpu-features.c
 		;
-
-		# Shorten the directory length for the output directory, as it was exceeding 260 characters on Windows in certain cases.
-		C.SearchSource : cpufeatures/cpu-features.c : $(NDKROOT)/sources/android ;
-
-		SDL2_JAVA_SRCS =
-				org/libsdl/app/HIDDevice.java
-				org/libsdl/app/HIDDeviceBLESteamController.java
-				org/libsdl/app/HIDDeviceManager.java
-				org/libsdl/app/HIDDeviceUSB.java
-				org/libsdl/app/SDL.java
-				org/libsdl/app/SDLActivity.java
-				org/libsdl/app/SDLAudioManager.java
-				org/libsdl/app/SDLControllerManager.java
-				org/libsdl/app/SDLSurface.java
-		;
 	}
+
+	# Shorten the directory length for the output directory, as it was exceeding 260 characters on Windows in certain cases.
+	C.SearchSource : cpufeatures/cpu-features.c : $(NDKROOT)/sources/android ;
 
 	if $(SDL_JOYSTICK) = 1 {
 		SRCS +=
 				src/joystick/*.c
 				src/joystick/*.h
-		;
-
-		SRCS +=
-				src/haptic/*.c
-				src/haptic/*.h
 		;
 	}
 
