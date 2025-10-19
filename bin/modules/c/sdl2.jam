@@ -102,11 +102,6 @@ rule Build.sdl2 TOOLCHAINS {
 		;
 
 		SRCS +=
-				src/core/windows/*.c
-				src/core/windows/*.h
-		;
-
-		SRCS +=
 				src/locale/windows/*.c
 				src/locale/windows/*.h
 		;
@@ -454,11 +449,6 @@ rule Build.sdl2 TOOLCHAINS {
 				src/joystick/*.c
 				src/joystick/*.h
 		;
-
-		SRCS +=
-				src/haptic/*.c
-				src/haptic/*.h
-		;
 	}
 
 	SRCS +=
@@ -496,7 +486,7 @@ rule Build.sdl2 TOOLCHAINS {
 		C.IncludeDirectories : $(NDKROOT)/sources/android/cpufeatures ;
 		C.OutputName : libSDL2 ;
 		C.OutputPostfix ;
-		C.LinkPrebuiltLibraries : dl GLESv1_CM GLESv2 EGL log android c m OpenSLES ;
+		C.LinkPrebuiltLibraries : dl GLESv1_CM GLESv2 log android c m OpenSLES ;
 		C.Library : $(SRCS) : shared ;
 
 	} else {
@@ -521,7 +511,7 @@ rule Build.sdl2 TOOLCHAINS {
 		C.Defines : ANDROID ;
 		#C.OutputName : libmain ;
 		#C.OutputPostfix ;
-		C.LinkPrebuiltLibraries : GLESv1_CM GLESv2 EGL nativewindow log c m : public ;
+		C.LinkPrebuiltLibraries : GLESv1_CM GLESv2 log c m : public ;
 		C.LinkFlags : -Wl,--undefined=Java_org_libsdl_app_SDLActivity_nativeInit : public ;
 
 	} else if $(C.PLATFORM) in ios iossimulator {
@@ -562,7 +552,7 @@ rule C.sdl2.Register ROOT : OPTIONS : BRANCH {
 		if patch-for-bgfx in $(OPTIONS) {
 			EXTRA = "git -C $(ROOT) am -3 -k $(SDL2_CURRENT_SCRIPT:D)/sdl2-bgfx-android-surface.patch" ;
 		}
-		GitClone https://github.com/libsdl-org/SDL.git -b $(BRANCH:E=release-2.30.2) --depth 1 : $(ROOT) include/SDL.h : $(EXTRA) ;
+		GitClone https://github.com/libsdl-org/SDL.git -b $(BRANCH:E=release-2.32.6) --depth 1 : $(ROOT) include/SDL.h : $(EXTRA) ;
 	}
 	SDL2_ROOT = $(ROOT) ;
 	SubDirPush ;
