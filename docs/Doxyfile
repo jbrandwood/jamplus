@@ -57,8 +57,10 @@ INPUT             = \
 		module_copydirectory.dox \
 		module_copyfile.dox \
 		module_csharp.dox \
+		module_emscripten.dox \
 		module_hardsoftlink.dox \
 		module_ios.dox \
+		module_java.dox \
 		multiple_passes.dox \
 		quick_start.dox \
 		scripts.dox \

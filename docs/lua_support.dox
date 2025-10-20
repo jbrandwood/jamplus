@@ -64,6 +64,98 @@ actions lua RunLuaScript
 \endcode
 \htmlonly </blockquote> \endhtmlonly
 
+Any settings attached to the target are propogated to the Lua task and are available via the `jamvar` table.
+
+Certain modifiers can be applied to determine which settings are bound and unbound. Use `JAM_UNBOUND_SETTINGS` to use a setting as is within the `jamvar` table. Use `JAM_BOUND_SETTINGS` to force a setting to resolve its path.
+
+\htmlonly <blockquote> \endhtmlonly
+\code
+actions screenoutput lua _EmbedFile
+{
+	osprocess = require 'osprocess'
+	local targets, sources = ...
+	local in_file = io.open(sources[1], 'rb')
+	local data = in_file:read('*a')
+	in_file:close()
+
+	local out_file = io.open(targets[1], 'w')
+
+	local name = jamvar.NAME
+	local sleepAmount = jamvar.SLEEP[1]
+	local symbol = name[1]:upper():gsub('%.', '_'):gsub('-', '_'):gsub('@', 'at')
+	local cpp_str = [[#include <stdint.h>
+unsigned char %s[] =
+]]
+	out_file:write(cpp_str:format(symbol))
+	out_file:write('{\n    ')
+	local data_is_binary = false
+
+	local tmp = {}
+	local format = string.format
+	local sbyte = string.byte
+	if data_is_binary then
+		for index = 1, #data do
+
+		end
+	else
+		for index = 1, #data do
+			local x = sbyte(data, index, index + 1)
+			tmp[#tmp + 1] = format('0x%x', x)
+			tmp[#tmp + 1] = ', '
+			if index > 1  and  (index - 1) % 4 == 0 then
+				tmp[#tmp + 1] = '\n    '
+			end
+		end
+	end
+
+	osprocess.sleep(tonumber(sleepAmount))
+
+	out_file:write(table.concat(tmp))
+	out_file:write('\n};\n')
+	out_file:write(('uint32_t %s_SIZE = sizeof(%s);\n'):format(symbol, symbol))
+
+	out_file:close()
+}
+
+rule EmbedFile SOURCES : SLEEP
+{
+	local alltargets ;
+
+	SOURCES = [ C.GristFiles : $(SOURCES) ] ;
+
+	local source ;
+	for source in $(SOURCES)
+	{
+		local splits = [ Split $(source) : "=" ] ;
+		local source = $(splits[1]) ;
+		local name = $(splits[2]:E=$(source):G=) ;
+		SEARCH on $(source) = $(SEARCH_SOURCE) ;
+		local target.cpp = @($(source).embed.cpp:G=$(C.ACTIVE_TOOLCHAIN_TARGET_GRIST)) ;
+		local targets = $(target.cpp) ;
+		alltargets += $(targets) ;
+		MakeLocate $(targets) : $(LOCATE_TARGET) ;
+
+		Depends $(targets) : $(source) ;
+		C.Clean : $(targets) ;
+		UseCommandLine $(targets) : v1r ;
+		NAME on $(targets) = $(name:BS) ;
+		SLEEP on $(targets) = $(SLEEP) ;
+		JAM_UNBOUND_SETTINGS on $(targets) = NAME SLEEP ;
+		_EmbedFile $(target.cpp) : $(source) ;
+	}
+
+	return $(alltargets) ;
+}
+
+local EMBED_SOURCES = [ EmbedFile fileglob.c jrun.jam main.cpp license : 0 ] ;
+
+C.Library test : $(EMBED_SOURCES) ;
+
+C.LinkLibraries main : test ;
+C.Application main : main.cpp ;
+\endcode
+\htmlonly </blockquote> \endhtmlonly
+
 
 
 
@@ -289,7 +381,7 @@ If \c TARGET_NAME is specified, \c VARIABLE_NAME is retrieved as if an <tt>on TA
 
 \param TARGET_NAME (optional) The target to make active to retrieve \c VARIABLE_NAME from.
 \param VARIABLE_NAME The Jam variable to retrieve.
-\return All strings within the \c VARIABLE_NAME string are returned as a Lua array of strings.
+\return All strings within the \c VARIABLE_NAME string are returned as a Lua array of strings. Returns nil if \c VARIABLE_NAME does not exist.
 
 \htmlonly </blockquote> \endhtmlonly
 

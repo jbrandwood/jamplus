@@ -16,8 +16,10 @@ Support for more than one toolchain used during the same Jam execution is provid
 \refitem rule_C_Application C.Application
 \refitem rule_C_BatchCompileGroupSize C.BatchCompileGroupSize
 \refitem rule_C_CFlags C.CFlags
+\refitem rule_C_CCFlags C.CCFlags
 \refitem rule_C_Clean C.Clean
 \refitem rule_C_ConfigureFile C.ConfigureFile
+\refitem rule_C_CStandard C.CStandard
 \refitem rule_C_CppExceptions C.C++Exceptions
 \refitem rule_C_CppStandard C.C++Standard
 \refitem rule_C_CppFlags C.C++Flags
@@ -38,12 +40,15 @@ Support for more than one toolchain used during the same Jam execution is provid
 \refitem rule_C_GristFiles C.GristFiles
 \refitem rule_C_IncludeDirectories C.IncludeDirectories
 \refitem rule_C_IncludeInBuild C.IncludeInBuild
+\refitem rule_C_Includes C.Includes
 \refitem rule_C_Inherits C.Inherits
 \refitem rule_C_InstallNamePath C.InstallNamePath
 \refitem rule_C_LibFlags C.LibFlags
 \refitem rule_C_Library C.Library
 \refitem rule_C_LinkDirectories C.LinkDirectories
 \refitem rule_C_LinkFlags C.LinkFlags
+\refitem rule_C_LinkAddFlags C.LinkAddFlags
+\refitem rule_C_LinkRemoveFlags C.LinkRemoveFlags
 \refitem rule_C_LinkLibraries C.LinkLibraries
 \refitem rule_C_LinkPrebuiltLibraries C.LinkPrebuiltLibraries
 \refitem rule_C_Lump C.Lump
@@ -178,13 +183,14 @@ For the given project \c TARGET, only allow \c SIZE files to be batch compiled i
 
 
 <hr>
-\section rule_C_CFlags rule C.CFlags TARGET : FLAGS
+\section rule_C_CFlags rule C.CFlags TARGET : FLAGS : OPTIONS
 \addindex rule_C_CFlags
 
 For the given project \c TARGET, assign the \c FLAGS to the appropriate configuration and platform.
 
 \param TARGET The target to assign the \c FLAGS to.  \c TARGET is optional if \ref rule_ActiveTarget has been specified.  If \c TARGET is <tt>*</tt>, the flags are made available globally.
 \param FLAGS The list of flags to apply.
+\param OPTIONS If \c public is specified, \c FLAGS are made available to a target using \c C.Inherits.
 
 \code
     # Assign /clr:oldsyntax to all C files in managedapp across all
@@ -199,6 +205,21 @@ For the given project \c TARGET, assign the \c FLAGS to the appropriate configur
     # configuration and win32 platform.
     C.CFlags managedapp : /clr:oldsyntax : debug : win32 ;
 \endcode
+
+
+
+
+
+<hr>
+\section rule_C_CCFlags rule C.CCFlags TARGET : FLAGS : OPTIONS
+\addindex rule_C_CCFlags
+
+This is an alias for:
+
+\code
+    C.Flags $(TARGET) : CC C++ : $(FLAGS) : $(OPTIONS) ;
+\endcode
+
 
 
 
@@ -228,13 +249,35 @@ Add \c FILES to the \c clean target for \c TARGET.
 
 
 <hr>
-\section rule_C_CppExceptions rule C.C++Exceptions TARGET : TYPE
+\section rule_C_CStandard rule C.CStandard TARGET : VERSION : OPTIONS
+\addindex rule_C_CStandard
+
+For the given project \c TARGET, set the C standard to \c VERSION.
+
+\param TARGET The target to set the C standard version to.  \c TARGET is optional if \ref rule_ActiveTarget has been specified.  If \c TARGET is <tt>*</tt>, the C standard version is made available globally.
+\param VERSION The C standard version number.
+\param OPTIONS See \ref rule_C_Flags for the list of covered \c OPTIONS.
+
+\code
+    # Set the C version to 99.
+    C.CStandard mycapp : 99 ;
+\endcode
+
+
+
+
+
+
+
+<hr>
+\section rule_C_CppExceptions rule C.C++Exceptions TARGET : TYPE : OPTIONS
 \addindex rule_C_CppExceptions
 
 For the given project \c TARGET, turn on/off C++ exception support within the current toolchain.
 
 \param TARGET The target to assign the exception support to.  \c TARGET is optional if \ref rule_ActiveTarget has been specified.  If \c TARGET is <tt>*</tt>, the exception flags are made available globally.
 \param TYPE \c true to turn on exceptions, \c false (default) to turn off exceptions.
+\param OPTIONS If \c public is specified, the specified settings are made available to a target using \c C.Inherits.
 
 \code
     # Turn on exceptions in the target mycppapp.
@@ -250,13 +293,14 @@ For the given project \c TARGET, turn on/off C++ exception support within the cu
 
 
 <hr>
-\section rule_C_CppStandard rule C.C++Standard TARGET : VERSION
+\section rule_C_CppStandard rule C.C++Standard TARGET : VERSION : OPTIONS
 \addindex rule_C_CppStandard
 
 For the given project \c TARGET, set the C++ standard to \c VERSION.
 
 \param TARGET The target to set the C++ standard version to.  \c TARGET is optional if \ref rule_ActiveTarget has been specified.  If \c TARGET is <tt>*</tt>, the C++ standard version is made available globally.
 \param VERSION The C++ standard version number.
+\param OPTIONS See \ref rule_C_Flags for the list of covered \c OPTIONS.
 
 \code
     # Set the C++ version to 17.
@@ -271,13 +315,14 @@ For the given project \c TARGET, set the C++ standard to \c VERSION.
 
 
 <hr>
-\section rule_C_CppFlags rule C.C++Flags TARGET : FLAGS
+\section rule_C_CppFlags rule C.C++Flags TARGET : FLAGS : OPTIONS
 \addindex rule_C_CppFlags
 
 For the given project \c TARGET, assign the C++ \c FLAGS for the current toolchain.
 
 \param TARGET The target to assign the \c FLAGS to.  \c TARGET is optional if \ref rule_ActiveTarget has been specified.  If \c TARGET is <tt>*</tt>, the flags are made available globally.
 \param FLAGS The list of flags to apply.
+\param OPTIONS If \c public is specified, the specified settings are made available to a target using \c C.Inherits.
 
 \code
     # Assign /clr:oldsyntax to all C++ files in managedapp.
@@ -458,7 +503,7 @@ For the given project \c TARGET, exclude the files matching regular express \c P
 
 
 <hr>
-\section rule_C_Flags rule C.Flags TYPE : TARGET : FLAGS
+\section rule_C_Flags rule C.Flags TYPE : TARGET : FLAGS : OPTIONS
 \addindex rule_C_Flags
 
 Assign the compilation \c FLAGS to the project \c TARGET.  \c TYPE can be any known source compilation type, such as \c CC for C-style files, \c C++ for C++-style files, and on certain compilers, \c M for Objective C files, or \c MM for Objective C++ files.
@@ -466,6 +511,14 @@ Assign the compilation \c FLAGS to the project \c TARGET.  \c TYPE can be any kn
 \param TYPE A source compilation type added through \ref rule_C_AddBuildExtensions "C.AddBuildExtensions". If more than one is specified, the flags are applied to all types.
 \param TARGET The target to assign the \c FLAGS to.  \c TARGET is optional if \ref rule_ActiveTarget has been specified.  If \c TARGET is <tt>*</tt>, the flags are made available globally.
 \param FLAGS The list of flags to apply.
+\param OPTIONS The following options are available:
+
+\htmlonly <blockquote> \endhtmlonly
+<ul>
+  <li>\c public - If \c public is specified, \c FLAGS are made available to a target using \c C.Inherits.</li>
+</ul>
+\htmlonly </blockquote> \endhtmlonly
+
 
 \code
     if $(C.PLATFORM) = macosx32  &&  $(C.CONFIG) = debug {
@@ -715,6 +768,29 @@ For the given project \c TARGET, re-include the \c SOURCES into the build.
 
 
 
+<hr>
+\section rule_C_Includes rule C.Includes TARGET : SOURCES : DEPS
+\addindex rule_C_Includes
+
+A helper rule that activates \c TARGET, grists \c SOURCES, and calls \ref rule_Includes with \c DEPS as dependencies.
+
+\param TARGET The target to activate and grist the \c SOURCES against.  \c TARGET is optional if \ref rule_ActiveTarget has been specified.
+\param SOURCES The list of source files to act as includes parents against \c DEPS.
+\param DEPS The list of dependencies.
+
+\code
+    rule C.Includes TARGET : SOURCES : DEPS {
+        C.ActiveTarget $(TARGET) ;
+        Includes [ C.GristFiles $(TARGET) : $(SOURCES) ] : $(DEPS) ;
+    }
+\endcode
+
+
+
+
+
+
+
 
 <hr>
 \section rule_C_Inherits rule C.Inherits TARGET : INHERITS_TARGETS [ : OPTIONS ]
@@ -875,6 +951,48 @@ Assign extra link \c FLAGS to the given project \c TARGET.
     }
     C.LinkFlags ManagedLuaPlus : /KEYFILE:\"$(SEARCH_SOURCE)/ManagedLuaPlus.snk\" ;
 \endcode
+
+
+
+
+
+
+<hr>
+\section rule_C_LinkAddFlags rule C.LinkAddFlags TARGET : FLAGS : OPTIONS
+\addindex rule_C_LinkAddFlags
+
+Add extra link \c FLAGS to the given project \c TARGET.
+
+\param TARGET The target to assign the link \c FLAGS to.  \c TARGET is optional if \ref rule_ActiveTarget has been specified.  If \c TARGET is <tt>*</tt>, the flags are made available globally.
+\param FLAGS The list of link flags to apply.
+\param OPTIONS If \c public is specified, the specified \c FLAGS are made available to a project using \c C.Inherits.
+
+\code
+    C.LinkRemoveFlags * : /OPT:REF /OPT:ICF /OPT:NOICF /DEBUG /DEBUG:FULL /DEBUG:NONE ;
+    C.LinkAddFlags * : /DEBUG:FULL ;
+\endcode
+
+
+
+
+
+
+<hr>
+\section rule_C_LinkRemoveFlags rule C.LinkRemoveFlags TARGET : FLAGS : OPTIONS
+\addindex rule_C_LinkRemoveFlags
+
+Removes link \c FLAGS from the given project \c TARGET.
+
+\param TARGET The target to assign the link \c FLAGS to.  \c TARGET is optional if \ref rule_ActiveTarget has been specified.  If \c TARGET is <tt>*</tt>, the flags are made available globally.
+\param FLAGS The list of link flags to remove.
+\param OPTIONS If \c public is specified, the specified \c FLAGS are made available to a project using \c C.Inherits.
+
+\code
+    C.LinkRemoveFlags * : /OPT:REF /OPT:ICF /OPT:NOICF /DEBUG /DEBUG:FULL /DEBUG:NONE ;
+    C.LinkAddFlags * : /DEBUG:FULL ;
+\endcode
+
+
 
 
 
@@ -1321,7 +1439,7 @@ Under GCC-based compilers, the precompiled header name is automatic based on the
 
 \param TARGET The target to which the precompiled header belongs.  This is needed to properly grist the precompiled header filenames.
 \param NAME This parameter is made up of either one or two filenames.  The first filename is the <tt>.cpp</tt> file used to create the precompiled header.  If it does not contain an extension, <tt>.cpp</tt> is added.  If the second filename is not specified, the default is to use the first filename with its suffix modified to <tt>.h</tt>.  If the second filename is specified, it will represent the header file used for the precompilation.
-\param FILES The list of files to apply the precompiled header to.
+\param FILES The list of files to apply the precompiled header to. Wildcards are expanded.
 
 \code
     # For all sources in PCH_SRCS in the Misc project, the precompiled header

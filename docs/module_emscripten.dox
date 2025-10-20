@@ -1,0 +1,111 @@
+/*! \page module_emscripten Emscripten Rules
+
+The \c emscripten module will automatically detect the appropriate compilers and set up some architecture-specific items.
+
+When building with Emscripten, additional rules are available to complete the build.
+
+\section module_emscripten_ruleslist List of Rules
+
+\secreflist
+\refitem rule_C_emscripten_JSLibraries C.emscripten.JSLibraries
+\refitem rule_C_emscripten_JSPre C.emscripten.JSPre
+\refitem rule_C_emscripten_JSPost C.emscripten.JSPost
+\refitem rule_C_emscripten_JSExterns C.emscripten.JSExterns
+\endsecreflist
+
+\section module_emscripten_rules Rules
+
+<hr>
+\section rule_C_emscripten_JSLibraries rule C.emscripten.JSLibraries TARGET : SOURCES : OPTIONS
+\addindex rule_C_emscripten_JSLibraries
+
+For the given \c TARGET, assign libraries via \c SOURCES to be linked with the link flag <tt>--js-library</tt>.
+
+\param TARGET The target to assign the libraries to.  \c TARGET is optional if \ref rule_ActiveTarget has been specified.  If \c TARGET is <tt>*</tt>, the libraries will be linked for all applications.
+\param SOURCES The list of libraries.
+\param OPTIONS If \c public is specified, the libraries specified by \c SOURCES are made available to a project using \c C.Inherits.
+
+\code
+    C.emscripten.JSLibraries :
+            js/libs/library_godot_audio.js
+            js/libs/library_godot_display.js
+            js/libs/library_godot_emscripten.js
+            js/libs/library_godot_fetch.js
+            js/libs/library_godot_webmidi.js
+            js/libs/library_godot_os.js
+            js/libs/library_godot_runtime.js
+            js/libs/library_godot_input.js
+            js/libs/library_godot_webgl2.js
+    ;
+\endcode
+
+
+
+
+<hr>
+\section rule_C_emscripten_JSPre rule C.emscripten.JSPre TARGET : SOURCES : OPTIONS
+\addindex rule_C_emscripten_JSPre
+
+For the given \c TARGET, assign libraries via \c SOURCES to be linked with the link flag <tt>--pre-js</tt>.
+
+\param TARGET The target to assign the libraries to.  \c TARGET is optional if \ref rule_ActiveTarget has been specified.  If \c TARGET is <tt>*</tt>, the libraries will be linked for all applications.
+\param SOURCES The list of libraries.
+\param OPTIONS If \c public is specified, the libraries specified by \c SOURCES are made available to a project using \c C.Inherits.
+
+\code
+    C.emscripten.JSPre :
+            js/libs/a_pre_file.js
+    ;
+\endcode
+
+
+
+
+
+<hr>
+\section rule_C_emscripten_JSPost rule C.emscripten.JSPost TARGET : SOURCES : OPTIONS
+\addindex rule_C_emscripten_JSPost
+
+For the given \c TARGET, assign libraries via \c SOURCES to be linked with the link flag <tt>--post-js</tt>.
+
+\param TARGET The target to assign the libraries to.  \c TARGET is optional if \ref rule_ActiveTarget has been specified.  If \c TARGET is <tt>*</tt>, the libraries will be linked for all applications.
+\param SOURCES The list of libraries.
+\param OPTIONS If \c public is specified, the libraries specified by \c SOURCES are made available to a project using \c C.Inherits.
+
+\code
+    C.emscripten.JSPost :
+            js/patches/patch_em_gl.js
+    ;
+\endcode
+
+
+
+
+
+
+<hr>
+\section rule_C_emscripten_JSExterns rule C.emscripten.JSExterns TARGET : SOURCES : OPTIONS
+\addindex rule_C_emscripten_JSExterns
+
+For the given \c TARGET, assign libraries via \c SOURCES to be linked with the flag <tt>--externs</tt>.
+
+\param TARGET The target to assign the libraries to.  \c TARGET is optional if \ref rule_ActiveTarget has been specified.  If \c TARGET is <tt>*</tt>, the libraries will be linked for all applications.
+\param SOURCES The list of libraries.
+\param OPTIONS If \c public is specified, the libraries specified by \c SOURCES are made available to a project using \c C.Inherits.
+
+\code
+    C.emscripten.JSExterns :
+            js/libs/library_godot_webgl2.externs.js
+    ;
+\endcode
+
+
+
+
+
+
+
+
+<hr>
+*/
+

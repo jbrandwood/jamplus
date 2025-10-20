@@ -7,6 +7,7 @@ jam [ -a ] [ -g ] [ -n ] [ -q ] [ -T ] [ -v ]
     [ -d <i>debug</i> ]
     [ -f <i>jambase</i> ]
     [ -j <i>jobs</i> ]
+    [ -l Run Lua]
     [ -o <i>actionsfile</i> ]
     [ -r ]
     [ -s <i>var</i>=<i>value</i> ]
@@ -17,6 +18,12 @@ jam [ -a ] [ -g ] [ -n ] [ -q ] [ -T ] [ -v ]
 </pre>
 
 If <i>target</i> is provided on the command line, <b>jam</b> builds <i>target</I>; otherwise <b>jam</b> builds the target 'all'.
+
+If multiple <i>targets</i> are provided on the command line, <b>jam</b> builds each sequentially. In order to consider multiple <i>targets</i> in one pass, comma separate them.
+
+\code
+    jam includes,protos generate all
+\endcode
 
 <b>Jam</b> may be invoked with the following options:
 
@@ -82,6 +89,10 @@ If <i>target</i> is provided on the command line, <b>jam</b> builds <i>target</I
   <tr>
     <td valign=top><code> -j <i>n</I></code>
     <td> Run up to <i>n</i> shell commands concurrently.  The default is the maximum number of available processors on the machine.  On Windows, the number of processors is determined from the environment variable <tt>NUMBER_OF_PROCESSORS</tt>.  On Mac OS X, the number of processors is obtained from the API <tt>MPProcessors</tt>.
+
+  <tr>
+    <td valign=top><code> -l <i>n</I></code>
+    <td> Run the internal Lua as if it were a command-line call to the Lua executable. Anything following <tt>-l</tt> are passed directly to the Lua instance as if they were on the Lua executable command-line.
 
   <tr>
     <td valign=top><code> -n</code>

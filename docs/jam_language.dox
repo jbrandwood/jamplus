@@ -373,6 +373,10 @@ Does the obvious; the else clause is optional. \em cond is built of:
     <td>list \em a matches list \em b string-for-string</td>
   </tr>
   <tr>
+    <td><code>\em a == \em b</code></td>
+    <td>list \em a matches list \em b string-for-string</td>
+  </tr>
+  <tr>
     <td><code>\em a != \em b</code></td>
     <td>list \em a does not match list \em b</td>
   </tr>

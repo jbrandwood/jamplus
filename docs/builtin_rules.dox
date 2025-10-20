@@ -12,8 +12,11 @@
 
 \secreflist
 \refitem rule_Depends Depends
+\refitem rule_DependsUnique DependsUnique
 \refitem rule_Includes Includes
+\refitem rule_IncludesUnique IncludesUnique
 \refitem rule_Needs Needs
+\refitem rule_NeedsUnique NeedsUnique
 \endsecreflist
 
 <hr>
@@ -22,7 +25,24 @@
 
 Builds a direct dependency: makes each of <i>targets1</i> depend on each of <i>targets2</i>.  Generally, <i>targets1</i> will be rebuilt if <i>targets2</i> are themselves rebuilt are or are newer than <i>targets1</i>.
 
-As a simplification when specifying multi-level dependencies, <i>targets2</i> depend on the optional <i>targets3</i>, and so on.</td>
+As a simplification when specifying multi-level dependencies, <i>targets2</i> depend on the optional <i>targets3</i>, and so on.
+
+
+
+
+
+
+
+<hr>
+\section rule_DependsUnique rule DependsUnique targets1 : targets2 [ : target3 ... targets9 ] ;
+\addindex rule_DependsUnique
+
+Builds a direct dependency: makes each of <i>targets1</i> depend on each of <i>targets2</i>.  Generally, <i>targets1</i> will be rebuilt if <i>targets2</i> are themselves rebuilt are or are newer than <i>targets1</i>.
+
+As a simplification when specifying multi-level dependencies, <i>targets2</i> depend on the optional <i>targets3</i>, and so on.
+
+Only unique targets are applied.
+
 
 
 
@@ -51,15 +71,53 @@ As a simplification when specifying multi-level dependencies, <i>targets2</i> de
 
 
 
+<hr>
+\section rule_IncludesUnique rule IncludesUnique <i>targets1</i> : <i>targets2</i> [ : <i>target3</i> ... <i>targets9</i> ] ;
+\addindex rule_IncludesUnique
+
+Builds a sibling dependency: makes any target that depends on any of <i>targets1</i> also depend on each of <i>targets2</i>. This reflects the dependencies that arise when one source file includes another:  the object built from the source file depends both on the original and included source file,  but the two sources files don't depend on each other.  For example:
+
+\code
+    Depends foo.o : foo.c ;
+    Includes foo.c : foo.h ;
+\endcode
+
+"foo.o" depends on "foo.c" and "foo.h" in this example.
+
+As a simplification when specifying multi-level dependencies, <i>targets2</i> depend on the optional <i>targets3</i>, and so on.
+
+Only unique targets are applied.
+
+
+
+
+
+
+
 
 
 <hr>
 \section rule_Needs rule Needs <i>targets1</i> : <i>targets2</i> [ : <i>target3</i> ... <i>targets9</i> ] ;
-\addindex rule_Depends
+\addindex rule_Needs
 
 Needs is very similar to \ref rule_Depends.  Like Depends, <i>targets1</i> are dependent on <i>targets2</i> having been built first.  Unlike Depends, if <i>targets2</i> are updated, <i>targets1</i> do not build.
 
 As a simplification when specifying multi-level dependencies, <i>targets2</i> depend on the optional <i>targets3</i>, and so on.
+
+
+
+
+
+<hr>
+\section rule_NeedsUnique rule NeedsUnique <i>targets1</i> : <i>targets2</i> [ : <i>target3</i> ... <i>targets9</i> ] ;
+\addindex rule_NeedsUnique
+
+Needs is very similar to \ref rule_Depends.  Like Depends, <i>targets1</i> are dependent on <i>targets2</i> having been built first.  Unlike Depends, if <i>targets2</i> are updated, <i>targets1</i> do not build.
+
+As a simplification when specifying multi-level dependencies, <i>targets2</i> depend on the optional <i>targets3</i>, and so on.
+
+Only unique targets are applied.
+
 
 
 
@@ -73,6 +131,7 @@ The rules \ref rule_Always "Always", \ref rule_ForceCare "ForceCare", \ref rule_
 
 \secreflist
 \refitem rule_Always Always
+\refitem rule_AliasTarget AliasTarget
 \refitem rule_ForceCare ForceCare
 \refitem rule_ForceContentsOnly ForceContentsOnly
 \refitem rule_IgnoreContents IgnoreContents
@@ -90,6 +149,21 @@ The rules \ref rule_Always "Always", \ref rule_ForceCare "ForceCare", \ref rule_
 \addindex rule_Always
 
 Causes <i>targets</i> to be rebuilt regardless of whether they are up-to-date (they must still be in the dependency graph).  This is used for the clean and uninstall targets, as they have no dependencies and would otherwise appear never to need building.  It is best applied to targets that are also NotFile targets, but it can also be used to force a real file to be updated as well.
+
+
+
+
+
+
+<hr>
+\section rule_AliasTarget rule AliasTarget ALIAS_TARGET_NAMES : DESTINATION_TARGET
+\addindex rule_AliasTarget
+
+(experimental) Causes \c ALIAS_TARGET_NAMES to internally refer to \c DESTINATION_TARGET as if \c DESTINATION_TARGET had been directly specified.
+
+\code
+    AliasTarget abc.txt : def.txt ;
+\endcode
 
 
 
@@ -254,6 +328,7 @@ The remaining rules are utility rules.
 
 \secreflist
 \refitem rule_ActionExists ActionExists
+\refitem rule_CompareFileTimestamp CompareFileTimestamp
 \refitem rule_ConfigureFileHelper ConfigureFileHelper
 \refitem rule_DebugSuppressMakeText DebugSuppressMakeText
 \refitem rule_DependsList DependsList
@@ -262,6 +337,8 @@ The remaining rules are utility rules.
 \refitem rule_ExpandFileList ExpandFileList
 \refitem rule_Glob Glob
 \refitem rule_GroupByVar GroupByVar
+\refitem rule_ListAppendUnique ListAppendUnique
+\refitem rule_ListLength ListLength
 \refitem rule_ListSort ListSort
 \refitem rule_MakeRelativePath MakeRelativePath
 \refitem rule_Match Match
@@ -269,6 +346,7 @@ The remaining rules are utility rules.
 \refitem rule_MD5 MD5
 \refitem rule_MD5File MD5File
 \refitem rule_OptionalFileCache OptionalFileCache
+\refitem rule_RescanTimestamp RescanTimestamp
 \refitem rule_RuleExists RuleExists
 \refitem rule_QueueJamfile QueueJamfile
 \refitem rule_QuickSettingsLookup QuickSettingsLookup
@@ -310,6 +388,25 @@ Determines whether \c ACTION_NAME exists.
 
 
 <hr>
+\section rule_CompareFileTimestamp rule CompareFileTimestamp LEFT_TARGET : RIGHT_TARGET
+\addindex rule_CompareFileTimestamp
+
+Compares the timestamps of \c LEFT_TARGET and \c RIGHT_TARGET.
+
+\param LEFT_TARGET The left target to compare against \c RIGHT_TARGET.
+\param RIGHT_TARGET The right target to compare against \c LEFT_TARGET.
+\return Returns "<" if the \c LEFT_TARGET timestamp is earlier than the \c RIGHT_TARGET timestamp. Returns "=" if they are the same. Returns ">" if the \c LEFT_TARGET timestamp is later than the \c RIGHT_TARGET timestamp.
+
+\code
+    # To be filled in
+\endcode
+
+
+
+
+
+
+<hr>
 \section rule_ConfigureFileHelper rule ConfigureFileHelper TARGET : SOURCE [ : OPTIONS ] ;
 \addindex rule_ConfigureFileHelper
 
@@ -337,7 +434,7 @@ or if \c VAR is not defined, a line of this format will be output:
 
 \param TARGET The destination target for the expansion copy.
 \param SOURCE The source file target to expansion copy from.
-\param OPTIONS (optional) May be \c noexpand, in which case no variable expansion is performed when copying from \c SOURCE to \c TARGET. Can also specify \c parens to use \$(VAR) as the replacement format instead of \${VAR}.
+\param OPTIONS (optional) May be \c noexpand, in which case no variable expansion is performed when copying from \c SOURCE to \c TARGET. Can also specify \c parens to use \$(VAR) as the replacement format instead of \${VAR}. If \c OPTIONS contains \c rawstring, then the text in \c SOURCE will be written directly to \c TARGET.
 
 \code
     # To be filled in
@@ -386,11 +483,18 @@ or if \c VAR is not defined, a line of this format will be output:
 
 
 <hr>
-\section rule_Echo rule Echo ARGS ;
+\section rule_Echo rule Echo ARGS [ : ARGS2 : ARGS3 ] ;
 \addindex rule_Echo
 
-Prints out the message \c ARGS to stdout.
+Prints out the message \c ARGS to stdout. If there are multiple parameters, they are printed also, separated by " : ".
 
+\code
+    # Hello world!
+    Echo Hello world! ;
+
+    # Hello : again : everyone out there!
+    Echo Hello : again : everyone out there! ;
+\endcode
 
 
 
@@ -398,10 +502,11 @@ Prints out the message \c ARGS to stdout.
 
 
 <hr>
-\section rule_Exit rule Exit ARGS ;
+\section rule_Exit rule Exit ARGS [ : ARGS2 : ARGS3 ] ;
 \addindex rule_Exit
 
-Prints out the message \c ARGS to stdout and then exits with a failure status.
+Prints out the message \c ARGS to stdout and then exits with a failure status. If there are multiple parameters, they are printed also, separated by " : ".
+
 
 
 
@@ -409,16 +514,16 @@ Prints out the message \c ARGS to stdout and then exits with a failure status.
 
 
 <hr>
-\section rule_ExpandFileList rule ExpandFileList WILDCARDS : ABSOLUTE : SEARCH_SOURCE
+\section rule_ExpandFileList rule ExpandFileList WILDCARDS : ABSOLUTE : THIS_SEARCH_SOURCE
 \addindex rule_ExpandFileList
 
 \c ExpandFileList takes a list of files or including glob-capable wildcards and expands them.  The result of the expansion is returned to the user.
 
-If \c ABSOLUTE is specified, then the result(s) of the wildcard expansion will rooted against \c SEARCH_SOURCE.
+If \c ABSOLUTE is specified, then the result(s) of the wildcard expansion will rooted against \c THIS_SEARCH_SOURCE if specified or against \c SEARCH_SOURCE.
 
 \param WILDCARDS A list of files or \ref rule_Glob "Glob"-capable wildcards.
 \param ABSOLUTE Whether to root the result of the wildcard expansion against \c SEARCH_SOURCE. Set to \c 1 or \c true to enable it.
-\param SEARCH_SOURCE A directory to root the \c WILDCARDS against.
+\param THIS_SEARCH_SOURCE A directory to root the \c WILDCARDS against.
 \return Returns the wildcard expanded file list.
 
 \code
@@ -529,6 +634,50 @@ The matched grouping is limited to the maximum number of targets specified via \
 
     # (2 max) - targete targetf
     Echo (2 max) - [ GroupByVar files : FLAGS : 2 ] ;
+\endcode
+
+
+
+
+
+
+
+<hr>
+\section rule_ListAppendUnique rule ListAppendUnique LIST : APPEND_LIST ;
+\addindex rule_ListAppendUnique
+
+Appends unique values from \c APPEND_LIST to \c LIST.
+
+This rule provides the same functionality as the <tt>|=</tt> operator.
+
+\param LIST The list to be appended to.
+\param APPEND_LIST The values to be uniquely appended to \c LIST.
+\return Returns the new list.
+
+\code
+    mylist = ef gh ;
+    mylist = [ ListAppendUnique $(mylist) : ij kl ] ;        # mylist = ef gh ij kl
+
+    # No elements are added to mylist, because mylist already contains them.
+    mylist = [ ListAppendUnique $(mylist) : ij kl ] ;        # mylist = ef gh ij kl
+\endcode
+
+
+
+
+
+<hr>
+\section rule_ListLength rule ListLength LIST ;
+\addindex rule_ListLength
+
+Returns the length of \c LIST.
+
+\param LIST The list to count the length of.
+\return Returns the number of items in \c LIST.
+
+\code
+    mylist = ef gh ;
+    Echo [ ListLength $(mylist) ] ;     # 2
 \endcode
 
 
@@ -723,6 +872,23 @@ Queued Jamfiles are processed in the order they are queued.  There may be cases 
     QueueJamfile me_first.jam : 1000 ;  # Parse me_first.jam and then me_second.jam.
 \endcode
 
+
+
+
+
+
+<hr>
+\section rule_RescanTimestamp rule_RescanTimestamp TARGET ;
+\addindex rule_RescanTimestamp
+
+Forces the timestamp of a file to be rescanned. This may be useful when a \ref rule_Shell command is executed that writes a file or when a \ref rule_LuaString is executed that does something similar.
+
+\param TARGET The target name representing a file on the disk that will be rescanned.
+
+\code
+    LuaString "local file = io.open('out.txt', 'wt'); file:write('File update'); file:close()" ;
+    RescanTimestamp out.txt ;
+\endcode
 
 
 

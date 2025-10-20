@@ -27,6 +27,7 @@ jam --workspace
     [ -platform=<i>PLATFORM</i> ]
     [ -config=<i>CONFIG</i> ]
     [ -compiler=<i>COMPILER</i> ]
+    [ -buildflag=<i>KEY=VALUE</i> ]
     [ -jambaseflags=<i>KEY=VALUE</i> ]
     [ -jamfileflags=<i>KEY=VALUE</i> ]
     [ -jamexepath=<i>JAMEXEPATH</i> ]
@@ -81,6 +82,14 @@ jam --workspace
   <tr>
     <td valign=top width=20%><code> -config=<i>CONFIG</i> </code>
     <td> Provides various configuration options to Jam's workspace generator.  <i>CONFIG</i> is the name of the configuration file.
+
+  <tr>
+    <td valign=top width=20%><code> -buildflag=<i>KEY=VALUE</i> </code>
+    <td> Provides additional settings when generating the workspace. For instance, an editor-specific workspace might be specified as:
+
+      <ul>
+        <li> <tt>-buildflag=EDITOR_BUILD=true
+      </ul>
 
   <tr>
     <td valign=top width=20%><code> -jambaseflags=<i>KEY=VALUE</i> </code>

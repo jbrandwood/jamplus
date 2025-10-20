@@ -4,6 +4,21 @@
 
 This section discusses variables that have special meaning to \b Jam.
 
+\section built_in_variables_command_line_settings JAM_COMMAND_LINE_SETTINGS
+
+All of the keys from the command line's <tt>-s</tt> or <tt>KEY=VALUE</tt> are entered into the \c JAM_COMMAND_LINE_SETTINGS list. The key can be used to look up the value by <tt>\$(JAM_COMMAND_LINE_SETTINGS.THE_KEY)</t>.
+
+\code
+    local key ;
+    for key in $(JAM_COMMAND_LINE_SETTINGS) {
+        local value = $(JAM_COMMAND_LINE_SETTINGS.$(key)) ;
+        Echo "Command Line Setting: $(key)=$(value)" ;
+    }
+\endcode
+
+
+
+
 \section built_in_variables_binding_binding_search_locate BINDING, SEARCH, and LOCATE Variables
 
 These variables control the binding of file target names to locations in the file system.  Generally, \$(SEARCH) is used to find existing sources while \$(LOCATE) is used to fix the location for built targets.
@@ -17,9 +32,6 @@ Rooted (absolute path) file targets are bound as is.  Unrooted file target names
 </ul>
 
 Both \$(SEARCH) and \$(LOCATE) should be set target-specific and not globally.  If they were set globally,  <b>jam</b> would use the same paths for all file binding, which is not likely to produce sane results.  When writing your own rules,  especially ones not built upon those in Jambase, you may need to set \$(SEARCH) or \$(LOCATE) directly.  Almost all of the rules defined in Jambase set \$(SEARCH) and \$(LOCATE) to sensible values for sources they are looking for and targets they create, respectively.
-
-
-
 
 
 

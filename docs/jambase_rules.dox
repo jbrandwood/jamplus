@@ -361,17 +361,21 @@ For workspace projects that support grouping of files into folders, the \c Sourc
 
 
 <hr>
-\section rule_SubDir rule SubDir TOP d1...dn : SUBNAME
+\section rule_SubDir rule SubDir VAR d1...dn : TARGET_DIRECTORY : OPTIONS
 \addindex rule_SubDir
 
-Sets up housekeeping for the source files located in <tt>$(TOP)/d1/.../dn</tt>:
+Sets up housekeeping for the source files located in <tt>$(VAR)/d1/.../dn</tt>:
 
 <ul>
-<li>Reads in rules file associated with \c TOP, if it hasn't already been read.</li>
+<li>Reads in rules file associated with \c VAR, if it hasn't already been read.</li>
 <li>Initializes subdirectory specific variables for search paths, output directories, compiler flags, and grist, using <tt>d1...dn</tt> tokens.
 </ul>
 
-\c TOP is the name of a variable; \c d1 thru \c dn are elements of a directory path.
+\param VAR The name of a variable
+\param d1...dn Additional directory components from $(VAR) making up the total path of <tt>$(VAR)/d1/.../dn/</tt>.
+\param TARGET_DIRECTORY (optional) Additional directory components building \c LOCATE_SOURCE and \c LOCATE_TARGET.
+\param OPTIONS (optional) If `register` is specified, then the subdirectory internal variables are set up, but no Jamfile is read and no SubDir change occurs.
+
 
 
 
@@ -380,17 +384,19 @@ Sets up housekeeping for the source files located in <tt>$(TOP)/d1/.../dn</tt>:
 
 
 <hr>
-\section rule_SubInclude rule SubInclude VAR d1...dn : FILETITLE : OPTIONS
+\section rule_SubInclude rule SubInclude VAR d1...dn : FILENAME : OPTIONS
 \addindex rule_SubInclude
 
-Reads the Jamfile in <tt>$(VAR)/d1/.../dn/</tt>.  Assumes a default Jamfile name of <tt>Jamfile.jam</tt>.  If \c FILETITLE is specified, <tt>$(FILETITLE).jam</tt> is read instead of <tt>Jamfile.jam</tt>.
+Reads the Jamfile in <tt>$(VAR)/d1/.../dn/</tt>.  Assumes a default Jamfile name of <tt>Jamfile.jam</tt>.  If \c FILENAME is specified, <tt>$(FILENAME).jam</tt> is read instead of <tt>Jamfile.jam</tt>.
 
 A given Jamfile is only ever read in once, even if multiple \c SubInclude calls are made with the same arguments.
 
+Internal detail: If the variable \c SubInclude_PreInclude is set, the rule specified in \c SubInclude_PreInclude is executed before the Jamfile is included.
+
 \param VAR A previously specified \c TOP variable created with \ref rule_SubDir.
 \param d1...dn Additional directory components from $(VAR) making up the total path of <tt>$(VAR)/d1/.../dn/</tt>.
-\param FILETITLE (optional) If specified, a Jamfile called <tt>$(FILETITLE).jam</tt> is read instead of the default <tt>Jamfile.jam</tt>.
-\param OPTIONS (optional) If `nocare` is specified, then \c FILETITLE does not have to exist.
+\param FILENAME (optional) If specified, a Jamfile called <tt>$(FILENAME).jam</tt> is read instead of the default <tt>Jamfile.jam</tt>. If a second list item for \c FILENAME is specified, then that is used as the calculated target name for this \ref rule_SubDir transition. Otherwise, the base of \c FILENAME is used as the target name.
+\param OPTIONS (optional) If `nocare` is specified, then \c FILENAME does not have to exist. See \ref rule_SubDir for further \c OPTIONS.
 
 
 
@@ -398,7 +404,7 @@ A given Jamfile is only ever read in once, even if multiple \c SubInclude calls 
 
 
 <hr>
-\section rule_SubIncludeRelative rule SubIncludeRelative RELATIVE_PATH : FILETITLE : OPTIONS
+\section rule_SubIncludeRelative rule SubIncludeRelative RELATIVE_PATH : FILENAME : OPTIONS
 \addindex rule_SubIncludeRelative
 
 After a \c SubDir rule has been called, \c SubIncludeRelative can be used to move within the \c SubDir structure.  Currently, it only works traversing into child directories.  It cannot be used with a <tt>..</tt> to move to a parent directory.
@@ -406,8 +412,8 @@ After a \c SubDir rule has been called, \c SubIncludeRelative can be used to mov
 Further information may be found in \ref rule_SubInclude "SubInclude".
 
 \param RELATIVE_PATH The relative child directory to move into.
-\param FILETITLE (optional) If specified, a Jamfile called <tt>$(FILETITLE).jam</tt> is read instead of the default <tt>Jamfile.jam</tt>.
-\param OPTIONS (optional) If `nocare` is specified, then \c FILETITLE does not have to exist.
+\param FILENAME (optional) See \ref rule_SubInclude "SubInclude".
+\param OPTIONS (optional) See \ref rule_SubInclude "SubInclude".
 
 \code
     SubDir TOP ;
@@ -468,7 +474,7 @@ In reality, a \c WorkspaceConfig is a hack. Just modify the generated <tt>custom
     #   * release_d3d
     #   * release_opengl
     #   * release_sdl
-    if $(TARGETINFO_LOCATE) {
+    if $(JAM_CREATING_WORKSPACE) {
         local config ;
         for config in debug release {
             local engine ;

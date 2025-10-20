@@ -18,6 +18,10 @@ A variable is defined with:
 	<td>The += operator adds \em elements to <i>variable</i>'s list of elements</td>
   </tr>
   <tr>
+    <td><code><i>variable</i> |= <i>elements</i> ;</code></td>
+	<td>The |= operator adds unique \em elements to <i>variable</i>'s list of elements</td>
+  </tr>
+  <tr>
     <td><code><i>variable</i> -= <i>elements</i> ;</code></td>
 	<td>The -= operator removes \em elements from <i>variable</i>'s list of elements</td>
   </tr>
@@ -32,6 +36,10 @@ A variable is defined with:
   <tr>
     <td><code><i>variable</i> on <i>targets</i> += <i>elements</i> ;</code></td>
 	<td>The += operator directly adds \em elements to <i>targets</i>'s <i>variable</i>'s list of elements</td>
+  </tr>
+  <tr>
+    <td><code><i>variable</i> on <i>targets</i> |= <i>elements</i> ;</code></td>
+	<td>The |= operator directly adds unique \em elements to <i>targets</i>'s <i>variable</i>'s list of elements</td>
   </tr>
   <tr>
     <td><code><i>variable</i> on <i>targets</i> -= <i>elements</i> ;</code></td>
@@ -56,6 +64,9 @@ Variables referenced in updating commands will be replaced with their values; ta
 
     # Add some additional elements to myvar.
     myvar += ij kl ;        # myvar = ef gh ij kl
+
+    # No elements are added to myvar, because myvar already contains them.
+    myvar |= ij kl ;        # myvar = ef gh ij kl
 
     # Remove some elements from myvar.
     myvar -= gh kl ;        # myvar = ef ij

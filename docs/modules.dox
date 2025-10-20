@@ -30,6 +30,10 @@ The following represents the list of provided Jam modules:
 
 - \subpage module_csharp "CSharp" - Various rules to build C# applications and assemblies.
 
+\subsection modules_java_support_list Java Support Modules
+
+- \subpage module_java "Java" - Provides Java support.
+
 \subsection modules_platform_support_list Platform Support Modules
 
 - \subpage module_android "Android" - Necessary rules to build for an Android target.
