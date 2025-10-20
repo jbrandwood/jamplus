@@ -324,7 +324,10 @@
     <ClCompile Include="variable.c" />
     <ClCompile Include="w32_getreg.c" />
     <ClCompile Include="w32_shortname.c" />
-    <ClCompile Include="xxhash.c" />
+    <ClCompile Include="xxhash.c">
+      <Optimization Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">MaxSpeed</Optimization>
+      <BasicRuntimeChecks Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Default</BasicRuntimeChecks>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="buffer.h" />
