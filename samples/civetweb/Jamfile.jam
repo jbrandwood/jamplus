@@ -1,7 +1,7 @@
 SubDir TOP ;
 
-local CIVETWEB_ROOT = civetweb_src/civetweb-1.12 ;
-local CIVETWEB_URL = https://github.com/civetweb/civetweb/archive/v1.12.zip ;
+local CIVETWEB_ROOT = civetweb_src/civetweb-1.16 ;
+local CIVETWEB_URL = https://github.com/civetweb/civetweb/archive/v1.16.zip ;
 
 if ! $(PREPASS_FINISHED) {
 
