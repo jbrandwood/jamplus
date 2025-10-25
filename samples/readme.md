@@ -3,6 +3,7 @@ JamPlus Samples
 
 This directory is comprised of a number of examples utilizing JamPlus as a build system.
 
+  * **c++standard/** - Tests setting of C++20.
   * **csharp-windowsforms/** - An example of a simple C# application.
   * **fakeps3/** - TODO: Broken. Needs to be updated.
   * **glob/** - Builds a command-line utility called `glob` exposing the filefind capabilities in Jam as standalone.
