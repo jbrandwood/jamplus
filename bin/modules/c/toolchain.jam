@@ -1,6 +1,10 @@
 rule C.Toolchain.* {
     C.ToolchainSpecKeys C.PLATFORM/PLATFORM C.CONFIG/CONFIG ;
 
+    if ! $(TOOLCHAIN_SPEC) {
+        Echo "* TOOLCHAIN_SPEC is empty in C.Toolchain.* and shouldn't be." ;
+        Exit ;
+    }
     if $(C.PLATFORM) != * {
         Echo "* Toolchain [ $(TOOLCHAIN_SPEC:J=/) ] not found!" ;
         Echo ;
