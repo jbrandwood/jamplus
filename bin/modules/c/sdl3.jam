@@ -453,8 +453,11 @@ rule Build.sdl3 TOOLCHAINS {
 			;
 
 			SRCS +=
-					#src/haptic/dummy/*.c
+					src/haptic/SDL_haptic.c
+					src/haptic/SDL_haptic_c.h
+					src/haptic/SDL_syshaptic.h
 			;
+
 		}
 
 #            SRCS +=
@@ -586,15 +589,13 @@ rule Build.sdl3 TOOLCHAINS {
 #
 #        } else if $(C.PLATFORM) in android {
 	if $(C.PLATFORM) in android {
-		#C.Inherits : sdl2-hidapi ;
 		C.Defines : ANDROID ;
 		C.IncludeDirectories : $(NDKROOT)/sources/android/cpufeatures ;
 		C.OutputName : libSDL3 ;
 		C.OutputPostfix ;
 		C.LinkPrebuiltLibraries : dl GLESv1_CM GLESv2 EGL log android c m OpenSLES : public ;
 
-		#C.Library : $(SRCS) : shared ;
-		C.Library : $(SRCS) ;
+		C.Library : $(SRCS) : shared ;
 
 	} else {
 		C.Library : $(SRCS) ;
