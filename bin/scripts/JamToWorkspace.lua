@@ -290,26 +290,36 @@ function _getTargetInfoPath()
 	return ospath.join(_getWorkspacePath(), '_targetinfo_')
 end
 
-function _getTargetInfoFilename(platform, config)
+local function _sanitizeFilename(filename)
+	return filename:gsub(' ', '-')
+end
+
+function _getTargetInfoFilename(workspace, platform, config)
 	return ospath.join(_getTargetInfoPath(), 'targetinfo.' ..
+			(workspace == '*' and '_all_' or workspace) .. '.' ..
 			(platform == '*' and '_all_' or platform) .. '.' ..
-			(config == '*' and '_all_' or config) .. '.lua')
+			(config == '*' and '_all_' or config:gsub(' ', '-')) .. '.lua')
 end
 
 function _getWorkspacesPath()
 	return ospath.join(destinationRootPath, '_workspaces_')
 end
 
-function _getWorkspacePath()
-	return ospath.join(_getWorkspacesPath(), ide)
+function _getWorkspacePath(name)
+	local outPath = ospath.join(_getWorkspacesPath(), ide)
+	if name then
+		outPath = ospath.join(outPath, name)
+	end
+	return outPath
 end
 
-function _getWorkspaceProjectsPath()
-	return ospath.join(_getWorkspacePath(), '_projects_')
+function _getWorkspaceProjectsPath(name)
+	assert(name)
+	return ospath.join(_getWorkspacePath(name), '_projects_')
 end
 
-function ReadTargetInfo(platform, config)
-	local targetInfoFilename = _getTargetInfoFilename(platform, config)
+function ReadTargetInfo(workspace, platform, config)
+	local targetInfoFilename = _getTargetInfoFilename(workspace, platform, config)
 	if ospath.exists(targetInfoFilename) then
 		local chunk, message = loadfile(targetInfoFilename)
 		if not chunk then
@@ -322,8 +332,8 @@ function ReadTargetInfo(platform, config)
 end
 
 function CreateTargetInfoFiles(outPath)
-	function DumpConfig(platform, config)
-		local targetInfoFilename = _getTargetInfoFilename(platform, config)
+	function DumpConfig(workspaceName, workspacePlatformName, workspaceConfigName, workspaceConfig)
+		local targetInfoFilename = _getTargetInfoFilename(workspaceName, workspacePlatformName, workspaceConfigName)
 		ospath.remove(targetInfoFilename)
 
 		local collectConfigurationArgs =
@@ -333,16 +343,42 @@ function CreateTargetInfoFiles(outPath)
 			ospath.escape('JAMFILE_ROOT=' .. sourceRootPath),
 			ospath.escape('JAMFILE=' .. ospath.join(_getTargetInfoPath(), 'DumpJamTargetInfo.jam')),
 			ospath.escape('TARGETINFO_LOCATE=' .. ospath.add_slash(_getTargetInfoPath())),
+			ospath.escape('TargetInfoFile=' .. ospath.add_slash(_getTargetInfoFilename(workspaceName, workspacePlatformName, workspaceConfigName))),
 			'JAM_CREATING_WORKSPACE=1',
-			'C.TOOLCHAIN=' .. platform .. '/' .. config,
-			'-d0',
-			'-S'
+			'WORKSPACE=' .. workspaceName,
+			'WORKSPACE_PLATFORM=' .. workspacePlatformName,
+			'WORKSPACE_CONFIG=' .. workspaceConfigName,
 		}
 		for _, flag in ipairs(BuildFlags) do
 			collectConfigurationArgs[#collectConfigurationArgs + 1] = flag
 		end
 
-		print('    Parsing toolchain ' .. platform .. '/' .. config .. '...')
+		local usedCustom = false
+		if workspaceConfig then
+			if workspaceConfig.CommandLineOptions then
+				usedCustom = true
+				local variablesTable =
+				{
+					PLATFORM = workspacePlatformName,
+					CONFIG = workspaceConfig.ActualConfigName,
+				}
+				for _, option in ipairs(workspaceConfig.CommandLineOptions) do
+					collectConfigurationArgs[#collectConfigurationArgs + 1] = expand(option, variablesTable)
+				end
+			end
+			if workspaceConfig.CustomTarget then
+				usedCustom = true
+				collectConfigurationArgs[#collectConfigurationArgs + 1] = 'WORKSPACE_CUSTOM_TARGET=' .. workspaceConfig.CustomTarget
+			end
+		end
+
+		if not usedCustom then
+			collectConfigurationArgs[#collectConfigurationArgs + 1] = 'C.TOOLCHAIN=' .. workspacePlatformName .. '/' .. (workspaceConfig  and  workspaceConfig.ActualConfigName  or  workspaceConfigName)
+		end
+		collectConfigurationArgs[#collectConfigurationArgs + 1] = '-d0'
+		collectConfigurationArgs[#collectConfigurationArgs + 1] = '-S'
+
+		print('    Parsing toolchain ' .. workspaceName .. '/' .. workspacePlatformName .. '/' .. workspaceConfigName .. '...')
 		--print(table.concat(collectConfigurationArgs, ' '))
 		for line in osprocess.lines(collectConfigurationArgs) do
 			print(line)
@@ -354,8 +390,10 @@ function CreateTargetInfoFiles(outPath)
 	Projects = nil
 	AutoWriteMetaTable = nil
 
-	DumpConfig('*', '*')
-	ReadTargetInfo('*', '*')
+	DumpConfig('*', '*', '*')
+	ReadTargetInfo('*', '*', '*')
+
+	AutoWriteMetaTable.active = false
 
 	if not Config.Platforms then
 		if opts.platform then
@@ -365,11 +403,32 @@ function CreateTargetInfoFiles(outPath)
 		end
 	end
 
-	local workspacePlatforms = {}
-	for _, platform in ipairs(list_concat(Config.Platforms, Config.WorkspacePlatforms)) do
-		if not workspacePlatforms[platform] then
-			workspacePlatforms[platform] = true
-			workspacePlatforms[#workspacePlatforms + 1] = platform
+	tiWorkspaces = {}
+	if Workspaces then
+		for workspaceName, workspace in pairs(Workspaces) do
+			if type(workspace.Export) == 'nil'  or  workspace.Export == true then
+				local tiWorkspace = {}
+				tiWorkspace.Name = workspaceName
+				tiWorkspace.Platforms = {}
+				tiWorkspaces[#tiWorkspaces + 1] = tiWorkspace
+
+				if workspace.Platforms then
+					for workspacePlatformName, workspacePlatform in pairs(workspace.Platforms) do
+						local tiWorkspacePlatform = {}
+						tiWorkspacePlatform.Name = workspacePlatformName
+						tiWorkspacePlatform.Configs = {}
+						tiWorkspace.Platforms[#tiWorkspace.Platforms + 1] = tiWorkspacePlatform
+
+						if workspacePlatform.Configs then
+							for configName, config in pairs(workspacePlatform.Configs) do
+								local tiWorkspaceConfig = config
+								config.Name = configName
+								tiWorkspacePlatform.Configs[#tiWorkspacePlatform.Configs + 1] = tiWorkspaceConfig
+							end
+						end
+					end
+				end
+			end
 		end
 	end
 
@@ -377,11 +436,19 @@ function CreateTargetInfoFiles(outPath)
 		Config.Configurations = VALID_CONFIGS
 	end
 
-	local workspaceConfigurations = {}
-	for _, config in ipairs(list_concat(Config.Configurations, Config.WorkspaceConfigurations)) do
-		if not workspaceConfigurations[config] then
-			workspaceConfigurations[config] = true
-			workspaceConfigurations[#workspaceConfigurations + 1] = config
+	if not tiWorkspaces[1].Platforms[1] then
+		for _, platform in ipairs(list_concat(Config.Platforms, Config.WorkspacePlatforms)) do
+			local tiWorkspacePlatform = {}
+			tiWorkspacePlatform.Name = platform
+			tiWorkspacePlatform.Configs = {}
+			tiWorkspaces[1].Platforms[#tiWorkspaces[1].Platforms + 1] = tiWorkspacePlatform
+
+			local workspaceConfigurations = {}
+			for _, config in ipairs(list_concat(Config.Configurations, Config.WorkspaceConfigurations)) do
+				local tiWorkspaceConfig = {}
+				tiWorkspaceConfig.Name = config
+				tiWorkspacePlatform.Configs[#tiWorkspacePlatform.Configs + 1] = tiWorkspaceConfig
+			end
 		end
 	end
 
@@ -389,19 +456,26 @@ function CreateTargetInfoFiles(outPath)
 --		DumpConfig('*', configName)
 --	end
 
-	for platformName in ivalues(workspacePlatforms) do
---		DumpConfig(platformName, '*')
-		for configName in ivalues(workspaceConfigurations) do
-			DumpConfig(platformName, configName)
+	table.sort(tiWorkspaces, function(left, right) return left.Name < right.Name end)
+	for _, workspace in ipairs(tiWorkspaces) do
+		table.sort(workspace.Platforms, function(left, right) return left.Name < right.Name end)
+		for _, workspacePlatform in ipairs(workspace.Platforms) do
+			table.sort(workspacePlatform.Configs, function(left, right) return left.Name < right.Name end)
+			for _, workspaceConfig in ipairs(workspacePlatform.Configs) do
+				DumpConfig(workspace.Name, workspacePlatform.Name, workspaceConfig.Name, workspaceConfig)
+			end
 		end
 	end
+
+	AutoWriteMetaTable.active = true
 end
 
 function ReadTargetInfoFiles()
-	for platformName in ivalues(Config.Platforms) do
---		ReadTargetInfo(platformName, '*')
-		for configName in ivalues(Config.Configurations) do
-			ReadTargetInfo(platformName, configName)
+	for _, workspace in ipairs(tiWorkspaces) do
+		for _, workspacePlatform in ipairs(workspace.Platforms) do
+			for _, workspaceConfig in ipairs(workspacePlatform.Configs) do
+				ReadTargetInfo(workspace.Name, workspacePlatform.Name, workspaceConfig.Name)
+			end
 		end
 	end
 
@@ -699,7 +773,7 @@ end
 
 
 function DumpProject(project, workspace)
-	local outPath = ospath.join(_getWorkspaceProjectsPath(), project.RelativePath)
+	local outPath = ospath.join(_getWorkspaceProjectsPath(workspace.Name), project.RelativePath)
 	ospath.mkdir(ospath.add_slash(outPath))
 
 	local exporter = Exporters[ide]
@@ -743,8 +817,8 @@ end
 
 
 function DumpWorkspace(workspace)
-	local outPath = _getWorkspacePath()
-	local projectsOutPath = _getWorkspaceProjectsPath()
+	local outPath = _getWorkspacePath(workspace.Name)
+	local projectsOutPath = _getWorkspaceProjectsPath(workspace.Name)
 
 	-- Write the !BuildWorkspace project
 	local exporter = Exporters[ide]
@@ -967,8 +1041,8 @@ include "$(scriptPath)DumpJamTargetInfo.jam" ;
 		exporter.Initialize()
 
 		-- Iterate all the workspaces.
-		local outWorkspacePath = _getWorkspacePath()
 		for _, workspace in pairs(Workspaces) do
+			local outWorkspacePath = _getWorkspacePath(workspace.Name)
 			if workspace.Export == nil  or  workspace.Export == true then
 				-- Rid ourselves of duplicates.
 				local usedProjects = {}

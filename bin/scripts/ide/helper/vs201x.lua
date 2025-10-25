@@ -30,13 +30,17 @@ local solutionProjectTypes = {
 local VisualStudio201xProjectMetaTable = {  __index = VisualStudio201xProjectMetaTable  }
 
 local function GetWorkspaceConfigList(workspace)
-	if not workspace.Configs then
+	if not workspace.Platforms then
 		return Config.Configurations
 	end
 
 	local workspaceConfigs = {}
-	for configName in pairs(workspace.Configs) do
-		workspaceConfigs[#workspaceConfigs + 1] = configName
+	for _, workspacePlatform in pairs(workspace.Platforms) do
+		for configName in pairs(workspacePlatform.Configs) do
+			if not list_find(workspaceConfigs, configName) then
+				workspaceConfigs[#workspaceConfigs + 1] = configName
+			end
+		end
 	end
 	table.sort(workspaceConfigs)
 	return workspaceConfigs
@@ -275,15 +279,21 @@ function VisualStudio201xProjectMetaTable:WriteHelper(outputPath, commandLines)
 					ospath.escape('-C' .. destinationRootPath) ..
 					' -g'
 
+			local commandLineTarget
 			local configName = workspaceConfigName
-			local customWorkspaceConfig = self.Workspace  and  self.Workspace.Configs  and  self.Workspace.Configs[workspaceConfigName]
+			local customWorkspaceConfig = self.Workspace  and  self.Workspace.Platforms  and  self.Workspace.Platforms[platformName]  and  self.Workspace.Platforms[platformName].Configs  and  self.Workspace.Platforms[platformName].Configs[workspaceConfigName]
 			if customWorkspaceConfig then
-				jamCommandLine = jamCommandLine .. ' ' .. table.concat(customWorkspaceConfig.CommandLineOptions, ' ')
+				if customWorkspaceConfig.CommandLineOptions then
+					jamCommandLine = jamCommandLine .. ' ' .. table.concat(customWorkspaceConfig.CommandLineOptions, ' ')
+				end
 				configName = customWorkspaceConfig.ActualConfigName
+				commandLineTarget = customWorkspaceConfig.CustomTarget  or  self.ProjectName
 			elseif architecture then
 				jamCommandLine = jamCommandLine .. ' C.TOOLCHAIN=' .. platformName .. '/' .. configName -- .. '@C.ARCHITECTURE=' .. architecture
+				commandLineTarget = self.ProjectName
 			else
 				jamCommandLine = jamCommandLine .. ' C.TOOLCHAIN=' .. platformName .. '/' .. configName
+				commandLineTarget = self.ProjectName
 			end
 
 			local configInfo =
@@ -309,25 +319,27 @@ function VisualStudio201xProjectMetaTable:WriteHelper(outputPath, commandLines)
 			end
 
 			if project and project.Name and project.Name ~= '!BuildWorkspace' and project.Name ~= '!UpdateWorkspace' then
-				if project.Defines and project.Defines[platformName] and project.Defines[platformName][configName] then
-					configInfo.Defines = table.concat(project.Defines[platformName][configName], ';'):gsub('"', '\\&quot;')
+				if project.Defines and project.Defines[platformName] and project.Defines[platformName][workspaceConfigName] then
+					configInfo.Defines = table.concat(project.Defines[platformName][workspaceConfigName], ';'):gsub('"', '\\&quot;')
 				end
-				if project.IncludePaths and project.IncludePaths[platformName] and project.IncludePaths[platformName][configName] then
-					configInfo.Includes = table.concat(project.IncludePaths[platformName][configName], ';')
+				if project.IncludePaths and project.IncludePaths[platformName] and project.IncludePaths[platformName][workspaceConfigName] then
+					configInfo.Includes = table.concat(project.IncludePaths[platformName][workspaceConfigName], ';')
 				end
-				if project.OutputPaths and project.OutputPaths[platformName] and project.OutputPaths[platformName][configName] 
-					and project.OutputNames and project.OutputNames[platformName] and project.OutputNames[platformName][configName] then
-					configInfo.OutputPath = project.OutputPaths[platformName][configName]
-					configInfo.Output = project.OutputPaths[platformName][configName] .. project.OutputNames[platformName][configName]
+				if project.OutputPaths and project.OutputPaths[platformName] and project.OutputPaths[platformName][workspaceConfigName]
+					and project.OutputNames and project.OutputNames[platformName] and project.OutputNames[platformName][workspaceConfigName] then
+					configInfo.OutputPath = project.OutputPaths[platformName][workspaceConfigName]
+					configInfo.Output = project.OutputPaths[platformName][workspaceConfigName] .. project.OutputNames[platformName][workspaceConfigName]
 				end
-				if project.DebuggerOutputNames  and  project.DebuggerOutputNames[platformName]  and  project.DebuggerOutputNames[platformName][configName] then
-					configInfo.Output = project.DebuggerOutputNames[platformName][configName]
+				if project.DebuggerOutputNames  and  project.DebuggerOutputNames[platformName]  and  project.DebuggerOutputNames[platformName][workspaceConfigName] then
+					configInfo.Output = project.DebuggerOutputNames[platformName][workspaceConfigName]
 				end
-				configInfo.BuildCommandLine = jamCommandLine .. ' ' .. self.ProjectName
-				configInfo.RebuildCommandLine = jamCommandLine .. ' -a ' .. self.ProjectName
-				configInfo.CleanCommandLine = jamCommandLine .. ' clean:' .. self.ProjectName
-				if project.ForceIncludes  and  project.ForceIncludes[platformName]  and  project.ForceIncludes[platformName][configName] then
-					configInfo.ForceIncludes = table.concat(project.ForceIncludes[platformName][configName], ';')
+
+				configInfo.BuildCommandLine = jamCommandLine .. ' ' .. commandLineTarget
+				configInfo.RebuildCommandLine = jamCommandLine .. ' -a ' .. commandLineTarget
+				configInfo.CleanCommandLine = jamCommandLine .. ' clean:' .. commandLineTarget
+
+				if project.ForceIncludes  and  project.ForceIncludes[platformName]  and  project.ForceIncludes[platformName][workspaceConfigName] then
+					configInfo.ForceIncludes = table.concat(project.ForceIncludes[platformName][workspaceConfigName], ';')
 				end
 			else
 				configInfo.BuildCommandLine = project.BuildCommandLine and project.BuildCommandLine[1] or jamCommandLine

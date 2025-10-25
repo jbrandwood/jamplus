@@ -878,7 +878,7 @@ function XcodeProjectMetaTable:Write(outputPath)
 	table.insert(self.Contents, '/* End PBXGroup section */\n\n')
 
 	-- Write PBXLegacyTarget.
-	local projectsPath = _getWorkspaceProjectsPath()
+	local projectsPath = _getWorkspaceProjectsPath(self.Workspace.Name)
 	XcodeHelper_WritePBXLegacyTarget(self, info, allTargets, projectsPath)
 
 	-- Write PBXProject.

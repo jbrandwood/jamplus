@@ -3,6 +3,7 @@ rule CompilerPlatformInfo
 	local text ;
 
 	local platformString = $(PLATFORM) ;
+	platformString ?= $(C.PLATFORM) ;
 	if $(platformString) = android {
 		if $(C.ARCHITECTURE) {
 			platformString = $(platformString)|$(C.ARCHITECTURE) ;

@@ -813,7 +813,6 @@ local function XcodeHelper_WriteProjectXCBuildConfiguration(self, info, projectN
 			table.insert(self.Contents, "\t\t\t\tALWAYS_SEARCH_USER_PATHS = NO;\n")
 			table.insert(self.Contents, "\t\t\t\tCLANG_ANALYZER_NONNULL = YES;\n")
 			table.insert(self.Contents, "\t\t\t\tCLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;\n")
-			table.insert(self.Contents, "\t\t\t\tCLANG_CXX_LANGUAGE_STANDARD = \"gnu++14\";\n")
 			table.insert(self.Contents, "\t\t\t\tCLANG_CXX_LIBRARY = \"libc++\";\n")
 			table.insert(self.Contents, "\t\t\t\tCLANG_ENABLE_MODULES = YES;\n")
 			table.insert(self.Contents, "\t\t\t\tCLANG_ENABLE_OBJC_ARC = YES;\n")
@@ -955,6 +954,7 @@ local function XcodeHelper_WriteXCBuildConfigurations(self, info, projectName, w
 			end
 
 			--table.insert(self.Contents, "\t\t\t\tENABLE_BITCODE = NO;\n")
+			table.insert(self.Contents, "\t\t\t\tCLANG_CXX_LANGUAGE_STANDARD = \"gnu++20\";\n")
 
 			local sourcesExcludedFromBuild = {}
 			local sourcesInfo = Projects[self.ProjectName].SourcesInfo
@@ -1433,7 +1433,7 @@ function XcodeProjectMetaTable:Write(outputPath)
 	table.insert(self.Contents, '/* End PBXGroup section */\n\n')
 
 	-- Write PBXLegacyTarget.
-	local projectsPath = _getWorkspaceProjectsPath()
+	local projectsPath = _getWorkspaceProjectsPath(self.Workspace.Name)
 	XcodeHelper_WritePBXLegacyTarget(self, info, allTargets, projectsPath)
 
 	-- Write PBXProject.

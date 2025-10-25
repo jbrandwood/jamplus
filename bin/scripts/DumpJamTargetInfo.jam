@@ -5,11 +5,14 @@ JAM_CREATING_WORKSPACE = 1 ;
 PLATFORM ?= $(C.PLATFORM) ;
 CONFIG ?= $(C.CONFIG) ;
 
+local workspaceName = $(WORKSPACE) ;
+if $(workspaceName) = * 	{ workspaceName = _all_ ; }
 local platformName = $(PLATFORM) ;
 if $(platformName) = * 	{ platformName = _all_ ; }
 local configName = $(CONFIG) ;
 if $(configName) = * 	{ configName = _all_ ; }
-TargetInfoFile = targetinfo.$(platformName).$(configName).lua ;
+local workspaceConfigName = $(WORKSPACE_CONFIG) ;
+#TargetInfoFile = targetinfo.$(workspaceName).$(platformName).$(configName).lua ;
 
 MakeLocate $(TargetInfoFile) : $(TARGETINFO_LOCATE) ;
 
@@ -260,14 +263,14 @@ rule DumpProjectInfo TARGET : SOURCES : OPTIONS {
 
 		local suffix = $($(ext):Z=$(C.COMPILER_SUITE_SYMBOL)) ;
 		local outputName = [ C._retrieveOutputName : $(suffix) ] ;
-		Contents += "$(project).OutputNames['$(PLATFORM)']['$(CONFIG)'] = [[$(outputName)]]$(NEWLINE)" ;
+		Contents += "$(project).OutputNames['$(PLATFORM)']['$(workspaceConfigName)'] = [[$(outputName)]]$(NEWLINE)" ;
 
 		local outputPath = [ C._retrieveOutputPath ] ;
-		Contents += "$(project).OutputPaths['$(PLATFORM)']['$(CONFIG)'] = [[$(outputPath[1])/]]$(NEWLINE)" ;
+		Contents += "$(project).OutputPaths['$(PLATFORM)']['$(workspaceConfigName)'] = [[$(outputPath[1])/]]$(NEWLINE)" ;
 
 		local debuggerOutputName = $(DEBUGGEROUTPUTNAME:Z=$(C.ACTIVE_TOOLCHAIN_TARGET)) ;
 		if $(debuggerOutputName) {
-			Contents += "$(project).DebuggerOutputNames['$(PLATFORM)']['$(CONFIG)'] = [[$(debuggerOutputName)]]$(NEWLINE)" ;
+			Contents += "$(project).DebuggerOutputNames['$(PLATFORM)']['$(workspaceConfigName)'] = [[$(debuggerOutputName)]]$(NEWLINE)" ;
 		}
 	}
 
@@ -288,17 +291,17 @@ rule DumpProjectInfo TARGET : SOURCES : OPTIONS {
 
 	local definesString = "[[$(defines)]]," ;
 	definesString ?= "" ;
-	Contents += "$(project).Defines['$(PLATFORM)']['$(CONFIG)'] = { $(definesString:J= ) }$(NEWLINE)" ;
+	Contents += "$(project).Defines['$(PLATFORM)']['$(workspaceConfigName)'] = { $(definesString:J= ) }$(NEWLINE)" ;
 
 	hdrs += $(STDHDRS) ;
 	hdrs += $(C.STDHDRS:Z=$(C.COMPILER_SUITE_SYMBOL)) ;
 
 	local hdrsString = "[[$(hdrs)]]," ;
 	hdrsString ?= "" ;
-	Contents += "$(project).IncludePaths['$(PLATFORM)']['$(CONFIG)'] = { $(hdrsString:J= ) }$(NEWLINE)" ;
+	Contents += "$(project).IncludePaths['$(PLATFORM)']['$(workspaceConfigName)'] = { $(hdrsString:J= ) }$(NEWLINE)" ;
 
 	local forceIncludesString = "[[$(forceIncludes)]]," ;
-	Contents += "$(project).ForceIncludes['$(PLATFORM)']['$(CONFIG)'] = { $(forceIncludesString:J= ) }$(NEWLINE)" ;
+	Contents += "$(project).ForceIncludes['$(PLATFORM)']['$(workspaceConfigName)'] = { $(forceIncludesString:J= ) }$(NEWLINE)" ;
 
 	DumpSources $(project) : $(SOURCES) ;
 
@@ -320,9 +323,9 @@ rule NoWorkspace WORKSPACE_NAME
 }
 
 
-rule Workspace WORKSPACE_NAME : TARGETS : OPTIONS
+rule _WorkspaceHelper WORKSPACE_NAME : TARGETS : COMMAND_LINE_SETTINGS : OPTIONS
 {
-	if $(NO_EXPORT_WORKSPACES.$(WORKSPACE_NAME)) {
+	if $(NO_EXPORT_WORKSPACES.$(WORKSPACE_NAME)) = true {
 		return ;
 	}
 	if $(EXPORTED_WORKSPACES.$(WORKSPACE_NAME:L):E=$(WORKSPACE_NAME)) != $(WORKSPACE_NAME) {
@@ -359,6 +362,7 @@ Assign NoWorkspace to one of the two to prevent the conflict." ;
 	{
 		Contents += "$(solutionInfo).Name = '$(WORKSPACE_NAME)'
 $(solutionInfo).Path = '$(subdir)'
+$(solutionInfo).CommandLineSettings = '$(COMMAND_LINE_SETTINGS:E="")'
 $(solutionInfo).RelativePath = '$(SUBDIR_DOWN:E=.:J=/)'
 " ;
 		first on $(WORKSPACE_NAME) = false ;
@@ -369,16 +373,37 @@ $(solutionInfo).RelativePath = '$(SUBDIR_DOWN:E=.:J=/)'
 }
 
 
-rule WorkspaceConfig WORKSPACE_NAME : CONFIG_NAME : ACTUAL_CONFIG_NAME : COMMAND_LINE_OPTIONS {
-    if $(NO_EXPORT_WORKSPACES.$(WORKSPACE_NAME)) {
+rule Workspace WORKSPACE_NAME : TARGETS : OPTIONS
+{
+	_WorkspaceHelper $(WORKSPACE_NAME) : $(TARGETS) : : $(OPTIONS) ;
+}
+
+
+rule WorkspaceWithSettings WORKSPACE_NAME : TARGETS : COMMAND_LINE_SETTINGS : OPTIONS
+{
+	_WorkspaceHelper $(WORKSPACE_NAME) : $(TARGETS) : $(COMMAND_LINE_SETTINGS) : $(OPTIONS) ;
+}
+
+
+
+rule WorkspaceConfig WORKSPACE_NAME : ACTUAL_PLATFORM_NAME : CONFIG_NAME : ACTUAL_CONFIG_NAME : COMMAND_LINE_OPTIONS : CUSTOM_TARGET {
+    if $(NO_EXPORT_WORKSPACES.$(WORKSPACE_NAME)) = true {
         return ;
     }
-    if $(PLATFORM) = *  &&  $(CONFIG) = * {
+    #if $(PLATFORM) = *  &&  $(CONFIG) = *
+    {
         local solutionInfo = "Workspaces['$(WORKSPACE_NAME)']" ;
-        local configText = "$(solutionInfo).Configs[ [[$(CONFIG_NAME)]] ]" ;
+        local configText = "$(solutionInfo).Platforms[ [[$(ACTUAL_PLATFORM_NAME)]] ].Configs[ [[$(CONFIG_NAME)]] ]" ;
         local optionLines = "$(TAB)[[$(COMMAND_LINE_OPTIONS)]],$(NEWLINE)" ;
-        Contents += "$(configText).CommandLineOptions = concat($(configText).CommandLineOptions, $(NEWLINE){$(NEWLINE)$(optionLines)})$(NEWLINE)" ;
+        if $(COMMAND_LINE_OPTIONS) {
+            Contents += "$(configText).CommandLineOptions = {}$(NEWLINE)" ;
+            Contents += "$(configText).CommandLineOptions = concat($(configText).CommandLineOptions, $(NEWLINE){$(NEWLINE)$(optionLines)})$(NEWLINE)" ;
+        }
+        Contents += "$(configText).Name = [[$(CONFIG_NAME)]]$(NEWLINE)" ;
         Contents += "$(configText).ActualConfigName = [[$(ACTUAL_CONFIG_NAME)]]$(NEWLINE)" ;
+        if $(CUSTOM_TARGET) {
+            Contents += "$(configText).CustomTarget = [[$(CUSTOM_TARGET)]]$(NEWLINE)" ;
+        }
     }
 }
 
