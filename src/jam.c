@@ -1079,19 +1079,23 @@ int main( int argc, char **argv, char **arg_environ )
 
 	if (!nodepcache)
 	{
-		LIST *usechecksumslist = var_get("JAM_CHECKSUMS");
-		if (!usechecksumslist)
+		LIST *creatingworkspacelist = var_get("JAM_CREATING_WORKSPACE");
+		if (creatingworkspacelist == NULL)
 		{
-			usechecksumslist = var_get("JAM_USE_CHECKSUMS");
-		}
-		if (usechecksumslist  &&  list_first(usechecksumslist)  &&  strcmp(list_value(list_first(usechecksumslist)), "1") == 0)
-		{
-			usechecksums = 1;
-		}
+			LIST *usechecksumslist = var_get("JAM_CHECKSUMS");
+			if (!usechecksumslist)
+			{
+				usechecksumslist = var_get("JAM_USE_CHECKSUMS");
+			}
+			if (usechecksumslist  &&  list_first(usechecksumslist)  &&  strcmp(list_value(list_first(usechecksumslist)), "1") == 0)
+			{
+				usechecksums = 1;
+			}
 
-		if (usechecksums)
-		{
-			globs.newestfirst = 0;
+			if (usechecksums)
+			{
+				globs.newestfirst = 0;
+			}
 		}
 	}
 #endif /* OPT_USE_CHECKSUMS_EXT */
