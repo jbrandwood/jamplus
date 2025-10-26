@@ -211,6 +211,7 @@ function ProcessCommandLine()
 		getopt.Option {{"jamfileflags"}, "Extra flags to make available for each invocation of Jam.  Specify in KEY=VALUE form.", "Req", 'JAMFILE_FLAGS', ProcessJamfileFlags },
 		getopt.Option {{"jamexepath"}, "The full path to the Jam executable when the default location won't suffice.", "Req", 'JAMEXEPATH' },
 		getopt.Option {{"jambase"}, "The full path to the Jambase.jam", "Req", 'JAMBASEFULLPATH' },
+		getopt.Option {{"verbose"}, "Verbose logging" },
 	}
 
 	function Usage()
@@ -379,7 +380,9 @@ function CreateTargetInfoFiles(outPath)
 		collectConfigurationArgs[#collectConfigurationArgs + 1] = '-S'
 
 		print('    Parsing toolchain ' .. workspaceName .. '/' .. workspacePlatformName .. '/' .. workspaceConfigName .. '...')
-		--print(table.concat(collectConfigurationArgs, ' '))
+		if opts.verbose then
+			print(table.concat(collectConfigurationArgs, ' '))
+		end
 		for line in osprocess.lines(collectConfigurationArgs) do
 			print(line)
 		end
