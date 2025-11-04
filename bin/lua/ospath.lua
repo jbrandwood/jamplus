@@ -124,7 +124,7 @@ function M.mirror_directory(srcPath, destPath, options)
     end
     options.deleteExtra = true
 
-    copy_directory_helper(srcPath, destPath, callback, options)
+    copy_directory_helper(srcPath, destPath, options)
 end
 
 
