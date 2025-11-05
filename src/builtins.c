@@ -145,6 +145,7 @@ LIST* builtin_listsort( PARSE *parse, LOL *args, int *jmp );
 
 LIST *builtin_dependslist( PARSE *parse, LOL *args, int *jmp );
 LIST *builtin_quicksettingslookup(PARSE *parse, LOL *args, int *jmp);
+LIST *builtin_settingslist(PARSE *parse, LOL *args, int *jmp);
 LIST *builtin_actionexists(PARSE *parse, LOL *args, int *jmp);
 LIST *builtin_ruleexists(PARSE *parse, LOL *args, int *jmp);
 LIST *builtin_configurefilehelper(PARSE *parse, LOL *args, int *jmp);
@@ -352,6 +353,9 @@ load_builtins()
 
 	bindrule( "QuickSettingsLookup" )->procedure =
 		parse_make( builtin_quicksettingslookup, P0, P0, P0, C0, C0, 0 );
+
+	bindrule( "SettingsList" )->procedure =
+		parse_make( builtin_settingslist, P0, P0, P0, C0, C0, 0 );
 
 	bindrule( "ActionExists" )->procedure =
 		parse_make( builtin_actionexists, P0, P0, P0, C0, C0, 0 );
@@ -1868,6 +1872,28 @@ LIST *builtin_quicksettingslookup(PARSE *parse, LOL *args, int *jmp)
 		return list_copy(L0, settings->value);
 
 	return L0;
+}
+
+
+LIST *builtin_settingslist(PARSE *parse, LOL *args, int *jmp)
+{
+	TARGET* t;
+	SETTINGS *vars;
+	LIST* out;
+
+	LIST *target = lol_get(args, 0);
+	if (!list_first(target))
+		return L0;
+
+	t = bindtarget(list_value(list_first(target)));
+
+	out = L0;
+	for (vars = t->settings; vars; vars = vars->next)
+	{
+		out = list_append(out, vars->symbol, 1);
+	}
+
+	return out;
 }
 
 
