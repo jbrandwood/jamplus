@@ -245,7 +245,7 @@ int main( int argc, char **argv, char **arg_environ )
 	int		n, num_targets;
 	const char	*s;
 	struct option	optv[N_OPTS];
-	char*       targets[N_TARGETS];
+	char*       targets[N_TARGETS] = {0};
 	char** extra_options = NULL;
 	const char	*all = "all";
 	int		anyhow = 0;
@@ -891,7 +891,7 @@ int main( int argc, char **argv, char **arg_environ )
 
 	for ( i = 0; i < n_targets; ++i )
 	{
-		l = list_append( l, actual_targets[ i ], 0 );
+		l = list_append( l, actual_targets[ i ], 1 );
 	}
 
 	var_set( "JAM_COMMAND_LINE_TARGETS", l, VAR_SET );
