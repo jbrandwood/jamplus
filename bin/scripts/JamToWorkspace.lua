@@ -1057,7 +1057,8 @@ function BuildWorkspaces()
 	locateTargetText =
 	{
 		locateTargetText = [[
-ALL_LOCATE_TARGET = "$(destinationRootPath)$$(C.PLATFORM)/_intermediates_" ;
+ALL_LOCATE_TARGET_ROOT = "$(destinationRootPath)" ;
+ALL_LOCATE_TARGET ?= "$(destinationRootPath)$$(C.PLATFORM)/_intermediates_" ;
 ]],
 		settingsFile = ospath.join(destinationRootPath, 'customsettings.jam'),
 	}
