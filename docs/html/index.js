@@ -68,7 +68,8 @@ var index =
       [ "Jam Version Variables", "builtin_variables.html#language_built_in_variables_version", null ],
       [ "Miscellaneous Variables", "builtin_variables.html#language_built_in_variables_misc", null ],
       [ "JAMSHELL Variable", "builtin_variables.html#built_in_variables_jamshell", null ],
-      [ "Clean up of extra files and directories", "builtin_variables.html#language_built_in_variables_clean_globs", null ]
+      [ "Clean up of extra files and directories", "builtin_variables.html#language_built_in_variables_clean_globs", null ],
+      [ "Clean up of extra files and directories (per-target)", "builtin_variables.html#language_built_in_variables_clean_globs_per_target", null ]
     ] ],
     [ "Dependency Cache", "dependency_cache.html", [
       [ "Introduction", "dependency_cache.html#dependency_cache_intro", null ],
