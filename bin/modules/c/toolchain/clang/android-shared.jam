@@ -167,6 +167,7 @@ rule android.SDK SDK_VERSION : NDK_VERSION : ARCHITECTURE {
     local NDK_DIRECTORY_PREFIX ;
     local NDK_COMPILER_PREFIX ;
     local cflags ;
+    local c++flags ;
     local linkflags ;
     local NDK_SYSROOT_LIB ;
     switch $(C.ARCHITECTURE) {
@@ -202,17 +203,18 @@ rule android.SDK SDK_VERSION : NDK_VERSION : ARCHITECTURE {
             NDK_COMPILER_PREFIX = aarch64-linux-android$(NDK_VERSION)- ;
             #cflags += -isystem $(NDKROOT)/sysroot/usr/include/aarch64-linux-android ;
             cflags += -target aarch64-linux-android$(NDK_VERSION) ;
-            cflags += -march=armv8-a ;
+            #cflags += -march=armv8-a ;
             cflags += -ffunction-sections -funwind-tables -fstack-protector -no-canonical-prefixes ;
             linkflags += -no-canonical-prefixes ;
             linkflags += -target aarch64-linux-android$(NDK_VERSION) ;
-            linkflags += -march=armv8-a ;
-            linkflags += -mthumb ;
+            #linkflags += -march=armv8-a ;
+            #linkflags += -mthumb ;
             NDK_SYSROOT_LIB = $(sysroot)/usr/lib/aarch64-linux-android ;
             # Fill in cflags
             # Fill in linkflags
         case x86-64 :
             NDK_COMPILER_PREFIX = x86_64- ;
+            cflags += -target x86_64-linux-android$(NDK_VERSION) ;
             # Fill in cflags
             # Fill in linkflags
         case mips64 :
@@ -226,12 +228,9 @@ rule android.SDK SDK_VERSION : NDK_VERSION : ARCHITECTURE {
     }
 
     #cflags += -D__ANDROID_API__=$(NDK_VERSION) ;
-    cflags += -fPIC ;
+    #cflags += -fpic ;
     cflags += -fvisibility=hidden ;
-    cflags += -fsigned-char ;
-
-    ARCHITECTURE_CFLAGS on $(C.COMPILER_SUITE_SYMBOL) = $(cflags) ;
-    ARCHITECTURE_LINKFLAGS on $(C.COMPILER_SUITE_SYMBOL) = $(linkflags) ;
+    #cflags += -fsigned-char ;
 
     local NDK_COMPILER_VERSION ;
     switch $(C.COMPILER) {
@@ -245,12 +244,11 @@ rule android.SDK SDK_VERSION : NDK_VERSION : ARCHITECTURE {
             #Echo C.AR on $(C.COMPILER_SUITE_SYMBOL)          \= $(NDK_TOOLCHAIN_ROOT)/bin/$(NDK_COMPILER_PREFIX)ar ruc ;
             #C.AR on $(C.COMPILER_SUITE_SYMBOL)          = $(NDK_TOOLCHAIN_ROOT)/bin/$(NDK_COMPILER_PREFIX)ar ruc ;
             #C.IncludeDirectories * : $(NDKROOT)/sources/cxx-stl/llvm-libc++/include ;
-            C.C++Flags * : -stdlib=libc++ ;
+            c++flags += -stdlib=libc++ ;
             switch $(C.ARCHITECTURE) {
                 case armv7-a :
-                    #C.IncludeDirectories * : $(NDKROOT)/sources/cxx-stl/gnu-libstdc++/4.9/libs/armeabi-v7a/include ;
-                    C.LinkDirectories * : $(NDK_TOOLCHAIN_ROOT)/$(lastDirectory)/lib/armv7-a ;
-                    C.LinkDirectories * : $(NDKROOT)/sources/cxx-stl/llvm-libc++/libs/armeabi-v7a ;
+                    #C.LinkDirectories * : $(NDK_TOOLCHAIN_ROOT)/$(lastDirectory)/lib/armv7-a ;
+                    #C.LinkDirectories * : $(NDKROOT)/sources/cxx-stl/llvm-libc++/libs/armeabi-v7a ;
 
                 case arm64 :
                     #C.IncludeDirectories * : $(NDKROOT)/sources/cxx-stl/gnu-libstdc++/4.9/libs/arm64-v8a/include ;
@@ -267,6 +265,10 @@ rule android.SDK SDK_VERSION : NDK_VERSION : ARCHITECTURE {
     NDK_TOOLCHAIN_ROOT on $(C.COMPILER_SUITE_SYMBOL) = $(NDK_TOOLCHAIN_ROOT) ;
 
     NDK_SYSROOT_LIBPATHS on $(C.ACTIVE_TOOLCHAIN_TARGET) = $(NDK_SYSROOT_LIB) $(NDK_SYSROOT_LIB)/$(NDK_VERSION) ;
+
+    ARCHITECTURE_CFLAGS on $(C.COMPILER_SUITE_SYMBOL) = $(cflags) ;
+    ARCHITECTURE_C++FLAGS on $(C.COMPILER_SUITE_SYMBOL) = $(c++flags) ;
+    ARCHITECTURE_LINKFLAGS on $(C.COMPILER_SUITE_SYMBOL) = $(linkflags) ;
 
     #C.AR on $(C.COMPILER_SUITE_SYMBOL)          ?= $(NDK_TOOLCHAIN_ROOT)/bin/$(NDK_COMPILER_PREFIX)ar ruc ;
     C.AR on $(C.COMPILER_SUITE_SYMBOL)          = $(NDK_TOOLCHAIN_ROOT)/bin/llvm-ar ruc ;
@@ -403,6 +405,7 @@ rule C.android._MultiCppCompile_SetupFlags {
     #extraflags += "-isystem @($(NDKROOT)/sysroot/usr/include:C)" ;
     local developerRoot = $(NDKROOT)/platforms ;
     extraflags += $(ARCHITECTURE_CFLAGS:Z=$(C.COMPILER_SUITE_SYMBOL)) ;
+    #extraflags += $(ARCHITECTURE_C++FLAGS:Z=$(C.COMPILER_SUITE_SYMBOL)) ;
 
     _flags = $(_flags[1-4]) $(extraflags) $(_flags[5-]) ;
 
@@ -429,7 +432,7 @@ rule C.android._SharedLibraryFromObjects_LinkFlags {
     #linkFlags += "--sysroot $(sysroot:C)" ;
     linkFlags += $(ARCHITECTURE_LINKFLAGS:Z=$(C.COMPILER_SUITE_SYMBOL)) ;
     linkFlags += -Wl,--no-undefined -Wl,-z,noexecstack -Wl,-z,relro -Wl,-z,now ;
-    linkFlags += -fPIC ;
+    #linkFlags += -fpic ;
 
     #_flags = $(_flags[1-4]) $(extraflags) $(_flags[5-]) ;
 }
