@@ -11,16 +11,18 @@ ANDROID.USE_GRADLE ?= 1 ;
 
 if $(NT) {
 
+    #$(C.LINK:C) $(LINKFLAGS) -o $(<[1]:C) @^^^($(>:J=$(NEWLINE))) $(NEEDLIBS:TC) $(LINKLIBS:TC)
 actions C.android.clang.Link {
     PATH=$(C.LINK[1]:D);$(EXTRA_LINK_PATH);%PATH%
-    $(C.LINK:C) $(LINKFLAGS) -o $(<[1]:C) @^^^($(>:J=$(NEWLINE))) $(NEEDLIBS:TC) $(LINKLIBS:TC)
+	$(C.LINK:C) -o $(<[1]:C) @^^^($(>:J=$(NEWLINE))) @^^^($(LINKFLAGS:J=$(NEWLINE))) @^^^($(NEEDLIBS:TCJ=$(NEWLINE)) $(NEWLINE) $(LINKLIBS:TCJ=$(NEWLINE)))
 }
 
 } else {
 
+    #"$(C.LINK)" -o $(<[1]:C) $(>:C) $(NEEDLIBS:TC) $(LINKLIBS:TC) $(LINKFLAGS)
 actions C.android.clang.Link {
     PATH=$(C.LINK[1]:D):$(EXTRA_LINK_PATH):%PATH%
-    "$(C.LINK)" -o $(<[1]:C) $(>:C) $(NEEDLIBS:TC) $(LINKLIBS:TC) $(LINKFLAGS)
+	$(C.LINK:C) -o $(<[1]:C) @^^^($(>:J=$(NEWLINE))) @^^^($(LINKFLAGS:J=$(NEWLINE))) @^^^($(NEEDLIBS:TCJ=$(NEWLINE)) $(NEWLINE) $(LINKLIBS:TCJ=$(NEWLINE)))
 }
 
 } # if $(NT)
