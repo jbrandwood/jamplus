@@ -128,7 +128,7 @@ local function XcodeHelper_GetProjectExportInfo(self, projectName, workspace)
 	if not info.EntryUuids then
 		info.EntryUuids = { }
 	end
-	
+
 	-- Make executable Products files available.
 	if not info.ExecutablePath  and  project.Options  and  project.Options.app then
 		local executablePath = projectName
@@ -203,14 +203,14 @@ local function XcodeHelper_GetProjectExportInfo(self, projectName, workspace)
 				executableConfig.Uuid = XcodeUuid()
 			end
 		end
-		
+
 		if type(info.LegacyTargetConfigUuids[platformName]) ~= 'table' then
 			info.LegacyTargetConfigUuids[platformName] = {}
 			for configName in ivalues(workspaceConfigs) do
 				info.LegacyTargetConfigUuids[platformName][configName] = XcodeUuid()
 			end
 		end
-		
+
 		if type(info.ProjectConfigUuids) ~= 'table' then
 			info.ProjectConfigUuids = {}
 		end
@@ -569,7 +569,7 @@ local function XcodeHelper_WritePBXLegacyTarget(self, info, allTargets, projects
 		end
 	end
 
-	for _, projectType in ipairs{ 'native', 'legacy' } do	
+	for _, projectType in ipairs{ 'native', 'legacy' } do
 		if projectType == 'native' then
 			-- Write PBXNativeTarget.
 			table.insert(self.Contents, '/* Begin PBXNativeTarget section */\n')
@@ -980,7 +980,7 @@ local function XcodeHelper_WriteXCBuildConfigurations(self, info, projectName, w
 			if subProject.IOS_SDK_VERSION_MIN and  subProject.IOS_SDK_VERSION_MIN[platformName]  and  subProject.IOS_SDK_VERSION_MIN[platformName][configName] then
 				iosSdkVersionMin = subProject.IOS_SDK_VERSION_MIN[platformName][configName]
 			elseif Projects['C.*']  and  Projects['C.*'].IOS_SDK_VERSION_MIN  and  Projects['C.*'].IOS_SDK_VERSION_MIN[platformName]  and  Projects['C.*'].IOS_SDK_VERSION_MIN[platformName][configName] then
-				iosSdkVersionMin = Projects['C.*'].IOS_SDK_VERSION_MIN[platformName][configName]			
+				iosSdkVersionMin = Projects['C.*'].IOS_SDK_VERSION_MIN[platformName][configName]
 		   	end
 
 			if iosSdkVersionMin then
@@ -992,7 +992,7 @@ local function XcodeHelper_WriteXCBuildConfigurations(self, info, projectName, w
 			if subProject.OSX_SDK_VERSION_MIN  and  subProject.OSX_SDK_VERSION_MIN[platformName]  and  subProject.OSX_SDK_VERSION_MIN[platformName][configName] then
 				osxSdkVersionMin = subProject.OSX_SDK_VERSION_MIN[platformName][configName]
 			elseif Projects['C.*']  and  Projects['C.*'].OSX_SDK_VERSION_MIN  and  Projects['C.*'].OSX_SDK_VERSION_MIN[platformName]  and  Projects['C.*'].OSX_SDK_VERSION_MIN[platformName][configName] then
-				osxSdkVersionMin = Projects['C.*'].OSX_SDK_VERSION_MIN[platformName][configName]			
+				osxSdkVersionMin = Projects['C.*'].OSX_SDK_VERSION_MIN[platformName][configName]
 		   	end
 
 			if osxSdkVersionMin then
@@ -1079,7 +1079,7 @@ local function XcodeHelper_WriteXCBuildConfigurations(self, info, projectName, w
 					productName = productName .. '.app'
 				end
 			end
-]]			
+]]
 			table.insert(self.Contents, "\t\t\t\tPRODUCT_NAME = \"" .. ((productName and productName ~= '') and productName or projectName) .. "\";\n")
 			if self.FileTypesInProject['.swift'] then
 				if isDebug then
@@ -1094,7 +1094,7 @@ local function XcodeHelper_WriteXCBuildConfigurations(self, info, projectName, w
 				if subProject.XCODE_SDKROOT  and  subProject.XCODE_SDKROOT[platformName]  and  subProject.XCODE_SDKROOT[platformName][configName] then
 					sdkRoot = subProject.XCODE_SDKROOT[platformName][configName]
 				elseif Projects['C.*']  and  Projects['C.*'].XCODE_SDKROOT  and  Projects['C.*'].XCODE_SDKROOT[platformName]  and  Projects['C.*'].XCODE_SDKROOT[platformName][configName] then
-					sdkRoot = Projects['C.*'].XCODE_SDKROOT[platformName][configName]			
+					sdkRoot = Projects['C.*'].XCODE_SDKROOT[platformName][configName]
 				end
 				if sdkRoot then
 					table.insert(self.Contents, "\t\t\t\tSDKROOT = " .. sdkRoot .. ";\n")
@@ -1139,7 +1139,7 @@ local function XcodeHelper_WriteXCBuildConfigurations(self, info, projectName, w
 			if subProject.PRODUCT_BUNDLE_IDENTIFIER  and  subProject.PRODUCT_BUNDLE_IDENTIFIER[platformName]  and  subProject.PRODUCT_BUNDLE_IDENTIFIER[platformName][configName] then
 				productBundleIdentifier = subProject.PRODUCT_BUNDLE_IDENTIFIER[platformName][configName]
 			elseif Projects['C.*']  and  Projects['C.*'].PRODUCT_BUNDLE_IDENTIFIER  and  Projects['C.*'].PRODUCT_BUNDLE_IDENTIFIER[platformName]  and  Projects['C.*'].PRODUCT_BUNDLE_IDENTIFIER[platformName][configName] then
-				productBundleIdentifier = Projects['C.*'].PRODUCT_BUNDLE_IDENTIFIER[platformName][configName]			
+				productBundleIdentifier = Projects['C.*'].PRODUCT_BUNDLE_IDENTIFIER[platformName][configName]
 			end
 			if productBundleIdentifier then
 				table.insert(self.Contents, "\t\t\t\tPRODUCT_BUNDLE_IDENTIFIER = \"" .. productBundleIdentifier .. "\";\n")
@@ -1150,7 +1150,7 @@ local function XcodeHelper_WriteXCBuildConfigurations(self, info, projectName, w
 			if subProject.PROVISIONING_PROFILE_SPECIFIER  and  subProject.PROVISIONING_PROFILE_SPECIFIER[platformName]  and  subProject.PROVISIONING_PROFILE_SPECIFIER[platformName][configName] then
 				provisioningProfileSpecifier = subProject.PROVISIONING_PROFILE_SPECIFIER[platformName][configName]
 			elseif Projects['C.*']  and  Projects['C.*'].PROVISIONING_PROFILE_SPECIFIER  and  Projects['C.*'].PROVISIONING_PROFILE_SPECIFIER[platformName]  and  Projects['C.*'].PROVISIONING_PROFILE_SPECIFIER[platformName][configName] then
-				provisioningProfileSpecifier = Projects['C.*'].PROVISIONING_PROFILE_SPECIFIER[platformName][configName]			
+				provisioningProfileSpecifier = Projects['C.*'].PROVISIONING_PROFILE_SPECIFIER[platformName][configName]
 			end
 			if not codeSignAutomatic  and  provisioningProfileSpecifier then
 				table.insert(self.Contents, "\t\t\t\tPROVISIONING_PROFILE_SPECIFIER = \"" .. provisioningProfileSpecifier .. "\";\n")
@@ -1161,7 +1161,7 @@ local function XcodeHelper_WriteXCBuildConfigurations(self, info, projectName, w
 			if subProject.XCODE_ENTITLEMENTS  and  subProject.XCODE_ENTITLEMENTS[platformName]  and  subProject.XCODE_ENTITLEMENTS[platformName][configName] then
 				codeSignEntitlements = subProject.XCODE_ENTITLEMENTS[platformName][configName]
 			elseif Projects['C.*']  and  Projects['C.*'].XCODE_ENTITLEMENTS  and  Projects['C.*'].XCODE_ENTITLEMENTS[platformName]  and  Projects['C.*'].XCODE_ENTITLEMENTS[platformName][configName] then
-				codeSignEntitlements = Projects['C.*'].XCODE_ENTITLEMENTS[platformName][configName]			
+				codeSignEntitlements = Projects['C.*'].XCODE_ENTITLEMENTS[platformName][configName]
 		   	end
 			if codeSignEntitlements then
 				table.insert(self.Contents, "\t\t\t\tCODE_SIGN_ENTITLEMENTS = \"" .. codeSignEntitlements .. "\";\n")
@@ -1215,7 +1215,7 @@ local function XcodeHelper_WriteXCBuildConfigurations(self, info, projectName, w
 
 	-- Write project configurations.
 	XcodeHelper_WriteProjectXCBuildConfiguration(self, info, projectName, workspaceConfigs)
-	
+
 	table.insert(self.Contents, '/* End XCBuildConfiguration section */\n\n')
 end
 
