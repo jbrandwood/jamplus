@@ -73,7 +73,7 @@ RM			?= rm -f ;
 RMDIR		?= $(RM) ;
 SLASH		?= / ;
 SUBDIRRULES ?= ;
-SUBDIRRESET ?= ASFLAGS HDRS C++FLAGS CCFLAGS ;
+SUBDIRRESET ?= ;
 
 OSFULL = $(OS)$(OSVER)$(OSPLAT) $(OS)$(OSPLAT) $(OS)$(OSVER) $(OS) ;
 
@@ -529,6 +529,7 @@ rule SubDir SUBDIR_PATH : TARGET_DIRECTORY : OPTIONS
 	# Note use of variable expanded assignment var
 
 	SUBDIR$(SUBDIRRESET) = ;
+	$(SUBDIRRESETVARS) = ;
 
 	# Invoke user-specific SubDir extensions,
 	# rule names listed in SUBDIRRULES.
