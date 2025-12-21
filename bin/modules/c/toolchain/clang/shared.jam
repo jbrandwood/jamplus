@@ -44,9 +44,10 @@ rule C.clang._C++Exceptions {
 }
 
 rule C.clang._C++Standard {
-    C++FLAGS on $(C.ACTIVE_TOOLCHAIN_TARGET) += -std=c++$(VERSION) ;
-    MMFLAGS on $(C.ACTIVE_TOOLCHAIN_TARGET) += -std=c++$(VERSION) ;
+    C++FLAGS on $(C.ACTIVE_TOOLCHAIN_TARGET) += -std=gnu++$(VERSION) ;
+    MMFLAGS on $(C.ACTIVE_TOOLCHAIN_TARGET) += -std=gnu++$(VERSION) ;
 }
+
 
 rule C.clang._RuntimeTypeHelper {
     if ! $(TYPE)  ||  $(TYPE) = dynamic {
