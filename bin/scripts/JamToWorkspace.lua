@@ -654,6 +654,7 @@ function BuildSourceTree(project, needsSourcesLibraries)
 				sourcesMap[lowerSource] = source
 			end
 		end
+		if not project.SourceGroups then project.SourceGroups = {} end
 		project.SourceGroups['Libraries'] = project.SourcesLibraries
 	end
 	if project.SourcesFrameworks  and  needsSourcesLibraries then
@@ -664,6 +665,7 @@ function BuildSourceTree(project, needsSourcesLibraries)
 				sourcesMap[lowerSource] = source
 			end
 		end
+		if not project.SourceGroups then project.SourceGroups = {} end
 		project.SourceGroups['Frameworks'] = project.SourcesFrameworks
 	end
 	project.Sources = newSources
