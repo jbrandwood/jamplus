@@ -64,7 +64,7 @@ rule C.Toolchain.clang.Setup COMPILER_BIN_PATH : SUFFIXES : COMPILER_ACTIONS {
     C._SharedLibraryFromObjects_ExportLib on $(C.COMPILER_SUITE_SYMBOL) = C.clang._SharedLibraryFromObjects_ExportLib ;
     C._SharedLibraryFromObjects_LinkFlags on $(C.COMPILER_SUITE_SYMBOL) = C.clang._SharedLibraryFromObjects_LinkFlags ;
 
-    SHAREDLIBDEFAULTFLAG on $(C.COMPILER_SUITE_SYMBOL) = -fPIC ;
+    SHAREDLIBDEFAULTFLAG on $(C.COMPILER_SUITE_SYMBOL) = -fpic ;
 
     C.Toolchain.clang.Shared ;
 
