@@ -296,7 +296,8 @@ rule ios.BundleInfoBoolean TARGET : KEY : VALUE : NO_OVERRIDE {
 	LuaString "
 		local key = jam_getvar('KEY')[1]
 		local pl = GetInfoPlistCurrentLevel()
-		if not jam_getvar('NO_OVERRIDE')[1] or not pl[key] then
+		local no_override = jam_getvar('NO_OVERRIDE')
+		if (not no_override or not no_override[1]) or not pl[key] then
 			pl[key] = jam_getvar('VALUE')[1] == 'true'
 		end
 		" ;
@@ -308,7 +309,8 @@ rule ios.BundleInfoInteger TARGET : KEY : VALUE : NO_OVERRIDE {
 	LuaString "
 		local key = jam_getvar('KEY')[1]
 		local pl = GetInfoPlistCurrentLevel()
-		if not jam_getvar('NO_OVERRIDE')[1] or not pl[key] then
+		local no_override = jam_getvar('NO_OVERRIDE')
+		if (not no_override or not no_override[1]) or not pl[key] then
 			pl[key] = tonumber(jam_getvar('VALUE')[1])
 		end
 		" ;
@@ -320,7 +322,8 @@ rule ios.BundleInfoString TARGET : KEY : VALUE : NO_OVERRIDE {
 	LuaString "
 		local key = jam_getvar('KEY')[1]
 		local pl = GetInfoPlistCurrentLevel()
-		if not jam_getvar('NO_OVERRIDE')[1] or not pl[key] then
+		local no_override = jam_getvar('NO_OVERRIDE')
+		if (not no_override or not no_override[1]) or not pl[key] then
 			pl[key] = jam_getvar('VALUE')[1]
 		end
 		" ;
@@ -388,9 +391,11 @@ rule ios.BundleInfoArrayBoolean TARGET : KEY : VALUE : NO_OVERRIDE {
 	TARGET = [ ActiveTarget $(TARGET) ] ;
 	if $(VALUE) {
 		LuaString "
+			-- ios.BundleInfoArrayBoolean $(TARGET:E=\"\") : $(KEY:E=\"\") : $(VALUE:E=\"\") : $(NO_OVERRIDE:E=\"\")
 			local key = jam_getvar('KEY')[1]
 			local pl = GetInfoPlistCurrentLevel()
-			if not jam_getvar('NO_OVERRIDE')[1] or not pl[key] then
+			local no_override = jam_getvar('NO_OVERRIDE')
+			if (not no_override or not no_override[1]) or not pl[key] then
 				local values = jam_getvar('VALUE')
 				for index, value in ipairs(values) do
 					values[index] = value == 'true'
@@ -417,7 +422,8 @@ rule ios.BundleInfoArrayInteger TARGET : KEY : VALUE : NO_OVERRIDE {
 		LuaString "
 			local key = jam_getvar('KEY')[1]
 			local pl = GetInfoPlistCurrentLevel()
-			if not jam_getvar('NO_OVERRIDE')[1] or not pl[key] then
+			local no_override = jam_getvar('NO_OVERRIDE')
+			if (not no_override or not no_override[1]) or not pl[key] then
 				local values = jam_getvar('VALUE')
 				for index, value in ipairs(values) do
 					values[index] = tonumber(value)
@@ -443,7 +449,8 @@ rule ios.BundleInfoArrayString TARGET : KEY : VALUE : NO_OVERRIDE {
 		LuaString "
 			local key = jam_getvar('KEY')[1]
 			local pl = GetInfoPlistCurrentLevel()
-			if not jam_getvar('NO_OVERRIDE')[1] or not pl[key] then
+			local no_override = jam_getvar('NO_OVERRIDE')
+			if (not no_override or not no_override[1]) or not pl[key] then
 				pl[key] = jam_getvar('VALUE')
 			end
 			" ;
