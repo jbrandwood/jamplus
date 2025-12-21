@@ -104,8 +104,18 @@ rule C.ios.RPaths TARGET : RPATHS {
 }
 
 
+if $(IOSBUILDENV_PATH) {
+
+actions C.ios.clang.Archive {
+	$(C.AR:C) qs $(LIBFLAGS) $(<:C) @^^^($(>:J=$(NEWLINE))$(NEWLINE))
+}
+
+} else {
+
 actions C.ios.clang.Archive {
 	$(C.AR:C) -static $(LIBFLAGS) -o $(<:C) -filelist ^^^($(>:J=$(NEWLINE))$(NEWLINE))
+}
+
 }
 
 
@@ -200,7 +210,7 @@ rule ios.SDK SDK_VERSION {
 	SDK_PLATFORM ?= $(C.PLATFORM) ;
 
 	local COMPILER_BIN_PATH = $(COMPILER_BIN_PATH:Z=$(C.COMPILER_SUITE_SYMBOL)) ;
-	local sysroot = $(IOSBUILDENV_PATH)/SDK ;
+	local sysroot = $(IOSBUILDENV_PATH)/SDK-iOS ;
 	SDK_VERSION ?= $(IOS_DEFAULT_MINIMUM_SDK_VERSION) ;
 
 	C.AR on $(C.COMPILER_SUITE_SYMBOL) = $(COMPILER_BIN_PATH)/$(C.AR:BSZ=$(C.COMPILER_SUITE_SYMBOL)) ;
@@ -1084,7 +1094,7 @@ rule ios.Bundle TARGET : TOOLCHAINS {
 
 				local framework = $(destinationPath)/$(framework)/$(framework:S=) ;
 				local certificateChain = $(CERTIFICATE_CHAIN:Z=$(C.ACTIVE_TOOLCHAIN_TARGET)) ;
-				certificateChain ?= "ios_development.cer:AppleIncRootCertificate.cer:AppleWWDRCAG3.cer:private_key01.key:password" ;
+				certificateChain ?= "ios_development.cer:AppleIncRootCertificate.cer:AppleWWDRCAG3.cer:private_key00.key:password" ;
 				CERTIFICATE_CHAIN on $(codeResources) $(framework) = $(certificateChain) ;
 				ios._CodeSignFramework $(codeResources) $(framework) : $(dependsList) $(framework) : $(C.COMPILER_SUITE_SYMBOL) ;
 			} else {
@@ -1135,7 +1145,7 @@ rule ios.Bundle TARGET : TOOLCHAINS {
 			Clean $(cleanBundleTarget) : $(codeResources) ;
 
 			local certificateChain = $(CERTIFICATE_CHAIN:Z=$(C.ACTIVE_TOOLCHAIN_TARGET)) ;
-			certificateChain ?= "ios_development.cer:AppleIncRootCertificate.cer:AppleWWDRCAG3.cer:private_key01.key:password" ;
+			certificateChain ?= "ios_development.cer:AppleIncRootCertificate.cer:AppleWWDRCAG3.cer:private_key00.key:password" ;
 			CERTIFICATE_CHAIN on $(codeResources) $(bundleLipoTarget) = $(certificateChain) ;
 			ENTITLEMENTS on $(codeResources) $(bundleLipoTarget) = $(entitlements) ;
 			ios._CodeSign $(codeResources) $(bundleLipoTarget) : $(dependsList) : $(C.COMPILER_SUITE_SYMBOL) ;
@@ -1321,12 +1331,13 @@ rule C.ios._MultiCppCompile_SetupFlags {
 
 	local extraflags ;
 	if $(IOSBUILDENV_PATH) {
-		extraflags = -U__STDC_HOSTED__ -U__clang_major__ -D__clang_major__=99 ;
+		#extraflags = -U__clang_major__ -D__clang_major__=99 ;
 		architecture ?= armv7 ;
 		extraflags += -target $(architecture)-apple-ios$(minimumsdkversion) ;
 		if $(isysroot) {
-			extraflags += --sysroot $(isysroot:C) ;
+			extraflags += --sysroot $(isysroot:C) -isysroot $(isysroot:C) ;
 		}
+		#extraflags += -fmodules-cache-path=\"$(isysroot)\\.llvm-modules\" ;
 		local noPeriodVersion = [ Subst $(minimumsdkversion) : %. : "" ] ;
 		extraflags += -integrated-as -fdiagnostics-format=msvc -fconstant-cfstrings -fvisibility=hidden ;
 		extraflags += -miphoneos-version-min=$(minimumsdkversion).0 ;
@@ -1384,8 +1395,8 @@ rule C.ios._ApplicationFromObjects_LinkFlags {
 		linkFlags += "-ios_version_min $(minimumsdkversion)" ;
 		linkFlags += "-sdk_version $(sdkversion)" ;
 		linkFlags += -lobjc -lSystem -lc++ ;
-		linkFlags += \"$(IOSBUILDENV_PATH)/SDK/libclang_rt.ios.a\" ;
-		linkFlags += -F\"$(IOSBUILDENV_PATH)/SDK/System/Library/Frameworks\" ;
+		linkFlags += \"$(isysroot)/libclang_rt.ios.a\" ;
+		linkFlags += -F\"$(isysroot)/System/Library/Frameworks\" ;
 	} else {
 		linkFlags += "-target $(architecture)-apple-ios$(minimumsdkversion)" ;
 		linkFlags += "-isysroot $(isysroot:C)" ;
@@ -2222,14 +2233,14 @@ if ! $(TARGETINFO_LOCATE)
 
 if $(NT) {
 
-actions ios._CodeSign
+actions screenoutput ios._CodeSign
 {
     "$(IOSBUILDENV_PATH)/Toolchain/ldid" -k"$(IOSBUILDENV_PATH)/Keychain" -S"$(CERTIFICATE_CHAIN)" -E"$(ENTITLEMENTS:TE=)" $(1[2]:CT)
     copy /B $(1[2]:CT\\)+,, $(1[2]:CT\\) > nul
     copy /B $(1[1]:C\\)+,, $(1[1]:CT\\) > nul
 }
 
-actions ios._CodeSignFramework
+actions screenoutput ios._CodeSignFramework
 {
     "$(IOSBUILDENV_PATH)/Toolchain/ldid" -k"$(IOSBUILDENV_PATH)/Keychain" -S"$(CERTIFICATE_CHAIN)" $(1[2]:CT)
     copy /B $(1[2]:CT\\)+,, $(1[2]:CT\\) > nul
