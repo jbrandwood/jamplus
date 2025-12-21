@@ -19,6 +19,11 @@ rule C.emscripten._ApplicationFromObjects_CleanIntermediates {
 
 
 rule C.emscripten._ApplicationFromObjects_LinkFlags {
+    local _t.wasm = $(_linkTargets[1]:S=.wasm) ;
+    local _tBINDING.wasm = [ C._retrieveOutputName : .wasm ] ;
+    BINDING on $(_t.wasm) = $(_tBINDING.wasm) ;
+    _linkTargets += $(_t.wasm) ;
+
     linkFlags += "--js-library $(JS_LIBS:T:Z=$(C.ACTIVE_TOOLCHAIN_TARGET))" ;
     linkFlags += "--pre-js $(JS_PRE:T:Z=$(C.ACTIVE_TOOLCHAIN_TARGET))" ;
     linkFlags += "--post-js $(JS_POST:T:Z=$(C.ACTIVE_TOOLCHAIN_TARGET))" ;
