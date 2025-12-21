@@ -1052,7 +1052,7 @@ rule ios.Bundle TARGET : TOOLCHAINS {
 			UseCommandLine $(embedded.mobileprovision) : $(provisionFileTarget) ;
 		}
 	}
-	
+
 
 	if $(C.PLATFORM) in ios {
 		local destinationPath = $(bundlePath)/Frameworks ;
@@ -1532,7 +1532,7 @@ rule C.ios._ApplicationTargetInfo {
 #	if $(C.PLATFORM) in ios  &&  ! $(NT) {
 #		local isysroot $(ISYSROOT:Z=$(C.ACTIVE_TOOLCHAIN_TARGET)) ;
 #		isysroot ?= $(ISYSROOT:Z=$(C.ACTIVE_TOOLCHAIN_*)) ;
-#		
+#
 #		# Create Entitlements.plist.
 #		local sourceEntitlementsPlist = @(Entitlements.plist:G=$(C.ACTIVE_TOOLCHAIN_TARGET_GRIST)|source) ;
 #		SEARCH on $(sourceEntitlementsPlist) = $(isysroot) ;
@@ -1625,7 +1625,7 @@ rule ios.AssetCatalog PARENT : ASSET_CATALOG_PATH : APP_ICON_NAME : LAUNCH_IMAGE
 
 rule ios.XIB PARENT : SOURCES  {
 	PARENT = [ C.ActiveTarget $(PARENT) ] ;
-	
+
 	local bundlePath = [ ios.GetBundlePath ] ;
 	if ! $(bundlePath)
 	{
@@ -1636,19 +1636,19 @@ rule ios.XIB PARENT : SOURCES  {
 
 	SOURCES = $(SOURCES:G=$(C.ACTIVE_TOOLCHAIN_TARGET_GRIST)) ;
 	SEARCH on $(SOURCES) += $(SEARCH_SOURCE) ;
-	
+
 	local targets = $(SOURCES:S=.nib) ;
-	
+
 	MakeLocate $(targets) : $(bundlePath) ;
-	Clean $(C.ACTIVE_TOOLCHAIN_CLEAN_TARGET) : $(targets) ;	
-	
+	Clean $(C.ACTIVE_TOOLCHAIN_CLEAN_TARGET) : $(targets) ;
+
 	Depends $(C.ACTIVE_TOOLCHAIN_TARGET) : $(targets) ;
 
 	local source ;
 	for source in $(SOURCES) {
 		local target = $(source:S=.nib) ;
 		Depends $(target) : $(source) ;
-	
+
 		ios.CompileXIB $(target) : $(source) : $(C.COMPILER_SUITE_SYMBOL) ;
 	}
 }
@@ -2091,7 +2091,7 @@ rule ios.Provision TARGET : PROFILE_ID {
 	# See if provided provision is a filename that exists.
 	local _profileDir = $(PROFILE_ID:P/) ;
 	local _profileFilename = $(PROFILE_ID:BS/G=$(C.ACTIVE_TOOLCHAIN_TARGET_GRIST)) ;
-	
+
 	if $(_profileDir) && $(_profileDir) != "" && $(_profileFilename) && $(_profileFilename) != ""
 	{
 		SEARCH on $(_profileFilename) = $(_profileDir) ;
