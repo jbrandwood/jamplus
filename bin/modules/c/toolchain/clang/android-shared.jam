@@ -196,6 +196,8 @@ rule android.SDK SDK_VERSION : NDK_VERSION : ARCHITECTURE {
             NDK_COMPILER_PREFIX = mipsel-linux-android- ;
             # Fill in cflags
             # Fill in linkflags
+            Exit *** Error \: android-shared.jam mips architecture unimplemented. ;
+
         case arm64 :
             NDK_COMPILER_PREFIX = aarch64-linux-android$(NDK_VERSION)- ;
             #cflags += -isystem $(NDKROOT)/sysroot/usr/include/aarch64-linux-android ;
@@ -217,6 +219,8 @@ rule android.SDK SDK_VERSION : NDK_VERSION : ARCHITECTURE {
             NDK_COMPILER_PREFIX = mips64el-linux-android- ;
             # Fill in cflags
             # Fill in linkflags
+            Exit *** Error \: android-shared.jam mips64 architecture unimplemented. ;
+
         case * :
             Exit *** Error \: Unknown architecture for NDK\: $(C.ARCHITECTURE) ;
     }
