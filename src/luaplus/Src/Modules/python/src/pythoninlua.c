@@ -137,7 +137,7 @@ static int py_object_call(lua_State *L)
             PyErr_Print();
             return luaL_error(L, "failed to create arguments tuple");
         }
-        pKywdArgs = PyDict_New();    
+        pKywdArgs = PyDict_New();
         if (!pKywdArgs) {
             Py_DECREF(args);
             PyErr_Print();
@@ -459,7 +459,7 @@ static int py_run(lua_State *L, int eval)
         ret = 1;
 
     Py_DECREF(o);
-    
+
 #if PY_MAJOR_VERSION < 3
     if (Py_FlushLine())
 #endif
@@ -638,7 +638,7 @@ LUALIB_API int luaopen_python(lua_State *L)
         Py_SetProgramName(argv[0]);
         PyImport_AppendInittab("lua", PyInit_lua);
 
-        /* Loading python library symbols so that dynamic extensions don't throw symbol not found error.           
+        /* Loading python library symbols so that dynamic extensions don't throw symbol not found error.
            Ref Link: http://stackoverflow.com/questions/29880931/importerror-and-pyexc-systemerror-while-embedding-python-script-within-c-for-pam
         */
 #if defined(__linux__)
