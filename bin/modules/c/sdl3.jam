@@ -335,13 +335,15 @@ rule Build.sdl3 TOOLCHAINS {
 				src/audio/coreaudio/*.m
 		;
 
+		SRCS +=
+				src/camera/coremedia/*.m
+		;
+
 		SDL_JOYSTICK = 1 ;
 		if $(SDL_JOYSTICK) = 1 {
 			SRCS +=
-					src/joystick/iphoneos/*.m
-					src/joystick/iphoneos/*.h
-					src/joystick/steam/*.c
-					src/joystick/steam/*.h
+					src/joystick/apple/*.m
+					src/joystick/apple/*.h
 			;
 
 			SRCS +=
@@ -360,6 +362,15 @@ rule Build.sdl3 TOOLCHAINS {
 		}
 
 		SRCS +=
+				src/gpu/metal/*.m
+		;
+
+		SRCS +=
+				src/haptic/*.c
+				src/haptic/*.h
+		;
+
+		SRCS +=
 				src/power/*.c
 				src/power/*.h
 				src/power/uikit/*.m
@@ -369,6 +380,10 @@ rule Build.sdl3 TOOLCHAINS {
 		SRCS +=
 				src/timer/unix/*.c
 				src/timer/unix/*.h
+		;
+
+		SRCS +=
+				src/tray/dummy/*.c
 		;
 
 		SRCS +=
@@ -413,7 +428,7 @@ rule Build.sdl3 TOOLCHAINS {
 
 		C.Defines : GLES_SILENCE_DEPRECATION ;
 		C.Flags : M MM : -fobjc-arc : public ;
-		C.ios.LinkFrameworks : AudioToolbox CoreAudio CoreGraphics CoreHaptics CoreMotion Foundation GameController Metal OpenGLES QuartzCore UIKit : public ;
+		C.ios.LinkFrameworks : AVFAudio AVFoundation AudioToolbox CoreAudio CoreGraphics CoreHaptics CoreMedia CoreMotion CoreVideo Foundation GameController Metal OpenGLES QuartzCore UIKit : public ;
 	}
 
 	else if $(C.PLATFORM) in android {
