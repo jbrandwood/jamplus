@@ -15,6 +15,8 @@ MakeLocate $(TargetInfoFile) : $(TARGETINFO_LOCATE) ;
 
 EMPTY = "" ;
 
+__AutoSourceGroup_Automatic = 1 ;
+
 rule DumpSources prefix : SOURCES
 {
 	local sources ;
