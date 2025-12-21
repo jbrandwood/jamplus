@@ -88,7 +88,7 @@ LUAG_FUNC( linda_protected_call)
 
     // acquire the keeper
     Keeper* K = keeper_acquire( linda->U->keepers, LINDA_KEEPER_HASHSEED(linda));
-    lua_State* KL = K ? K->L : NULL; // need to do this for 'STACK_CHECK'
+    lua_State* KL = K ? K->L : NULL; // need to 	do this for 'STACK_CHECK'
     if( KL == NULL) return 0;
     // if we didn't do anything wrong, the keeper stack should be clean
     ASSERT_L(lua_gettop(KL) == 0);
