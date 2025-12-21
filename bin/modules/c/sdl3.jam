@@ -660,11 +660,13 @@ rule Build.sdl3 TOOLCHAINS {
 
 rule C.sdl3.Register ROOT : OPTIONS : BRANCH {
 	if clone in $(OPTIONS) {
-		local EXTRA ;
-		if patch-for-bgfx in $(OPTIONS) {
-			EXTRA = "git -C $(ROOT) am -3 -k $(SDL3_CURRENT_SCRIPT:D)/sdl2-bgfx-android-surface.patch" ;
+		if ! $(JAM_CREATING_WORKSPACE) {
+			local EXTRA ;
+			if patch-for-bgfx in $(OPTIONS) {
+				EXTRA = "git -C $(ROOT) am -3 -k $(SDL3_CURRENT_SCRIPT:D)/sdl2-bgfx-android-surface.patch" ;
+			}
+			GitClone https://github.com/libsdl-org/SDL.git -b $(BRANCH:E=release-3.2.x) --depth 1 : $(ROOT) include/SDL3/SDL.h : $(EXTRA) ;
 		}
-		GitClone https://github.com/libsdl-org/SDL.git -b $(BRANCH:E=release-3.2.x) --depth 1 : $(ROOT) include/SDL3/SDL.h : $(EXTRA) ;
 	}
 	SDL3_ROOT = $(ROOT) ;
 	SubDirPush ;
