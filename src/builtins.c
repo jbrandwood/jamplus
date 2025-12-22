@@ -2466,7 +2466,7 @@ LIST *builtin_parsejam(PARSE *parse, LOL *args, int *jmp)
 		}
 	}
 
-	return 0;
+	return L0;
 }
 
 
