@@ -988,20 +988,20 @@ static int jluasearcher_Lua (ls_lua_State *L) {
 
 #ifndef OPT_BUILTIN_LUA_DLL_SUPPORT_EXT
 
-extern int luaopen_filefind(lua_State *L);
-extern int luaopen_lxp(lua_State *L);
-extern int luaopen_md5(lua_State *L);
-extern int luaopen_miniz(lua_State *L);
-extern int luaopen_ospath_core(lua_State *L);
-extern int luaopen_osprocess_core(lua_State *L);
-extern int luaopen_prettydump(lua_State *L);
+extern LUALIB_API int luaopen_filefind(lua_State *L);
+extern LUALIB_API int luaopen_lxp(lua_State *L);
+extern LUALIB_API int luaopen_md5(lua_State *L);
+extern LUALIB_API int luaopen_miniz(lua_State *L);
+extern LUALIB_API int luaopen_ospath_core(lua_State *L);
+extern LUALIB_API int luaopen_osprocess_core(lua_State *L);
+extern LUALIB_API int luaopen_prettydump(lua_State *L);
 #ifdef JAM_LUA_ADD_PYTHON
-extern int luaopen_python(lua_State *L);
+extern LUALIB_API int luaopen_python(lua_State *L);
 #endif /* JAM_LUA_ADD_PYTHON */
-extern int luaopen_rapidjson(lua_State *L);
-extern int luaopen_struct(lua_State *L);
-extern int luaopen_uuid(lua_State *L);
-extern int luaopen_ziparchive(lua_State *L);
+extern LUALIB_API int luaopen_rapidjson(lua_State *L);
+extern LUALIB_API int luaopen_struct(lua_State *L);
+extern LUALIB_API int luaopen_uuid(lua_State *L);
+extern LUALIB_API int luaopen_ziparchive(lua_State *L);
 
 #endif /* OPT_BUILTIN_LUA_DLL_SUPPORT_EXT */
 
@@ -1167,8 +1167,6 @@ static int luasupport_pmain (ls_lua_State *L)
 }
 
 
-#ifdef OPT_BUILTIN_LUA_DLL_SUPPORT_EXT
-
 #ifdef OS_NT
 static HMODULE ls_lua_loadlibrary(const char* filename)
 #else
@@ -1182,6 +1180,8 @@ static void* ls_lua_loadlibrary(const char* filename)
 #endif
 }
 
+
+#ifdef OPT_BUILTIN_LUA_DLL_SUPPORT_EXT
 
 static void* ls_lua_loadsymbol(void* handle, const char* symbol)
 {
@@ -1311,6 +1311,37 @@ void ls_lua_preinit()
     ls_luaL_error = (int (*)(ls_lua_State *L, const char *fmt, ...))ls_lua_loadsymbol(handle, "luaL_error");
 
 #else
+    if (1)
+    {
+#ifdef OS_NT
+        HMODULE handle = NULL;
+#else
+        void* handle = NULL;
+#endif
+
+        char fileName[4096];
+        getprocesspath(fileName, 4096);
+
+#ifdef OS_NT
+#ifdef _DEBUG
+        strcat(fileName, "/lua53.dll");
+#else
+        strcat(fileName, "/lua53.dll");
+#endif
+#else
+#ifdef _DEBUG
+        strcat(fileName, "/liblua53_debug.so");
+#else
+        strcat(fileName, "/liblua53.so");
+#endif
+#endif
+        handle = ls_lua_loadlibrary(fileName);
+        if (!handle)
+        {
+            //printf("jam: Unable to find the LuaPlus shared library.\n");
+            //exit(EXITBAD);
+        }
+    }
 
     ls_lua_close = (void (*)(ls_lua_State *))lua_close;
 
@@ -1459,7 +1490,7 @@ int luahelper_taskadd(const char* taskscript, LOL* args, LOL* unboundargs)
     ls_lua_pushstring(L, "*");                                /* lanes gen * */
 
     ls_lua_newtable(L);                                     /* lanes gen * opts_tbl */
-    ls_lua_newtable(L);                                     /* lanes gen * opts_tbl globals */ 
+    ls_lua_newtable(L);                                     /* lanes gen * opts_tbl globals */
     ls_lua_newtable(L);                                     /* lanes gen * opts_tbl globals jamvar */
 
     int hasoverridesettings = 0;

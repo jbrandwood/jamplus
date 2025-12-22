@@ -131,6 +131,9 @@
 #include "w32_shortname.c"
 #include "xxhash.c"
 
+#undef LUA_CORE
+#undef LUA_LIB
+
 #undef LoadString
 #include "luaplus/Src/LuaPlus/lua53-luaplus/src/lua.h"
 #include "luaplus/Src/LuaPlus/lua53-luaplus/src/lualib.h"

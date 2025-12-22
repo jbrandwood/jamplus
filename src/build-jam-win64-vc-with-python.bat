@@ -1,7 +1,8 @@
 setlocal
 rmdir /s/q %~dp0..\bin\win64
 mkdir %~dp0..\bin\win64
-cl /nologo /O2 /Oi /Gy /GL /EHsc /Zi /I %~dp0luaplus/Src/LuaPlus/lua53-luaplus/src /D JAM_LUA_ADD_PYTHON /I %~dp0luaplus/Src /I%~dp0python/include /Fe"%~dp0..\bin\win64\jam.exe" onejam.c onejam-luaexpat.c onejam-prettydump.cpp onejam-python.c onejam-rapidjson.cpp onejam-ziparchive.cpp /link /LIBPATH:%~dp0python/Libs
+cl /nologo /O2 /Oi /Gy /GL /EHsc /Zi /I %~dp0luaplus/Src/LuaPlus/lua53-luaplus/src /D JAM_LUA_ADD_PYTHON /D LUA_BUILD_AS_DLL /D LUA_CORE /D LUA_LIB /I %~dp0luaplus/Src /I%~dp0python/include /Fe"%~dp0..\bin\win64\jam.exe" onejam.c onejam-luaexpat.c onejam-prettydump.cpp onejam-python.c onejam-rapidjson.cpp onejam-ziparchive.cpp /link /LIBPATH:%~dp0python/Libs
 %~dp0..\bin\win64\jam.exe --embedbuildmodules %~dp0..\bin
 move %~dp0..\bin\win64\jam.exe.embed %~dp0..\bin\win64\jam.exe
 del /q onejam.obj onejam-luaexpat.obj onejam-prettydump.obj onejam-rapidjson.obj onejam-ziparchive.obj
+call %~dp0build-jam-lua-proxy-win64-vc.bat
