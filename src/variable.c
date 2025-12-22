@@ -38,6 +38,7 @@
 # include "hash.h"
 # include "newstr.h"
 # include "buffer.h"
+#include "rules.h"
 #include <limits.h>
 
 static struct hash *varhash = 0;
@@ -233,7 +234,37 @@ var_string(
 LIST *
 var_get( const char *symbol )
 {
-	VARIABLE var, *v = &var;
+	VARIABLE var, *v;
+
+	const char *lbracket = strchr( symbol, '[' );
+	if (lbracket)
+	{
+		TARGET *t;
+		const char *rbracket;
+		BUFFER targetBuff;
+		BUFFER settingBuff;
+		SETTINGS *s;
+
+		rbracket = strchr(lbracket + 1, ']');
+
+		buffer_init(&targetBuff);
+		buffer_addstring(&targetBuff, symbol, lbracket - symbol);
+		buffer_addchar(&targetBuff, 0);
+
+		buffer_init(&settingBuff);
+		buffer_addstring(&settingBuff, lbracket + 1, rbracket ? (rbracket - (lbracket + 1)) : strlen(lbracket + 1));
+		buffer_addchar(&settingBuff, 0);
+
+		t = bindtarget(buffer_ptr(&targetBuff));
+		s = quicksettingslookup(t, buffer_ptr(&settingBuff));
+
+		buffer_free(&settingBuff);
+		buffer_free(&targetBuff);
+
+		return s ? s->value : L0;
+	}
+
+	v = &var;
 
 	v->symbol = symbol;
 
@@ -264,7 +295,36 @@ var_set(
 	LIST	*value,
 	int	flag )
 {
-	VARIABLE *v = var_enter( symbol );
+	VARIABLE *v;
+
+	const char *lbracket = strchr( symbol, '[' );
+	if (lbracket)
+	{
+		TARGET *t;
+		const char *rbracket;
+		BUFFER targetBuff;
+		BUFFER settingBuff;
+
+		rbracket = strchr(lbracket + 1, ']');
+
+		buffer_init(&targetBuff);
+		buffer_addstring(&targetBuff, symbol, lbracket - symbol);
+		buffer_addchar(&targetBuff, 0);
+
+		buffer_init(&settingBuff);
+		buffer_addstring(&settingBuff, lbracket + 1, rbracket ? (rbracket - (lbracket + 1)) : strlen(lbracket + 1));
+		buffer_addchar(&settingBuff, 0);
+
+		t = bindtarget(buffer_ptr(&targetBuff));
+		t->settings = addsettings(t->settings, flag, buffer_ptr(&settingBuff), list_copy(L0, value));
+
+		buffer_free(&settingBuff);
+		buffer_free(&targetBuff);
+
+		return;
+	}
+
+	v = var_enter( symbol );
 
 	if( DEBUG_VARSET )
 	    var_dump( symbol, value, "set" );

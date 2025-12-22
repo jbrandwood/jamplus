@@ -1,0 +1,57 @@
+NotFile all ;
+
+numTests = 0 ;
+numTestsPassed = 0 ;
+
+rule TestExpansion CODE : RIGHT
+{
+    parse "rule TheTest { return $(CODE:J) ; }" ;
+    local LEFT = [ TheTest ] ;
+    numTests = [ Math $(numTests) + 1 ] ;
+    if $(LEFT) = $(RIGHT)
+    {
+        numTestsPassed = [ Math $(numTestsPassed) + 1 ] ;
+    }
+    else
+    {
+        Echo "fail: $(CODE:J=" ") \!\= $(RIGHT:J=" ")" ;
+    }
+}
+
+both = good bad ;
+list["good"] = happy smile ;
+TestExpansion {={$(list["good"])}=} : happy smile ;
+TestExpansion {={$(list[good])}=} : happy smile ;
+list["bad"] = sad frown ;
+TestExpansion {={$(list["bad"])}=} : sad frown ;
+TestExpansion {={$(list)}=} : ;
+TestExpansion {={$(list["both"])}=} : ;
+TestExpansion {={$(list[$(both)])}=} : happy smile sad frown ;
+TestExpansion {={[ on list Var good ]}=} : happy smile ;
+TestExpansion {={[ on list Var bad ]}=} : sad frown ;
+TestExpansion {={[ on list Var $(both) ]}=} : happy smile sad frown ;
+TestExpansion {={$(good:Z=list)}=} : happy smile ;
+TestExpansion {={$(bad:Z=list)}=} : sad frown ;
+TestExpansion {={$(both:Z=list)}=} : ;
+TestExpansion {={$($(both):Z=list)}=} : happy smile sad frown ;
+
+#------------------------------------------------------------------------------
+local keys = [ SettingsList list ] ;
+TestExpansion {={$(keys)}=} : bad good ;
+
+local key ;
+for key in $(keys) {
+    list[$(key)] = $(list[$(key)])-seen ;
+}
+
+TestExpansion {={$(list[good])}=} : happy-seen smile-seen ;
+TestExpansion {={$(list[bad])}=} : sad-seen frown-seen ;
+
+
+list = abc def ghi ;
+TestExpansion {={$(list)}=} : $(list) ;
+TestExpansion {={$(list[2])}=} : $(list[2]) ;
+TestExpansion {={$(list[2-])}=} : $(list[2-]) ;
+
+#------------------------------------------------------------------------------
+Echo "Tests passed: $(numTestsPassed)/$(numTests)" ;

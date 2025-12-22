@@ -324,10 +324,29 @@ var_expand(
 		/* Look for [x-y] and [x-] subscripting */
 		/* sub1 is x (0 default) */
 		/* sub2 is length (-1 means forever) */
+		const char* varname = buffer_ptr( &varnamebuff );
 
 		if( ( bracket = strchr( buffer_ptr( &varnamebuff ), MAGIC_LEFT ) ) )
 		{
 		    char *dash;
+
+			if ((bracket[1] >= 'a' && bracket[1] <= 'z') || (bracket[1] >= 'A' && bracket[1] <= 'Z'))
+			{
+				PATHPART *fp;
+				char *bracket2;
+				edits.targetsetting = 1;
+				fp = &edits.targetname;
+				*bracket = 0;
+				if( ( bracket2 = strchr( bracket + 1, MAGIC_RIGHT ) ) )
+				{
+					*bracket2 = 0;
+					fp->ptr = varname;
+					fp->len = (int)(bracket - varname);
+					varname = bracket + 1;
+				}
+			}
+			else
+			{
 
 		    if( ( dash = strchr( bracket + 1, '-' ) ) )
 			*dash = '\0';
@@ -342,6 +361,7 @@ var_expand(
 			sub2 = atoi( dash + 1 ) - sub1;
 
 		    *bracket = '\0';
+			}
 		}
 
 		/* Get variable value, specially handling $(<), $(>), $(n) */
@@ -350,7 +370,6 @@ var_expand(
 		if ( !literal )
 #endif
 		{
-		    const char* varname = buffer_ptr( &varnamebuff );
 		    if( varname[0] == '<' && !varname[1] )
 			value = lol_get( lol, 0 );
 		    else if( varname[0] == '>' && !varname[1] )
@@ -369,7 +388,7 @@ var_expand(
 		}
 #ifdef OPT_EXPAND_LITERALS_EXT
 		else {
-		    origvalue = value = list_append( L0, buffer_ptr( &varnamebuff ), 0 );
+		    origvalue = value = list_append( L0, varname, 0 );
 		}
 #endif
 
