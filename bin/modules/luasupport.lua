@@ -27,6 +27,7 @@ setmetatable(jam, {
 })
 --]]
 
+local type = type
 local jam_with_prefix_metatable = {}
 jam_with_prefix_metatable.__index = function(t, key)
     local fullRuleName = t.prefix .. key
