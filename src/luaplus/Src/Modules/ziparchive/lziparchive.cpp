@@ -29,7 +29,7 @@ extern "C" {
 #define luaL_register(a, b, c) luaL_setfuncs(a, c, 0)
 #define lua_objlen lua_rawlen
 
-LUALIB_API int ziparchive_luaL_argerror (lua_State *L, int narg, const char *extramsg) {
+int ziparchive_luaL_argerror (lua_State *L, int narg, const char *extramsg) {
   lua_Debug ar;
   if (!lua_getstack(L, 0, &ar))  /* no stack frame? */
     return luaL_error(L, "bad argument #%d (%s)", narg, extramsg);
@@ -47,7 +47,7 @@ LUALIB_API int ziparchive_luaL_argerror (lua_State *L, int narg, const char *ext
 }
 
 
-LUALIB_API int luaL_typerror (lua_State *L, int narg, const char *tname) {
+int ziparchive_luaL_typerror (lua_State *L, int narg, const char *tname) {
   const char *msg = lua_pushfstring(L, "%s expected, got %s",
                                     tname, luaL_typename(L, narg));
   return ziparchive_luaL_argerror(L, narg, msg);
@@ -244,7 +244,7 @@ int lziparchive_fileopen(lua_State* L)
 	else if (lua_type(L, 2) == LUA_TNUMBER)
 		entryIndex = (int)lua_tointeger(L, 2);
 	else
-		luaL_typerror(L, 2, "string or integer");
+		ziparchive_luaL_typerror(L, 2, "string or integer");
 
 	ZipEntryFileHandle* fileHandle = (ZipEntryFileHandle*)lua_newuserdata(L, sizeof(ZipEntryFileHandle));
 	::new(fileHandle) ZipEntryFileHandle;
