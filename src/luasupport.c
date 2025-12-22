@@ -429,28 +429,53 @@ static LIST *luahelper_addtolist(ls_lua_State *L, LIST *list, int index)
 }
 
 
+static void LS_jam_setvar_settings_helper(ls_lua_State *L, int targetIndex, int setflag, const char *settingName, LIST *values)
+{
+    const char *targetName = ls_lua_tostring(L, targetIndex);
+    TARGET *t = bindtarget(targetName);
+    t->settings = addsettings(t->settings, setflag, settingName, values);
+}
+
+
 int LS_jam_setvar(ls_lua_State *L)
 {
     int numParams = ls_lua_gettop(L);
     if (numParams < 2  ||  numParams > 3)
         return 0;
 
-    if (!ls_lua_isstring(L, 1))
-        return 0;
-
     if (numParams == 2)
     {
+        if (!ls_lua_isstring(L, 1))
+            return 0;
+
         var_set(ls_lua_tostring(L, 1), luahelper_addtolist(L, L0, 2), VAR_SET);
     }
     else
     {
-        TARGET *t;
+        const char *settingName = ls_lua_tostring(L, 2);
+        LIST *values = luahelper_addtolist(L, L0, 3);
 
-        if (!ls_lua_isstring(L, 2))
-            return 0;
+        if (ls_lua_istable(L, 1))
+        {
+            int index = 1;
+            while (1)
+            {
+                ls_lua_rawgeti(L, 1, index);
+                if (ls_lua_isnil(L, -1))
+                {
+                    ls_lua_pop(L, 1);
+                    break;
+                }
 
-        t = bindtarget(ls_lua_tostring(L, 1));
-        t->settings = addsettings(t->settings, VAR_SET, ls_lua_tostring(L, 2), luahelper_addtolist(L, L0, 3));
+                LS_jam_setvar_settings_helper(L, -1, VAR_SET, settingName, values);
+                ls_lua_pop(L, 1);
+                ++index;
+            }
+        }
+        else if (ls_lua_isstring(L, 1))
+        {
+            LS_jam_setvar_settings_helper(L, 1, VAR_SET, settingName, values);
+        }
     }
 
     return 0;
@@ -463,22 +488,39 @@ int LS_jam_appendvar(ls_lua_State *L)
     if (numParams < 2  ||  numParams > 3)
         return 0;
 
-    if (!ls_lua_isstring(L, 1))
-        return 0;
-
     if (numParams == 2)
     {
+        if (!ls_lua_isstring(L, 1))
+            return 0;
+
         var_set(ls_lua_tostring(L, 1), luahelper_addtolist(L, L0, 2), VAR_APPEND);
     }
     else
     {
-        TARGET *t;
+        const char *settingName = ls_lua_tostring(L, 2);
+        LIST *values = luahelper_addtolist(L, L0, 3);
 
-        if (!ls_lua_isstring(L, 2))
-            return 0;
+        if (ls_lua_istable(L, 1))
+        {
+            int index = 1;
+            while (1)
+            {
+                ls_lua_rawgeti(L, 1, index);
+                if (ls_lua_isnil(L, -1))
+                {
+                    ls_lua_pop(L, 1);
+                    break;
+                }
 
-        t = bindtarget(ls_lua_tostring(L, 1));
-        t->settings = addsettings(t->settings, VAR_APPEND, ls_lua_tostring(L, 2), luahelper_addtolist(L, L0, 3));
+                LS_jam_setvar_settings_helper(L, -1, VAR_APPEND, settingName, values);
+                ls_lua_pop(L, 1);
+                ++index;
+            }
+        }
+        else if (ls_lua_isstring(L, 1))
+        {
+            LS_jam_setvar_settings_helper(L, 1, VAR_APPEND, settingName, values);
+        }
     }
 
     return 0;
@@ -495,21 +537,24 @@ int LS_jam_getvar(ls_lua_State *L)
     if (numParams < 1  ||  numParams > 2)
         return 0;
 
-    if (!ls_lua_isstring(L, 1))
-        return 0;
-
     if (numParams == 1)
     {
+        if (!ls_lua_isstring(L, 1))
+            return 0;
+
         const char* variableName = ls_lua_tostring(L, 1);
         list = var_get(variableName);
         if (!list)
         {
-	        return 0;
+            return 0;
         }
     }
     else
     {
         TARGET *t;
+
+        if (!ls_lua_isstring(L, 1))
+            return 0;
 
         if (!ls_lua_isstring(L, 2))
             return 0;

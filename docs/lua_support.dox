@@ -336,6 +336,25 @@ actions updated together ACTION_NAME
 
 
 
+\subsection lua_jam_appendvar function jam_appendvar([ TARGET_NAME, ] VARIABLE_NAME, VALUE)
+\addindex lua_jam_appendvar
+
+\htmlonly <blockquote> \endhtmlonly
+
+Appends \c VALUE into the active Jam global \c VARIABLE_NAME.  \c VALUE can be a boolean, number, string, or table.  Nested tables are collapsed.
+
+If \c TARGET_NAME is specified, \c VALUE is set into \c VARIABLE_NAME as if an <tt>VARIABLE_NAME on TARGET_NAME</tt> had been issued in Jam.
+
+\param TARGET_NAME (optional) The target to make active to set \c VARIABLE_NAME into. Can be a string or an array of strings.
+\param VARIABLE_NAME The Jam variable to set.
+
+\htmlonly </blockquote> \endhtmlonly
+
+
+
+
+
+
 
 \subsection lua_jam_evaluaterule function jam_evaluaterule(RULE_NAME [, PARAMETERS])
 \addindex lua_jam_evaluaterule
@@ -431,7 +450,7 @@ Sets \c VALUE into the active Jam global \c VARIABLE_NAME.  \c VALUE can be a bo
 
 If \c TARGET_NAME is specified, \c VALUE is set into \c VARIABLE_NAME as if an <tt>VARIABLE_NAME on TARGET_NAME</tt> had been issued in Jam.
 
-\param TARGET_NAME (optional) The target to make active to set \c VARIABLE_NAME into.
+\param TARGET_NAME (optional) The target to make active to set \c VARIABLE_NAME into. Can be a string or an array of strings.
 \param VARIABLE_NAME The Jam variable to set.
 
 \htmlonly </blockquote> \endhtmlonly
