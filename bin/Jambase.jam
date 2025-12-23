@@ -1034,6 +1034,7 @@ if [ Search $(JAMFILE) ] {
 	include $(JAMFILE) ;
 } else if [ Search $(JAMFILE.LUA) ] {
 	LuaSupport ;
+	JAM_CURRENT_SCRIPT = $(JAMFILE.LUA:TR=$(CWD)) ;
 	LuaFile $(JAMFILE.LUA) ;
 } else {
 	TARGET ?= $(JAM_COMMAND_LINE_TARGETS[1]) ;

@@ -1939,6 +1939,7 @@ LIST* luahelper_call_script(const char* filename, LIST* args)
     int top;
     int ret;
     LISTITEM *l2;
+    BUFFER buff;
     int index = 0;
 
     ls_lua_init();
@@ -1962,7 +1963,14 @@ LIST* luahelper_call_script(const char* filename, LIST* args)
             ret = ls_luaL_loadbufferx(L, (const char*)buffer, bufferSize, filename, NULL);
             pZipArchive->m_pFree(pZipArchive->m_pAlloc_opaque, buffer);
         }
+    } else {
+        if (file_absolutepath(filename, &buff)) {
+            var_set("JAM_CURRENT_SCRIPT", list_append(L0, buffer_ptr(&buff), 0), VAR_SET);
+        } else {
+            var_set("JAM_CURRENT_SCRIPT", list_append(L0, filename, 0), VAR_SET);
+        }
     }
+    buffer_free(&buff);
     return ls_lua_callhelper(top, ret);
 }
 
