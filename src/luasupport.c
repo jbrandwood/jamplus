@@ -33,6 +33,10 @@ extern int zip_findfile(const char *filename);
 #include "luaplus/Src/Modules/lanes/src/threading.h"
 #include "luaplus/Src/Modules/lanes/src/lanes.h"
 
+#ifndef OS_NT
+#include <dlfcn.h>
+#endif
+
 #endif /* OPT_BUILTIN_LUA_DLL_SUPPORT_EXT */
 
 #include <stddef.h>
@@ -988,20 +992,20 @@ static int jluasearcher_Lua (ls_lua_State *L) {
 
 #ifndef OPT_BUILTIN_LUA_DLL_SUPPORT_EXT
 
-extern LUALIB_API int luaopen_filefind(lua_State *L);
-extern LUALIB_API int luaopen_lxp(lua_State *L);
-extern LUALIB_API int luaopen_md5(lua_State *L);
-extern LUALIB_API int luaopen_miniz(lua_State *L);
-extern LUALIB_API int luaopen_ospath_core(lua_State *L);
-extern LUALIB_API int luaopen_osprocess_core(lua_State *L);
-extern LUALIB_API int luaopen_prettydump(lua_State *L);
+LUALIB_API int luaopen_filefind(lua_State *L);
+LUALIB_API int luaopen_lxp(lua_State *L);
+LUALIB_API int luaopen_md5(lua_State *L);
+LUALIB_API int luaopen_miniz(lua_State *L);
+LUALIB_API int luaopen_ospath_core(lua_State *L);
+LUALIB_API int luaopen_osprocess_core(lua_State *L);
+LUALIB_API int luaopen_prettydump(lua_State *L);
 #ifdef JAM_LUA_ADD_PYTHON
-extern LUALIB_API int luaopen_python(lua_State *L);
+LUALIB_API int luaopen_python(lua_State *L);
 #endif /* JAM_LUA_ADD_PYTHON */
-extern LUALIB_API int luaopen_rapidjson(lua_State *L);
-extern LUALIB_API int luaopen_struct(lua_State *L);
-extern LUALIB_API int luaopen_uuid(lua_State *L);
-extern LUALIB_API int luaopen_ziparchive(lua_State *L);
+LUALIB_API int luaopen_rapidjson(lua_State *L);
+LUALIB_API int luaopen_struct(lua_State *L);
+LUALIB_API int luaopen_uuid(lua_State *L);
+LUALIB_API int luaopen_ziparchive(lua_State *L);
 
 #endif /* OPT_BUILTIN_LUA_DLL_SUPPORT_EXT */
 
