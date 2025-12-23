@@ -991,6 +991,7 @@ int main( int argc, char **argv, char **arg_environ )
 		int jambase_parsed = 0;
 		for ( n = 0; (s = getoptval( optv, 'f', n )); n++ )
 		{
+			char *ptr;
 			var_set( "JAM_MANUAL_JAMBASE", list_append( L0, "1", 1 ), VAR_SET );
 
 			if ( s[0] != '-' )
@@ -1006,7 +1007,20 @@ int main( int argc, char **argv, char **arg_environ )
 				s += 1;
 				jambase_parsed = 1;
 			}
-			parse_file( s );
+			ptr = strrchr( s, '.' );
+			if ( strcmp( ptr, ".lua" ) == 0 )
+			{
+#ifdef OPT_BUILTIN_LUA_SUPPORT_EXT
+				luahelper_call_script( s, L0 );
+#else
+				printf( "Cannot run Lua script '%s'. Lua support not built-in.\n", s );
+				exit( EXITBAD );
+#endif
+			}
+			else
+			{
+				parse_file( s );
+			}
 		}
 
 		if ( !n )
