@@ -40,7 +40,7 @@ rule C.vc._C++Exceptions {
 
 
 rule C.vc._C++Standard {
-    C.Flags : C++ : /std:c++$(VERSION) /permissive- /Zc:__cplusplus : $(OPTIONS) ;
+    C.Flags : C++ : /std:c++$(VERSION) /permissive- /Zc:__cplusplus /Zc:preprocessor : $(OPTIONS) ;
     C.Flags : MM : /std:c++$(VERSION) : $(OPTIONS) ;
 }
 
