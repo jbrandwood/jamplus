@@ -1942,6 +1942,7 @@ LIST* luahelper_call_script(const char* filename, LIST* args)
     BUFFER buff;
     int index = 0;
 
+    buffer_init(&buff);
     ls_lua_init();
     top = ls_lua_gettop(L);
     ls_lua_newtable(L);
