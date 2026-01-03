@@ -1,5 +1,6 @@
 rule C.Toolchain.clang.android-releaseltcg {
     C.Flags * : CC C++ M MM : -g -O3 ;
+    C.LinkFlags * : -Wl,--build-id ;
 
     C.Toolchain.Helper.ReleaseSettings ;
 }
