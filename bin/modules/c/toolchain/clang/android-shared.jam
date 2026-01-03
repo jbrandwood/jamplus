@@ -164,6 +164,8 @@ rule android.SDK SDK_VERSION : NDK_VERSION : ARCHITECTURE {
     NDK_TOOLCHAIN_ROOT = $(NDKROOT)/toolchains/llvm/prebuilt/$(NDK_HOST) ; #$(NDK_DIRECTORY_PREFIX:E=$(NDK_COMPILER_PREFIX))$(NDK_COMPILER_VERSION)/prebuilt/$(NDK_HOST) ;
     local sysroot = $(NDK_TOOLCHAIN_ROOT)/sysroot ;
 
+    SHAREDLIBDEFAULTFLAG on $(C.COMPILER_SUITE_SYMBOL) = -fPIC ;
+
     local NDK_DIRECTORY_PREFIX ;
     local NDK_COMPILER_PREFIX ;
     local cflags ;
