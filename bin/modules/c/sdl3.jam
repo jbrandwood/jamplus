@@ -85,6 +85,7 @@ rule Build.sdl3 TOOLCHAINS {
 	if $(C.PLATFORM) in win32 win64 {
 		SRCS +=
 				src/core/windows/*.c
+				src/core/windows/*.cpp
 				src/core/windows/*.h
 		;
 
@@ -151,6 +152,7 @@ rule Build.sdl3 TOOLCHAINS {
 		;
 		SRCS +=
 				src/video/windows/*.c
+				src/video/windows/*.cpp
 				src/video/windows/*.h
 		;
 
@@ -187,8 +189,7 @@ rule Build.sdl3 TOOLCHAINS {
 		SDL_JOYSTICK = 1 ;
 		if $(SDL_JOYSTICK) = 1 {
 			SRCS +=
-					src/joystick/gdk/*.c
-					src/joystick/gdk/*.h
+					src/joystick/gdk/*.cpp
 			;
 
 			SRCS +=
@@ -211,6 +212,8 @@ rule Build.sdl3 TOOLCHAINS {
 					src/haptic/SDL_haptic.c
 					src/haptic/SDL_haptic_c.h
 					src/haptic/SDL_syshaptic.h
+					src/haptic/hidapi/*.c
+					src/haptic/hidapi/*.h
 			;
 
 			SRCS +=
@@ -287,6 +290,10 @@ rule Build.sdl3 TOOLCHAINS {
 		SRCS +=
 				src/timer/unix/*.c
 				src/timer/unix/*.h
+		;
+
+		SRCS +=
+				src/filesystem/posix/SDL_sysfsops.c
 		;
 
 		SRCS +=
@@ -387,6 +394,10 @@ rule Build.sdl3 TOOLCHAINS {
 		;
 
 		SRCS +=
+				src/filesystem/posix/SDL_sysfsops.c
+		;
+
+		SRCS +=
 				src/filesystem/cocoa/*.m
 				src/filesystem/cocoa/*.h
 		;
@@ -471,6 +482,8 @@ rule Build.sdl3 TOOLCHAINS {
 					src/haptic/SDL_haptic.c
 					src/haptic/SDL_haptic_c.h
 					src/haptic/SDL_syshaptic.h
+					src/haptic/hidapi/*.c
+					src/haptic/hidapi/*.h
 			;
 
 		}
@@ -676,11 +689,7 @@ rule Build.sdl3 TOOLCHAINS {
 rule C.sdl3.Register ROOT : OPTIONS : BRANCH {
 	if clone in $(OPTIONS) {
 		if ! $(JAM_CREATING_WORKSPACE) {
-			local EXTRA ;
-			if patch-for-bgfx in $(OPTIONS) {
-				EXTRA = "git -C $(ROOT) am -3 -k $(SDL3_CURRENT_SCRIPT:D)/sdl2-bgfx-android-surface.patch" ;
-			}
-			GitClone https://github.com/libsdl-org/SDL.git -b $(BRANCH:E=release-3.2.x) --depth 1 : $(ROOT) include/SDL3/SDL.h : $(EXTRA) ;
+			GitClone https://github.com/libsdl-org/SDL.git -b $(BRANCH:E=main) --depth 1 : $(ROOT) include/SDL3/SDL.h : $(EXTRA) ;
 		}
 	}
 	SDL3_ROOT = $(ROOT) ;
