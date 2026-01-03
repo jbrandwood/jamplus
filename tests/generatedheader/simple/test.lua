@@ -305,7 +305,8 @@ extern void Print(const char* str);
 *** updating 3 target(s)...
 @ WriteFile <$(TOOLCHAIN_GRIST):test>test.h
 @ C.$(COMPILER).CC <$(TOOLCHAIN_GRIST):test>main.o
-*** updated 2 target(s)...
+@ $(C_LINK) <$(TOOLCHAIN_GRIST):test>test
+*** updated 3 target(s)...
 ]]
 			else
 				pattern4 = [[
