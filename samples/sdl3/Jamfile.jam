@@ -1,0 +1,105 @@
+PROJECT_DEPS = $(JAM_CURRENT_SCRIPT:D)/.deps ;
+
+C.Use ;
+
+SubDir TOP ;
+
+local TOOLCHAINS ;
+
+if $(PLATFORM) in android {
+    android.SDK 28 : 21 ;
+
+    TOOLCHAINS =
+        #$(C.ACTIVE_TOOLCHAIN_SPEC)@C.ARCHITECTURE=armv7-a
+        $(C.ACTIVE_TOOLCHAIN_SPEC)@C.ARCHITECTURE=arm64
+    ;
+}
+
+if ! clean in $(JAM_COMMAND_LINE_TARGETS) {
+    C.sdl3.Register $(PROJECT_DEPS)/sdl3 : clone ;
+} else {
+    C.sdl3.Register $(PROJECT_DEPS)/sdl3 ;
+}
+
+rule Build.Globals {
+    C.RuntimeType * : static ;
+
+    if $(PLATFORM) in android {
+        android.SDK 28 : 21 ;
+    }
+}
+
+rule Build.testapp {
+    local TESTAPP_SRCS =
+            sdltest.c
+    ;
+
+    C.Inherits : sdl3 ;
+
+    if $(PLATFORM) in * win32 win64 {
+        C.Application : $(TESTAPP_SRCS) : windows ;
+
+    } else if $(PLATFORM) in macosx32 macosx64 {
+        C.Application : $(TESTAPP_SRCS) : bundle ;
+
+    } else if $(PLATFORM) in ios iossimulator {
+        ios.BundleInfo : displayname : testapp ;
+        ios.BundleInfo : bundleversion : 1.0 ;
+        ios.BundleInfo : uistatusbarhidden : true ;
+        ios.BundleInfo : uisupportedinterfaceorientations : portrait ;
+        ios.BundleInfoBoolean : UIRequiresFullScreen : true ;
+
+        C.Application : $(TESTAPP_SRCS) ;
+
+        ios.BundleInfo : identifier : com.jamplus.test ;
+        #ios.ProvisionFile : test.mobileprovision ;
+        #ios.CodeSign : "iPhone Developer" : "ios_development.cer:AppleIncRootCertificate.cer:AppleWWDRCA.cer:my_key.key:" ;
+        ios.CodeSign : "iPhone Developer" : "ios_development.cer:AppleIncRootCertificate.cer:AppleWWDRCAG3.cer:private_key01.key:asdf" ;
+        ios.Bundle ;
+
+        ios.Archive : $(BUNDLE_PATH:Z=$(C.ACTIVE_TOOLCHAIN_TARGET))/../package ;
+        ios.WebServer ;
+
+    } else if $(PLATFORM) in android {
+        C.OutputName : libmain ;
+        C.OutputPostfix : ;
+        C.Library : $(TESTAPP_SRCS) : shared ;
+    }
+} # rule Build.testapp
+
+SubInclude TOP : testapp : register ;
+
+local toolchainsUsed = [ C.Build Globals sdl3 testapp : $(TOOLCHAINS) ] ;
+
+if $(PLATFORM) in android {
+	SubDir TOP android ;
+
+	C.ActiveTarget testapp ;
+
+	android.SDKMinimumVersion : 26 ;
+	android.SDKTargetVersion : 34 ;
+	android.SDKCompileVersion : 34 ;
+	android.ProductVersion : 1.0.0 : 1 ;
+
+	android.PackageName : org.jamplus.testapp ;
+
+	#android.Assets : ../assets ;
+	android.ExternalAssets : ../assets ;
+	android.UncompressedAssetExtensions : ogg ;
+	android.SourcePaths :
+			src
+			$(SDL3_ROOT)/android-project/app/src/main/java
+	;
+	android.NativeLibraries :
+			testapp
+			sdl3
+	;
+	android.NativePrebuiltLibraries :
+			c++_shared
+	;
+
+	android.Sign : $(HOME)/.android/debug.keystore android androiddebugkey android ;
+	android.Application : $(SDL3_JAVA_SRCS) ;
+	android.Package : $(toolchainsUsed) : install ;
+}
+
