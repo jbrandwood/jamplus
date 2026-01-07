@@ -1863,7 +1863,7 @@ rule ios.AssetCatalog PARENT : ASSET_CATALOG_PATH : APP_ICON_NAME : LAUNCH_IMAGE
 
         local appIcon = ''
         local launchImage = ''
-        local NT = jam_getvar('NT')[1]
+        local NT = jam_getvar('NT') ~= nil
 
         local appIcons = {}
         local launchImages = {}
