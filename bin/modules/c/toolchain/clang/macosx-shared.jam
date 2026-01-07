@@ -201,27 +201,51 @@ end
 " ;
 
 
-rule macosx.BundleInfoBoolean TARGET : KEY : VALUE {
+rule macosx.BundleInfoBoolean TARGET : KEY : VALUE : NO_OVERRIDE {
 	if $(InfoPlistHelper) {  LuaString $(InfoPlistHelper) ;  InfoPlistHelper = ;  }
 
 	TARGET = [ ActiveTarget $(TARGET) ] ;
-	LuaString "GetInfoPlistCurrentLevel()[jam_getvar('KEY')[1]] = jam_getvar('VALUE')[1] == 'true'" ;
+	LuaString "
+		local key = jam_getvar('KEY')[1]
+		local pl = GetInfoPlistCurrentLevel()
+		local no_override = jam_getvar('NO_OVERRIDE')
+		if (not no_override or not no_override[1]) or not pl[key] then
+			local value = jam_getvar('VALUE')
+			pl[key] = value and value[1] == 'true' or false
+		end
+		" ;
 }
 
 
-rule macosx.BundleInfoInteger TARGET : KEY : VALUE {
+rule macosx.BundleInfoInteger TARGET : KEY : VALUE : NO_OVERRIDE {
 	if $(InfoPlistHelper) {  LuaString $(InfoPlistHelper) ;  InfoPlistHelper = ;  }
 
 	TARGET = [ ActiveTarget $(TARGET) ] ;
-	LuaString "GetInfoPlistCurrentLevel()[jam_getvar('KEY')[1]] = tonumber(jam_getvar('VALUE')[1])" ;
+	LuaString "
+		local key = jam_getvar('KEY')[1]
+		local pl = GetInfoPlistCurrentLevel()
+		local no_override = jam_getvar('NO_OVERRIDE')
+		if (not no_override or not no_override[1]) or not pl[key] then
+			local value = jam_getvar('VALUE')
+			pl[key] = value and tonumber(value[1])
+		end
+		" ;
 }
 
 
-rule macosx.BundleInfoString TARGET : KEY : VALUE {
+rule macosx.BundleInfoString TARGET : KEY : VALUE : NO_OVERRIDE {
 	if $(InfoPlistHelper) {  LuaString $(InfoPlistHelper) ;  InfoPlistHelper = ;  }
 
 	TARGET = [ ActiveTarget $(TARGET) ] ;
-	LuaString "GetInfoPlistCurrentLevel()[jam_getvar('KEY')[1]] = jam_getvar('VALUE')[1]" ;
+	LuaString "
+		local key = jam_getvar('KEY')[1]
+		local pl = GetInfoPlistCurrentLevel()
+		local no_override = jam_getvar('NO_OVERRIDE')
+		if (not no_override or not no_override[1]) or not pl[key] then
+			local value = jam_getvar('VALUE')
+			pl[key] = value and value[1]
+		end
+		" ;
 }
 
 
@@ -294,12 +318,24 @@ rule macosx.BundleInfoArrayDictEnd TARGET {
 }
 
 
-rule macosx.BundleInfoArrayBoolean TARGET : KEY : VALUE {
+rule macosx.BundleInfoArrayBoolean TARGET : KEY : VALUE : NO_OVERRIDE {
 	if $(InfoPlistHelper) {  LuaString $(InfoPlistHelper) ;  InfoPlistHelper = ;  }
 
 	TARGET = [ ActiveTarget $(TARGET) ] ;
 	if $(VALUE) {
-		LuaString "GetInfoPlistCurrentLevel()[jam_getvar('KEY')[1]] = jam_getvar('VALUE')" ;
+		LuaString "
+			-- ios.BundleInfoArrayBoolean $(TARGET:E=\"\") : $(KEY:E=\"\") : $(VALUE:E=\"\") : $(NO_OVERRIDE:E=\"\")
+			local key = jam_getvar('KEY')[1]
+			local pl = GetInfoPlistCurrentLevel()
+			local no_override = jam_getvar('NO_OVERRIDE')
+			if (not no_override or not no_override[1]) or not pl[key] then
+				local values = jam_getvar('VALUE')
+				for index, value in ipairs(values) do
+					values[index] = value == 'true'
+				end
+				pl[key] = values
+			end
+			" ;
 	} else {
 		LuaString "
 			local currentLevel = GetInfoPlistCurrentLevel()
@@ -313,17 +349,22 @@ rule macosx.BundleInfoArrayBoolean TARGET : KEY : VALUE {
 }
 
 
-rule macosx.BundleInfoArrayInteger TARGET : KEY : VALUE {
+rule macosx.BundleInfoArrayInteger TARGET : KEY : VALUE : NO_OVERRIDE {
 	if $(InfoPlistHelper) {  LuaString $(InfoPlistHelper) ;  InfoPlistHelper = ;  }
 
 	TARGET = [ ActiveTarget $(TARGET) ] ;
 	if $(VALUE) {
 		LuaString "
-			local values = jam_getvar('VALUE')
-			for index, value in ipairs(values) do
-				values[index] = tonumber(value)
+			local key = jam_getvar('KEY')[1]
+			local pl = GetInfoPlistCurrentLevel()
+			local no_override = jam_getvar('NO_OVERRIDE')
+			if (not no_override or not no_override[1]) or not pl[key] then
+				local values = jam_getvar('VALUE')
+				for index, value in ipairs(values) do
+					values[index] = tonumber(value)
+				end
+				pl[key] = values
 			end
-			GetInfoPlistCurrentLevel()[jam_getvar('KEY')[1]] = values
 " ;
 	} else {
 		LuaString "
@@ -337,12 +378,19 @@ rule macosx.BundleInfoArrayInteger TARGET : KEY : VALUE {
 }
 
 
-rule macosx.BundleInfoArrayString TARGET : KEY : VALUE {
+rule macosx.BundleInfoArrayString TARGET : KEY : VALUE : NO_OVERRIDE {
 	if $(InfoPlistHelper) {  LuaString $(InfoPlistHelper) ;  InfoPlistHelper = ;  }
 
 	TARGET = [ ActiveTarget $(TARGET) ] ;
 	if $(VALUE) {
-		LuaString "GetInfoPlistCurrentLevel()[jam_getvar('KEY')[1]] = jam_getvar('VALUE')" ;
+		LuaString "
+			local key = jam_getvar('KEY')[1]
+			local pl = GetInfoPlistCurrentLevel()
+			local no_override = jam_getvar('NO_OVERRIDE')
+			if (not no_override or not no_override[1]) or not pl[key] then
+				pl[key] = jam_getvar('VALUE')
+			end
+			" ;
 	} else {
 		LuaString "
 			local currentLevel = GetInfoPlistCurrentLevel()
@@ -355,19 +403,19 @@ rule macosx.BundleInfoArrayString TARGET : KEY : VALUE {
 }
 
 
-rule macosx.BundleInfo TARGET : TYPE : VALUE {
+rule macosx.BundleInfo TARGET : TYPE : VALUE : NO_OVERRIDE {
 	TARGET = [ ActiveTarget $(TARGET) ] ;
 	on $(C.ACTIVE_TOOLCHAIN_TARGET) if ! $(INFO_PLIST_KEYS) {
 		INFO_PLIST_KEYS on $(C.ACTIVE_TOOLCHAIN_TARGET) = true ;
 
 		SDK_VERSION_MIN ?= $(SDK_VERSION_MIN:Z=$(C.ACTIVE_TOOLCHAIN_*)) ;
-		macosx.BundleInfoString : CFBundleDevelopmentRegion : en ;
-		macosx.BundleInfoString : CFBundleExecutable : [ C._retrieveOutputName $(TARGET) ] ;
-		macosx.BundleInfoString : CFBundleInfoDictionaryVersion : 6.0 ;
-		macosx.BundleInfoString : CFBundlePackageType : APPL ;
-		macosx.BundleInfoString : CFBundleSignature : ???? ;
-		macosx.BundleInfoString : MinimumOSVersion : $(SDK_VERSION_MIN) ;
-		#macosx.BundleInfoString : CFBundleResourceSpecification : ResourceRules.plist ;
+		macosx.BundleInfoString : CFBundleDevelopmentRegion : en : $(NO_OVERRIDE) ;
+		macosx.BundleInfoString : CFBundleExecutable : [ C._retrieveOutputName $(TARGET) ] : $(NO_OVERRIDE) ;
+		macosx.BundleInfoString : CFBundleInfoDictionaryVersion : 6.0 : $(NO_OVERRIDE) ;
+		macosx.BundleInfoString : CFBundlePackageType : APPL : $(NO_OVERRIDE) ;
+		macosx.BundleInfoString : CFBundleSignature : ???? : $(NO_OVERRIDE) ;
+		macosx.BundleInfoString : MinimumOSVersion : $(SDK_VERSION_MIN) : $(NO_OVERRIDE) ;
+		#macosx.BundleInfoString : CFBundleResourceSpecification : ResourceRules.plist : $(NO_OVERRIDE) ;
 
 		local sdkversion = $(SDK_VERSION:Z=$(C.ACTIVE_TOOLCHAIN_TARGET)) ;
 		sdkversion ?= $(SDK_VERSION:Z=$(C.ACTIVE_TOOLCHAIN_*)) ;
@@ -375,56 +423,56 @@ rule macosx.BundleInfo TARGET : TYPE : VALUE {
 		local minimumsdkversion = $(SDK_VERSION_MIN:Z=$(C.ACTIVE_TOOLCHAIN_TARGET)) ;
 		minimumsdkversion ?= $(SDK_VERSION_MIN:Z=$(C.ACTIVE_TOOLCHAIN_*)) ;
 
-		macosx.BundleInfoString : DTPlatformName : macos ;
-		macosx.BundleInfoString : DTPlatformVersion : $(sdkversion) ;
-		macosx.BundleInfoString : DTSDKName : iphoneos$(sdkversion) ;
+		macosx.BundleInfoString : DTPlatformName : macos : $(NO_OVERRIDE) ;
+		macosx.BundleInfoString : DTPlatformVersion : $(sdkversion) : $(NO_OVERRIDE) ;
+		macosx.BundleInfoString : DTSDKName : iphoneos$(sdkversion) : $(NO_OVERRIDE) ;
 
 		local xcodeVersions = [ Match "Xcode ([^$(NEWLINE)]*).*Build version ([^$(NEWLINE)]*)" : [ Shell "xcodebuild -version" ] ] ;
 		xcodeVersions = [ Subst $(xcodeVersions[1]) : "%." : "" ] $(xcodeVersions[2]) ;
 		xcodeVersions = 0$(xcodeVersions[1]) $(xcodeVersions[2]) ;
-		macosx.BundleInfoString : DTXcode : $(xcodeVersions[1]) ;
-		macosx.BundleInfoString : DTXcodeBuild : $(xcodeVersions[2]) ;
+		macosx.BundleInfoString : DTXcode : $(xcodeVersions[1]) : $(NO_OVERRIDE) ;
+		macosx.BundleInfoString : DTXcodeBuild : $(xcodeVersions[2]) : $(NO_OVERRIDE) ;
 
 		#local sdkVersion = [ Match "([^$(NEWLINE)]*)" : [ Shell "xcrun --sdk iphoneos$(sdkversion) --show-sdk-build-version" ] ] ;
-		#macosx.BundleInfoString : DTSDKBuild : $(sdkVersion) ;
-		#macosx.BundleInfoString : DTPlatformBuild : $(sdkVersion) ;
+		#macosx.BundleInfoString : DTSDKBuild : $(sdkVersion) : $(NO_OVERRIDE) ;
+		#macosx.BundleInfoString : DTPlatformBuild : $(sdkVersion) : $(NO_OVERRIDE) ;
 
 		local osVersion = [ Match "([^$(NEWLINE)]*)" : [ Shell "sw_vers -buildVersion" ] ] ;
-		macosx.BundleInfoString : BuildMachineOSBuild : $(osVersion) ;
+		macosx.BundleInfoString : BuildMachineOSBuild : $(osVersion) : $(NO_OVERRIDE) ;
 
 		#macosx.BundleInfoArrayString : CFBundleSupportedPlatforms : iPhoneOS ;
-		macosx.BundleInfoString : MinimumOSVersion : $(minimumsdkversion) ;
+		macosx.BundleInfoString : MinimumOSVersion : $(minimumsdkversion) : $(NO_OVERRIDE) ;
 	}
 
 	switch $(TYPE:L) {
-		case info :					macosx.BundleInfoString : CFBundleGetInfoString : $(VALUE) ;
-		case iconfile :				macosx.BundleInfoString : CFBundleIconFile : $(VALUE) ;
-		case iconfiles :			macosx.BundleInfoArrayString : CFBundleIconFiles : $(VALUE) ;
-		case longversion :			macosx.BundleInfoString : CFBundleLongVersionString : $(VALUE) ;
+		case info :					macosx.BundleInfoString : CFBundleGetInfoString : $(VALUE) : $(NO_OVERRIDE) ;
+		case iconfile :				macosx.BundleInfoString : CFBundleIconFile : $(VALUE) : $(NO_OVERRIDE) ;
+		case iconfiles :			macosx.BundleInfoArrayString : CFBundleIconFiles : $(VALUE) : $(NO_OVERRIDE) ;
+		case longversion :			macosx.BundleInfoString : CFBundleLongVersionString : $(VALUE) : $(NO_OVERRIDE) ;
 		case bundlename :
-			macosx.BundleInfoString : CFBundleName : $(VALUE) ;
+			macosx.BundleInfoString : CFBundleName : $(VALUE) : $(NO_OVERRIDE) ;
 			CFBundleName on $(C.ACTIVE_TOOLCHAIN_TARGET) = $(VALUE) ;
 		case displayname :
-			macosx.BundleInfoString : CFBundleDisplayName : $(VALUE) ;
+			macosx.BundleInfoString : CFBundleDisplayName : $(VALUE) : $(NO_OVERRIDE) ;
 			CFBundleDisplayName on $(C.ACTIVE_TOOLCHAIN_TARGET) = $(VALUE) ;
-		case executable :			macosx.BundleInfoString : CFBundleExecutable : $(VALUE) ;
+		case executable :			macosx.BundleInfoString : CFBundleExecutable : $(VALUE) : $(NO_OVERRIDE) ;
 		case identifier :
-			macosx.BundleInfoString : CFBundleIdentifier : $(VALUE) ;
+			macosx.BundleInfoString : CFBundleIdentifier : $(VALUE) : $(NO_OVERRIDE) ;
 			CFBundleIdentifier on $(C.ACTIVE_TOOLCHAIN_TARGET) = $(VALUE) ;
-		case shortversion :			macosx.BundleInfoString : CFBundleShortVersionString : $(VALUE) ;
+		case shortversion :			macosx.BundleInfoString : CFBundleShortVersionString : $(VALUE) : $(NO_OVERRIDE) ;
 		case bundleversion :
-			macosx.BundleInfoString : CFBundleVersion : $(VALUE) ;
+			macosx.BundleInfoString : CFBundleVersion : $(VALUE) : $(NO_OVERRIDE) ;
 			CFBundleVersion on $(C.ACTIVE_TOOLCHAIN_TARGET) = $(VALUE) ;
-		case copyright :			macosx.BundleInfoString : NSHumanReadableCopyright : $(VALUE) ;
-		case mainnibfile :			macosx.BundleInfoString : NSMainNibFile : $(VALUE) ;
-		case nsprincipalclass :		macosx.BundleInfoString : NSPrincipalClass : $(VALUE) ;
-		case resourcespec :			macosx.BundleInfoString : CFBundleResourceSpecification : $(VALUE) ;
-		case supportedplatforms :   macosx.BundleInfoArray : CFBundleSupportedPlatforms : $(VALUE) ;
-		case minimumosversion :		macosx.BundleInfoString : MinimumOSVersion : $(VALUE) ;
-		case uidevicefamily :		macosx.BundleInfoIntegerArray : UIDeviceFamily : $(VALUE) ;
-		case uiprerenderedicon :	macosx.BundleInfoBoolean : UIPrerenderedIcon : $(VALUE) ;
-		case uistatusbarhidden :	macosx.BundleInfoBoolean : UIStatusBarHidden : $(VALUE) ;
-		case uiviewcontrollerbasedstatusbarappearance : macosx.BundleInfoBoolean : UIViewControllerBasedStatusBarAppearance : $(VALUE) ;
+		case copyright :			macosx.BundleInfoString : NSHumanReadableCopyright : $(VALUE) : $(NO_OVERRIDE) ;
+		case mainnibfile :			macosx.BundleInfoString : NSMainNibFile : $(VALUE) : $(NO_OVERRIDE) ;
+		case nsprincipalclass :		macosx.BundleInfoString : NSPrincipalClass : $(VALUE) : $(NO_OVERRIDE) ;
+		case resourcespec :			macosx.BundleInfoString : CFBundleResourceSpecification : $(VALUE) : $(NO_OVERRIDE) ;
+		case supportedplatforms :   macosx.BundleInfoArray : CFBundleSupportedPlatforms : $(VALUE) : $(NO_OVERRIDE) ;
+		case minimumosversion :		macosx.BundleInfoString : MinimumOSVersion : $(VALUE) : $(NO_OVERRIDE) ;
+		case uidevicefamily :		macosx.BundleInfoIntegerArray : UIDeviceFamily : $(VALUE) : $(NO_OVERRIDE) ;
+		case uiprerenderedicon :	macosx.BundleInfoBoolean : UIPrerenderedIcon : $(VALUE) : $(NO_OVERRIDE) ;
+		case uistatusbarhidden :	macosx.BundleInfoBoolean : UIStatusBarHidden : $(VALUE) : $(NO_OVERRIDE) ;
+		case uiviewcontrollerbasedstatusbarappearance : macosx.BundleInfoBoolean : UIViewControllerBasedStatusBarAppearance : $(VALUE) : $(NO_OVERRIDE) ;
 	}
 }
 
