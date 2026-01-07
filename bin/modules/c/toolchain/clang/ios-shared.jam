@@ -254,7 +254,7 @@ rule ios.MinimumOSVersion TARGET : SDK_VERSION_MIN {
 	}
 }
 
-LuaString "
+InfoPlistHelper = "
 function GetInfoPlistCurrentLevelNoCreate()
 	if not plist then
 		plist = require 'plist'
@@ -301,8 +301,9 @@ end
 
 
 rule ios.BundleInfoBoolean TARGET : KEY : VALUE : NO_OVERRIDE {
+	if $(InfoPlistHelper) {  LuaString $(InfoPlistHelper) ;  InfoPlistHelper = ;  }
+
 	TARGET = [ ActiveTarget $(TARGET) ] ;
-	LuaString "GetInfoPlistCurrentLevel()[jam_getvar('KEY')[1]] = jam_getvar('VALUE')[1] == 'true'" ;
 	LuaString "
 		local key = jam_getvar('KEY')[1]
 		local pl = GetInfoPlistCurrentLevel()
@@ -315,6 +316,8 @@ rule ios.BundleInfoBoolean TARGET : KEY : VALUE : NO_OVERRIDE {
 
 
 rule ios.BundleInfoInteger TARGET : KEY : VALUE : NO_OVERRIDE {
+	if $(InfoPlistHelper) {  LuaString $(InfoPlistHelper) ;  InfoPlistHelper = ;  }
+
 	TARGET = [ ActiveTarget $(TARGET) ] ;
 	LuaString "
 		local key = jam_getvar('KEY')[1]
@@ -328,6 +331,8 @@ rule ios.BundleInfoInteger TARGET : KEY : VALUE : NO_OVERRIDE {
 
 
 rule ios.BundleInfoString TARGET : KEY : VALUE : NO_OVERRIDE {
+	if $(InfoPlistHelper) {  LuaString $(InfoPlistHelper) ;  InfoPlistHelper = ;  }
+
 	TARGET = [ ActiveTarget $(TARGET) ] ;
 	LuaString "
 		local key = jam_getvar('KEY')[1]
@@ -341,6 +346,8 @@ rule ios.BundleInfoString TARGET : KEY : VALUE : NO_OVERRIDE {
 
 
 rule ios.BundleInfoDictBegin TARGET : KEY {
+	if $(InfoPlistHelper) {  LuaString $(InfoPlistHelper) ;  InfoPlistHelper = ;  }
+
 	TARGET = [ ActiveTarget $(TARGET) ] ;
 	LuaString "
 		local currentLevel = GetInfoPlistCurrentLevel()
@@ -354,12 +361,16 @@ rule ios.BundleInfoDictBegin TARGET : KEY {
 
 
 rule ios.BundleInfoDictEnd TARGET {
+	if $(InfoPlistHelper) {  LuaString $(InfoPlistHelper) ;  InfoPlistHelper = ;  }
+
 	TARGET = [ ActiveTarget $(TARGET) ] ;
 	LuaString "PopInfoPlistLevel()" ;
 }
 
 
 rule ios.BundleInfoArrayBegin TARGET : KEY {
+	if $(InfoPlistHelper) {  LuaString $(InfoPlistHelper) ;  InfoPlistHelper = ;  }
+
 	TARGET = [ ActiveTarget $(TARGET) ] ;
 	LuaString "
 		local currentLevel = GetInfoPlistCurrentLevel()
@@ -373,12 +384,16 @@ rule ios.BundleInfoArrayBegin TARGET : KEY {
 
 
 rule ios.BundleInfoArrayEnd TARGET {
+	if $(InfoPlistHelper) {  LuaString $(InfoPlistHelper) ;  InfoPlistHelper = ;  }
+
 	TARGET = [ ActiveTarget $(TARGET) ] ;
 	LuaString "PopInfoPlistLevel()" ;
 }
 
 
 rule ios.BundleInfoArrayDictBegin TARGET {
+	if $(InfoPlistHelper) {  LuaString $(InfoPlistHelper) ;  InfoPlistHelper = ;  }
+
 	TARGET = [ ActiveTarget $(TARGET) ] ;
 	LuaString "
 		local currentLevel = GetInfoPlistCurrentLevel()
@@ -392,12 +407,16 @@ rule ios.BundleInfoArrayDictBegin TARGET {
 
 
 rule ios.BundleInfoArrayDictEnd TARGET {
+	if $(InfoPlistHelper) {  LuaString $(InfoPlistHelper) ;  InfoPlistHelper = ;  }
+
 	TARGET = [ ActiveTarget $(TARGET) ] ;
 	LuaString "PopInfoPlistLevel()" ;
 }
 
 
 rule ios.BundleInfoArrayBoolean TARGET : KEY : VALUE : NO_OVERRIDE {
+	if $(InfoPlistHelper) {  LuaString $(InfoPlistHelper) ;  InfoPlistHelper = ;  }
+
 	TARGET = [ ActiveTarget $(TARGET) ] ;
 	if $(VALUE) {
 		LuaString "
@@ -427,6 +446,8 @@ rule ios.BundleInfoArrayBoolean TARGET : KEY : VALUE : NO_OVERRIDE {
 
 
 rule ios.BundleInfoArrayInteger TARGET : KEY : VALUE : NO_OVERRIDE {
+	if $(InfoPlistHelper) {  LuaString $(InfoPlistHelper) ;  InfoPlistHelper = ;  }
+
 	TARGET = [ ActiveTarget $(TARGET) ] ;
 	if $(VALUE) {
 		LuaString "
@@ -454,6 +475,8 @@ rule ios.BundleInfoArrayInteger TARGET : KEY : VALUE : NO_OVERRIDE {
 
 
 rule ios.BundleInfoArrayString TARGET : KEY : VALUE : NO_OVERRIDE {
+	if $(InfoPlistHelper) {  LuaString $(InfoPlistHelper) ;  InfoPlistHelper = ;  }
+
 	TARGET = [ ActiveTarget $(TARGET) ] ;
 	if $(VALUE) {
 		LuaString "
@@ -626,6 +649,8 @@ rule ios.BundleInfo TARGET : TYPE : VALUE : NO_OVERRIDE {
 
 
 rule ios.MergeInfoPList TARGET : SOURCE {
+	if $(InfoPlistHelper) {  LuaString $(InfoPlistHelper) ;  InfoPlistHelper = ;  }
+
 	TARGET = [ ActiveTarget $(TARGET) ] ;
 
 	local grist = $(C.ACTIVE_TOOLCHAIN_TARGET_GRIST):source ;
@@ -664,6 +689,8 @@ rule ios.MergeEntitlements TARGET : SOURCE {
 
 
 rule ios.InfoPListFile TARGET : SOURCE {
+	if $(InfoPlistHelper) {  LuaString $(InfoPlistHelper) ;  InfoPlistHelper = ;  }
+
 	#TARGET = [ ActiveTarget $(TARGET) ] ;
 
 	local grist = $(C.ACTIVE_TOOLCHAIN_TARGET_GRIST):intermediate ;
