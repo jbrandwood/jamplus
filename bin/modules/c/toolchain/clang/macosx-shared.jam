@@ -65,11 +65,11 @@ rule macosx.SDK SDK_VERSION {
 		case 10.6 :
 			isysroot = $(developerRoot)/MacOSX10.6.sdk ;
 			sdkroot = macosx10.6 ;
-		
+
 		case 10.7 :
 			isysroot = $(developerRoot)/MacOSX10.7.sdk ;
 			sdkroot = macosx10.7 ;
-		
+
 		case 10.8 :
 			developerRoot = [ Match ([^$(NEWLINE)]*) : [ Shell "xcode-select --print-path" ] ] ;
 			isysroot = $(developerRoot)/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.8.sdk ;
