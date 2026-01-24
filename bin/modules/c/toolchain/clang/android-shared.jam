@@ -185,6 +185,7 @@ rule android.SDK SDK_VERSION : NDK_VERSION : ARCHITECTURE {
             cflags += -target armv7-linux-androideabi$(NDK_VERSION) ;
             cflags += -march=armv7-a -mfpu=neon -mfloat-abi=softfp ;
             cflags += -ffunction-sections -funwind-tables -fstack-protector -no-canonical-prefixes -marm ;
+            linkflags += -Wl,-z,max-page-size=16384 ;
             linkflags += -no-canonical-prefixes ;
             linkflags += -target armv7-linux-androideabi$(NDK_VERSION) ;
             linkflags += -march=armv7-a -Wl,--fix-cortex-a8 ;
@@ -207,6 +208,7 @@ rule android.SDK SDK_VERSION : NDK_VERSION : ARCHITECTURE {
             cflags += -target aarch64-linux-android$(NDK_VERSION) ;
             #cflags += -march=armv8-a ;
             cflags += -ffunction-sections -funwind-tables -fstack-protector -no-canonical-prefixes ;
+            linkflags += -Wl,-z,max-page-size=16384 ;
             linkflags += -no-canonical-prefixes ;
             linkflags += -target aarch64-linux-android$(NDK_VERSION) ;
             #linkflags += -march=armv8-a ;
