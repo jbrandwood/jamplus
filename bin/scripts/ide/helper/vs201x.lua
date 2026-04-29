@@ -5,6 +5,8 @@
 -------------------------------------------------------------------------------
 local uuid = require 'uuid'
 
+local tinsert = table.insert
+
 local function GetIDEPlatforms()
 	local idePlatforms = {}
 	for platformName in ivalues(Config.Platforms) do
@@ -154,7 +156,12 @@ function VisualStudio201xProjectMetaTable:WriteHelper(outputPath, commandLines)
 	end
 
 	-- Write header.
-    if self.Options.vs2022 then
+	if self.Options.vs2026 then
+		table.insert(self.Contents, expand([[
+<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+]]))
+	elseif self.Options.vs2022 then
         table.insert(self.Contents, expand([[
 <?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
@@ -245,8 +252,15 @@ function VisualStudio201xProjectMetaTable:WriteHelper(outputPath, commandLines)
     <ProjectGuid>$(Uuid)</ProjectGuid>
     <Keyword>MakeFileProj</Keyword>
 ]], extraInfo, info))
+		elseif self.Options.vs2026 then
+			table.insert(self.Contents, expand([[
+  <PropertyGroup Label="Globals">
+    <VCProjectVersion>17.0</VCProjectVersion>
+    <ProjectGuid>$(Uuid)</ProjectGuid>
+    <Keyword>MakeFileProj</Keyword>
+]], extraInfo, info))
 		end
-		if not self.Options.vs2017  and  not self.Options.vs2019  and  not self.Options.vs2022 then
+		if not self.Options.vs2017  and  not self.Options.vs2019  and  not self.Options.vs2022  and  not self.Options.vs2026 then
 			table.insert(self.Contents, expand([[
   <PropertyGroup Label="Globals">
     <ProjectGUID>$(Uuid)</ProjectGUID>
@@ -404,13 +418,17 @@ function VisualStudio201xProjectMetaTable:WriteHelper(outputPath, commandLines)
 				self.Contents[#self.Contents + 1] = [[
     <PlatformToolset>v120</PlatformToolset>
 ]]
-			elseif self.Options.vs2015  or  self.Options.vs2017  or  self.Options.vs2019  or  self.Options.vs2022 then
+			elseif self.Options.vs2015  or  self.Options.vs2017  or  self.Options.vs2019  or  self.Options.vs2022  or  self.Options.vs2026 then
 				if isAndroidPlatform then
 					self.Contents[#self.Contents + 1] = [[
     <PlatformToolset>v143</PlatformToolset>
 ]]
 				else
-					if self.Options.vs2022 then
+					if self.Options.vs2026 then
+						self.Contents[#self.Contents + 1] = [[
+    <PlatformToolset>v145</PlatformToolset>
+]]
+					elseif self.Options.vs2022 then
 						self.Contents[#self.Contents + 1] = [[
     <PlatformToolset>v143</PlatformToolset>
 ]]
@@ -663,6 +681,10 @@ end
 
 
 function VisualStudio201xSolutionMetaTable:Write(outputPath)
+	if self.Options.vs2026 then
+		return self:WriteSlnx(outputPath)
+	end
+
 	local filename = ospath.join(outputPath, self.Name .. '.sln')
 
 	local workspace = Workspaces[self.Name]
@@ -709,6 +731,13 @@ VisualStudioVersion = 16.0.29503.13
 MinimumVisualStudioVersion = 10.0.40219.1
 ]])
 	elseif self.Options.vs2022 then
+		table.insert(self.Contents, [[
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31815.197
+MinimumVisualStudioVersion = 10.0.40219.1
+]])
+	elseif self.Options.vs2026 then
 		table.insert(self.Contents, [[
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
@@ -910,6 +939,106 @@ EndGlobal
 
 	WriteFileIfModified(filename, self.Contents)
 end
+
+
+-- Write a .slnx file.
+function VisualStudio201xSolutionMetaTable:WriteSlnx(outputPath)
+	local filename = ospath.join(outputPath, self.Name .. '.slnx')
+
+	local workspace = Workspaces[self.Name]
+
+	-- Write XML header.
+	tinsert(self.Contents, '<Solution>\n')
+
+	-- Write configurations.
+	local workspaceConfigs = GetWorkspaceConfigList(workspace)
+	local idePlatforms = GetIDEPlatforms()
+	tinsert(self.Contents, '  <Configurations>\n')
+	for configName in ivalues(workspaceConfigs) do
+		local configInfo = {}
+		configInfo.VSConfig = workspaceConfigs == Config.Configurations  and  GetMapConfigToVSConfig(configName)  or  configName
+		tinsert(self.Contents, expand('    <BuildType Name="$(VSConfig)" />\n', configInfo))
+	end
+	for platformName in ivalues(idePlatforms) do
+		local configInfo = {}
+		configInfo.VSPlatform = GetMapPlatformToVSPlatform(platformName)
+		tinsert(self.Contents, expand('    <Platform Name="$(VSPlatform)" />\n', configInfo))
+	end
+	table.insert(self.Contents, '  </Configurations>\n')
+
+	-- Derive the startup project name.
+	local startupProjectName
+	for projectName in ivalues(workspace.Projects) do
+		local project = Projects[projectName]
+		if project  and  project.Options  and  project.Options.startup then
+			startupProjectName = projectName
+			break
+		end
+	end
+	if not startupProjectName then
+		startupProjectName = buildWorkspaceName
+	end
+
+	-- Write projects.
+	local startupProjectName
+	for projectName in ivalues(workspace.Projects) do
+		local project = Projects[projectName]
+		if project  and  project.Options  and  project.Options.startup then
+			startupProjectName = projectName
+			break
+		end
+	end
+	if not startupProjectName then
+		startupProjectName = buildWorkspaceName
+	end
+
+	local function WriteProjectConfigInfo(projectName)
+		local info = ProjectExportInfo[projectName]
+		if not info then return end
+
+		tinsert(self.Contents, expand('    <Project Path="$(Filename)">\n', info))
+		if projectName ~= startupProjectName then
+			tinsert(self.Contents, expand('      <Build Project="false" />\n', info))
+		end
+		tinsert(self.Contents, expand('    </Project>\n', info))
+	end
+
+	for projectName in ivalues(workspace.Projects) do
+		WriteProjectConfigInfo(projectName)
+	end
+
+	if false then
+	-- Write the folders we use.
+	local folderList = {}
+	self:_GatherSolutionFolders(workspace.ProjectTree, folderList, '')
+
+	if #folderList > 0 then
+		table.insert(self.Contents, '  <SolutionFolders>\n')
+		for solutionFolderName in ivalues(folderList) do
+			local info = ProjectExportInfo[solutionFolderName]
+			if not info then
+				info =
+				{
+					Name = solutionFolderName:match('.*\\(.+)'),
+					Filename = solutionFolderName,
+					Uuid = '{' .. uuid.new():upper() .. '}'
+				}
+				ProjectExportInfo[solutionFolderName] = info
+			end
+			table.insert(self.Contents, expand('    <Folder Name="$(Name)" Guid="$(Uuid)" />\n', info))
+		end
+		table.insert(self.Contents, '  </SolutionFolders>\n')
+	end
+end
+
+	-- Close Solution
+	tinsert(self.Contents, '</Solution>\n')
+
+	self.Contents = table.concat(self.Contents)
+
+	WriteFileIfModified(filename, self.Contents)
+end
+
 
 function VisualStudio201xSolution(solutionName, options)
 	return setmetatable(
