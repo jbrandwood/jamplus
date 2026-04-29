@@ -29,6 +29,7 @@ rule C.vc._CStandard {
 
 
 rule C.vc._C++Exceptions {
+    FLAGS_TO_REMOVE on $(C.ACTIVE_TOOLCHAIN_TARGET) -= /EHa /EHsc ;
     FLAGS_TO_REMOVE on $(C.ACTIVE_TOOLCHAIN_TARGET) += /EHa /EHsc ;
 
     if ! $(TYPE)  ||  $(TYPE) = false {
